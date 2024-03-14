@@ -3,8 +3,12 @@
 </p>
 
 <p align="center">
-    <img src="https://img.shields.io/badge/Swift-5.9-f05237.svg" />
-    <img src="https://img.shields.io/badge/Playdate_SDK-2.4.1-ffc500.svg" />
+    <a href="https://www.swift.org/">
+        <img src="https://img.shields.io/badge/Swift-5.9-f05237.svg" />
+    </a>
+    <a href="https://sdk.play.date">
+        <img src="https://img.shields.io/badge/Playdate_SDK-2.4.1-ffc500.svg" />
+    </a>
 </p>
 
 # PlaydateKit
