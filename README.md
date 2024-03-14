@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="https://github.com/finnvoor/PlaydateKit/assets/8284016/b034895e-3214-4919-b2bd-26c1a0f04eb9" width="400" max-width="90%" alt="PlaydateKit Logo" />
+    <img src="https://github.com/finnvoor/PlaydateKit/assets/8284016/cc62d7bd-87bc-4f8e-9b0f-18998df28832" width="400" max-width="90%" alt="PlaydateKit Logo" />
 </p>
 
 <p align="center">
