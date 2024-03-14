@@ -12,24 +12,30 @@ public extension Playdate {
                 video.loadVideo(path.utf8Start).unsafelyUnwrapped
             }
 
+            /// Frees the given video player.
             public static func freePlayer(_ player: OpaquePointer) {
                 video.freePlayer(player)
             }
 
+            /// Sets the rendering destination for the video player to the given bitmap.
             public static func setContext(player: OpaquePointer, context: OpaquePointer) throws(Error) {
                 guard video.setContext(player, context) != 0 else {
                     throw getError(player)
                 }
             }
 
+            /// Gets the rendering destination for the video player. If no rendering context has been set, a context bitmap with the same
+            /// dimensions as the vieo will be allocated.
             public static func getContext(player: OpaquePointer) -> OpaquePointer {
                 video.getContext(player).unsafelyUnwrapped
             }
 
+            /// Sets the rendering destination for the video player to the screen.
             public static func useScreenContext(_ player: OpaquePointer) {
                 video.useScreenContext(player)
             }
 
+            /// Renders frame number `frameNumber` into the current context.
             public static func renderFrame(player: OpaquePointer, frameNumber: Int32) throws(Error) {
                 guard video.renderFrame(player, frameNumber) != 0 else {
                     throw getError(player)
@@ -42,6 +48,7 @@ public extension Playdate {
                 Error(humanReadableText: video.getError(player))
             }
 
+            /// Retrieves information about the video.
             public static func getInfo(player: OpaquePointer) -> (
                 width: Int32, height: Int32,
                 frameRate: Float,
