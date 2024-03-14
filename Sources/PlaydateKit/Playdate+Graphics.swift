@@ -7,10 +7,6 @@ public extension Playdate {
         public enum Video {
             // MARK: Public
 
-            public struct Error: Swift.Error, @unchecked Sendable {
-                let humanReadableText: UnsafePointer<CChar>?
-            }
-
             /// Opens the pdv file at path and returns a new video player object for rendering its frames.
             public static func loadVideo(path: StaticString) -> OpaquePointer {
                 video.loadVideo(path.utf8Start)!
@@ -211,27 +207,33 @@ public extension Playdate {
         }
 
         /// Allocates and returns a new `LCDBitmap` from the file at path. If there is no file at `path`, the function returns nil.
-        public static func loadBitmap(path: StaticString) -> OpaquePointer? {
-            // TODO: - What is outerr?
-            graphics.loadBitmap(path.utf8Start, nil)
+        public static func loadBitmap(path: StaticString) throws(Error) -> OpaquePointer? {
+            var error: UnsafePointer<CChar>?
+            let bitmap = graphics.loadBitmap(path.utf8Start, &error)
+            if let error { throw Error(humanReadableText: error) }
+            return bitmap
         }
 
         /// Allocates and returns a new `LCDBitmap` from the file at path. If there is no file at `path`, the function returns nil.
-        public static func loadBitmap(path: UnsafeMutablePointer<CChar>) -> OpaquePointer? {
-            // TODO: - What is outerr?
-            graphics.loadBitmap(path, nil)
+        public static func loadBitmap(path: UnsafeMutablePointer<CChar>) throws(Error) -> OpaquePointer? {
+            var error: UnsafePointer<CChar>?
+            let bitmap = graphics.loadBitmap(path, &error)
+            if let error { throw Error(humanReadableText: error) }
+            return bitmap
         }
 
         /// Loads the image at `path` into the previously allocated `bitmap`.
-        public static func loadIntoBitmap(path: StaticString, bitmap: OpaquePointer) {
-            // TODO: - err
-            graphics.loadIntoBitmap(path.utf8Start, bitmap, nil)
+        public static func loadIntoBitmap(path: StaticString, bitmap: OpaquePointer) throws(Error) {
+            var error: UnsafePointer<CChar>?
+            graphics.loadIntoBitmap(path.utf8Start, bitmap, &error)
+            if let error { throw Error(humanReadableText: error) }
         }
 
         /// Loads the image at `path` into the previously allocated `bitmap`.
-        public static func loadIntoBitmap(path: UnsafeMutablePointer<CChar>, bitmap: OpaquePointer) {
-            // TODO: - err
-            graphics.loadIntoBitmap(path, bitmap, nil)
+        public static func loadIntoBitmap(path: UnsafeMutablePointer<CChar>, bitmap: OpaquePointer) throws(Error) {
+            var error: UnsafePointer<CChar>?
+            graphics.loadIntoBitmap(path, bitmap, &error)
+            if let error { throw Error(humanReadableText: error) }
         }
 
         /// Allocates and returns a new `width` by `height` `LCDBitmap` filled with `bgcolor`.
@@ -253,7 +255,7 @@ public extension Playdate {
 
         /// Sets a `mask` image for the given `bitmap`. The set mask must be the same size as the target bitmap.
         public static func setBitmapMask(_ bitmap: OpaquePointer, mask: OpaquePointer) -> Int32 {
-            // TODO: - What does this return?
+            // TODO: - Figure out what this returns
             graphics.setBitmapMask(bitmap, mask)
         }
 
@@ -270,27 +272,33 @@ public extension Playdate {
         }
 
         /// Allocates and returns a new `LCDBitmap` from the file at `path`. If there is no file at `path`, the function returns nil.
-        public static func loadBitmapTable(path: StaticString) -> OpaquePointer? {
-            // TODO: - err
-            graphics.loadBitmapTable(path.utf8Start, nil)
+        public static func loadBitmapTable(path: StaticString) throws(Error) -> OpaquePointer? {
+            var error: UnsafePointer<CChar>?
+            let bitmapTable = graphics.loadBitmapTable(path.utf8Start, nil)
+            if let error { throw Error(humanReadableText: error) }
+            return bitmapTable
         }
 
         /// Allocates and returns a new `LCDBitmap` from the file at `path`. If there is no file at `path`, the function returns nil.
-        public static func loadBitmapTable(path: UnsafeMutablePointer<CChar>) -> OpaquePointer? {
-            // TODO: - err
-            graphics.loadBitmapTable(path, nil)
+        public static func loadBitmapTable(path: UnsafeMutablePointer<CChar>) throws(Error) -> OpaquePointer? {
+            var error: UnsafePointer<CChar>?
+            let bitmapTable = graphics.loadBitmapTable(path, &error)
+            if let error { throw Error(humanReadableText: error) }
+            return bitmapTable
         }
 
         /// Loads the image table at `path` into the previously allocated `table`.
-        public static func loadIntoBitmapTable(path: StaticString, table: OpaquePointer) {
-            // TODO: - err
-            graphics.loadIntoBitmapTable(path.utf8Start, table, nil)
+        public static func loadIntoBitmapTable(path: StaticString, table: OpaquePointer) throws(Error) {
+            var error: UnsafePointer<CChar>?
+            graphics.loadIntoBitmapTable(path.utf8Start, table, &error)
+            if let error { throw Error(humanReadableText: error) }
         }
 
         /// Loads the image table at `path` into the previously allocated `table`.
-        public static func loadIntoBitmapTable(path: UnsafeMutablePointer<CChar>, table: OpaquePointer) {
-            // TODO: - err
-            graphics.loadIntoBitmapTable(path, table, nil)
+        public static func loadIntoBitmapTable(path: UnsafeMutablePointer<CChar>, table: OpaquePointer) throws(Error) {
+            var error: UnsafePointer<CChar>?
+            graphics.loadIntoBitmapTable(path, table, &error)
+            if let error { throw Error(humanReadableText: error) }
         }
 
         /// Allocates and returns a new `LCDBitmapTable` that can hold `count` `width` by `height` `LCDBitmaps`.
@@ -359,16 +367,20 @@ public extension Playdate {
 
         /// Returns the `LCDFont` object for the font file at `path`. The returned font can be freed with
         /// `Playdate.System.realloc(font, 0)` when it is no longer in use.
-        public static func loadFont(path: StaticString) -> OpaquePointer? {
-            // TODO: - err
-            graphics.loadFont(path.utf8Start, nil)
+        public static func loadFont(path: StaticString) throws(Error) -> OpaquePointer? {
+            var error: UnsafePointer<CChar>?
+            let font = graphics.loadFont(path.utf8Start, &error)
+            if let error { throw Error(humanReadableText: error) }
+            return font
         }
 
         /// Returns the `LCDFont` object for the font file at `path`. The returned font can be freed with
         /// `Playdate.System.realloc(font, 0)` when it is no longer in use.
-        public static func loadFont(path: UnsafeMutablePointer<CChar>) -> OpaquePointer? {
-            // TODO: - err
-            graphics.loadFont(path, nil)
+        public static func loadFont(path: UnsafeMutablePointer<CChar>) throws(Error) -> OpaquePointer? {
+            var error: UnsafePointer<CChar>?
+            let font = graphics.loadFont(path, &error)
+            if let error { throw Error(humanReadableText: error) }
+            return font
         }
 
         /// Returns an `LCDFont` object wrapping the `LCDFontData` `data` comprising the contents (minus 16-byte header)

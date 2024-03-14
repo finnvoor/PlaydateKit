@@ -4,10 +4,6 @@ public extension Playdate {
     enum File {
         // MARK: Public
 
-        public struct Error: Swift.Error, @unchecked Sendable {
-            let humanReadableText: UnsafePointer<CChar>?
-        }
-
         /// Returns human-readable text describing the most recent error
         /// (usually indicated by a -1 return from a filesystem function).
         public static var lastError: Error {

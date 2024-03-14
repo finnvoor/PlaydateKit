@@ -3,6 +3,10 @@
 // MARK: - Playdate
 
 public enum Playdate {
+    public struct Error: Swift.Error, @unchecked Sendable {
+        let humanReadableText: UnsafePointer<CChar>?
+    }
+
     public static var playdateAPI: PlaydateAPI { playdate.pointee }
 
     public static func initialize(with pointer: UnsafeMutableRawPointer) {
