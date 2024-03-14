@@ -26,7 +26,7 @@ Currently, the following sections of the API are implemented:
 - [x] Display
 - [x] File
 - [x] Graphics
-- [ ] JSON
+- [x] JSON
 - [ ] Lua
 - [x] Scoreboards
 - [ ] Sound
