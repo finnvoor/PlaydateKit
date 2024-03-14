@@ -3,17 +3,22 @@ public import CPlaydate
 // MARK: - Playdate
 
 public enum Playdate {
+    // MARK: Public
+
     public struct Error: Swift.Error, @unchecked Sendable {
         let humanReadableText: UnsafePointer<CChar>?
     }
 
-    nonisolated(unsafe) public static var playdateAPI: PlaydateAPI! {
+    public nonisolated(unsafe) static var playdateAPI: PlaydateAPI! {
+        // MARK: Internal
+
         guard let _playdateAPI else {
             fatalError("playdateAPI is not set! Did you forget to call Playdate.initialize(with:)?")
         }
         return _playdateAPI
     }
-    nonisolated(unsafe) private static var _playdateAPI: PlaydateAPI?
+
+    private nonisolated(unsafe) static var _playdateAPI: PlaydateAPI?
 
     public static func initialize(with pointer: UnsafeMutableRawPointer) {
         _playdateAPI = pointer.bindMemory(to: PlaydateAPI.self, capacity: 1).pointee

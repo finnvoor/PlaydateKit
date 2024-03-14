@@ -30,7 +30,7 @@ Currently, the following sections of the API are implemented:
 - [ ] Lua
 - [x] Scoreboards
 - [ ] Sound
-- [ ] Sprite
+- [x] Sprite
 - [x] System
 
 ## Usage
