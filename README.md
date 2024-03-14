@@ -13,7 +13,7 @@
 
 # PlaydateKit
 
-PlaydateKit provides easy to use Swift bindings for the Playdate C API. PlaydateKit aims to be as Swift-y as possible, replacing error pointers with throwable functions and avoiding the use of pointers as much as possible.
+PlaydateKit provides easy to use Swift bindings for the Playdate C API. PlaydateKit aims to be as Swift-y as possible, replacing error pointers with throwable functions, avoiding the use of pointers as much as possible, and adding documentation comments to all functions (taken directly from the Playdate SDK docs).
 
 PlaydateKit is still very much WIP. 
 
