@@ -9,7 +9,7 @@ public extension Playdate {
 
             /// Opens the pdv file at path and returns a new video player object for rendering its frames.
             public static func loadVideo(path: StaticString) -> OpaquePointer {
-                video.loadVideo(path.utf8Start)!
+                video.loadVideo(path.utf8Start).unsafelyUnwrapped
             }
 
             public static func freePlayer(_ player: OpaquePointer) {
@@ -23,7 +23,7 @@ public extension Playdate {
             }
 
             public static func getContext(player: OpaquePointer) -> OpaquePointer {
-                video.getContext(player)!
+                video.getContext(player).unsafelyUnwrapped
             }
 
             public static func useScreenContext(_ player: OpaquePointer) {
@@ -132,7 +132,7 @@ public extension Playdate {
 
         /// Returns a new LCDBitmap that is an exact copy of `bitmap`.
         public static func copyBitmap(_ bitmap: OpaquePointer) -> OpaquePointer {
-            graphics.copyBitmap(bitmap)!
+            graphics.copyBitmap(bitmap).unsafelyUnwrapped
         }
 
         /// Returns true if any of the opaque pixels in `bitmap1` when positioned at `x1`, `y1` with `flip1` overlap any
@@ -238,7 +238,7 @@ public extension Playdate {
 
         /// Allocates and returns a new `width` by `height` `LCDBitmap` filled with `bgcolor`.
         public static func newBitmap(width: Int32, height: Int32, bgColor: LCDColor) -> OpaquePointer {
-            graphics.newBitmap(width, height, bgColor)!
+            graphics.newBitmap(width, height, bgColor).unsafelyUnwrapped
         }
 
         /// Draws the `bitmap` with its upper-left corner at location `x`, `y` tiled inside a `width` by `height` rectangle.
@@ -249,7 +249,7 @@ public extension Playdate {
         /// Returns a new, rotated and scaled `LCDBitmap` based on the given `bitmap`.
         public static func rotatedBitmap(_ bitmap: OpaquePointer, rotation: Float, xScale: Float, yScale: Float) -> (bitmap: OpaquePointer, allocatedSize: Int32) {
             var allocatedSize: Int32 = 0
-            let bitmap = graphics.rotatedBitmap(bitmap, rotation, xScale, yScale, &allocatedSize)!
+            let bitmap = graphics.rotatedBitmap(bitmap, rotation, xScale, yScale, &allocatedSize).unsafelyUnwrapped
             return (bitmap, allocatedSize)
         }
 
@@ -303,7 +303,7 @@ public extension Playdate {
 
         /// Allocates and returns a new `LCDBitmapTable` that can hold `count` `width` by `height` `LCDBitmaps`.
         public static func newBitmapTable(count: Int32, width: Int32, height: Int32) -> OpaquePointer {
-            graphics.newBitmapTable(count, width, height)!
+            graphics.newBitmapTable(count, width, height).unsafelyUnwrapped
         }
 
         /// Frees the given bitmap table. Note that this will invalidate any bitmaps returned by `getTableBitmap()`.
