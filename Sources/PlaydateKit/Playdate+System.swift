@@ -94,7 +94,7 @@ public extension Playdate {
 
         /// Allocates heap space if `ptr` is NULL, else reallocates the given pointer. If `size` is zero, frees the given pointer.
         public static func realloc(ptr: UnsafeMutableRawPointer?, size: Int) -> UnsafeMutableRawPointer {
-            system.realloc(ptr, size).unsafelyUnwrapped
+            system.realloc(ptr, size)!
         }
 
         // MARK: - Logging
@@ -102,7 +102,7 @@ public extension Playdate {
         /// Calls the log function, outputting an error in red to the console, then pauses execution.
         public static func error(format: StaticString) {
             let error = unsafeBitCast(
-                system.error.unsafelyUnwrapped,
+                system.error!,
                 to: (@convention(c) (UnsafePointer<CChar>?) -> Void).self
             )
             format.utf8Start.withMemoryRebound(
@@ -116,7 +116,7 @@ public extension Playdate {
         /// Calls the log function, outputting an error in red to the console, then pauses execution.
         public static func error(format: UnsafePointer<CChar>) {
             let error = unsafeBitCast(
-                system.error.unsafelyUnwrapped,
+                system.error!,
                 to: (@convention(c) (UnsafePointer<CChar>?) -> Void).self
             )
             error(format)
@@ -125,7 +125,7 @@ public extension Playdate {
         /// Calls the log function.
         public static func logToConsole(format: StaticString) {
             let logToConsole = unsafeBitCast(
-                system.logToConsole.unsafelyUnwrapped,
+                system.logToConsole!,
                 to: (@convention(c) (UnsafePointer<CChar>?) -> Void).self
             )
             format.utf8Start.withMemoryRebound(
@@ -139,7 +139,7 @@ public extension Playdate {
         /// Calls the log function.
         public static func logToConsole(format: UnsafePointer<CChar>) {
             let logToConsole = unsafeBitCast(
-                system.logToConsole.unsafelyUnwrapped,
+                system.logToConsole!,
                 to: (@convention(c) (UnsafePointer<CChar>?) -> Void).self
             )
             logToConsole(format)
@@ -158,7 +158,7 @@ public extension Playdate {
             callback: (@convention(c) (UnsafeMutableRawPointer?) -> Void)?,
             userdata: UnsafeMutableRawPointer? = nil
         ) -> OpaquePointer {
-            system.addMenuItem(title.utf8Start, callback, userdata).unsafelyUnwrapped
+            system.addMenuItem(title.utf8Start, callback, userdata)!
         }
 
         /// Adds a new menu item to the System Menu.
@@ -172,7 +172,7 @@ public extension Playdate {
             callback: (@convention(c) (UnsafeMutableRawPointer?) -> Void)?,
             userdata: UnsafeMutableRawPointer? = nil
         ) -> OpaquePointer {
-            system.addMenuItem(title, callback, userdata).unsafelyUnwrapped
+            system.addMenuItem(title, callback, userdata)!
         }
 
         /// Adds a new menu item that can be checked or unchecked by the player.
@@ -188,7 +188,7 @@ public extension Playdate {
             callback: (@convention(c) (UnsafeMutableRawPointer?) -> Void)?,
             userdata: UnsafeMutableRawPointer? = nil
         ) -> OpaquePointer {
-            system.addCheckmarkMenuItem(title.utf8Start, checked ? 1 : 0, callback, userdata).unsafelyUnwrapped
+            system.addCheckmarkMenuItem(title.utf8Start, checked ? 1 : 0, callback, userdata)!
         }
 
         /// Adds a new menu item that can be checked or unchecked by the player.
@@ -204,7 +204,7 @@ public extension Playdate {
             callback: (@convention(c) (UnsafeMutableRawPointer?) -> Void)?,
             userdata: UnsafeMutableRawPointer? = nil
         ) -> OpaquePointer {
-            system.addCheckmarkMenuItem(title, checked ? 1 : 0, callback, userdata).unsafelyUnwrapped
+            system.addCheckmarkMenuItem(title, checked ? 1 : 0, callback, userdata)!
         }
 
         /// Adds a new menu item that allows the player to cycle through a set of options.
@@ -229,7 +229,7 @@ public extension Playdate {
                 optionsCount,
                 callback,
                 userData
-            ).unsafelyUnwrapped
+            )!
         }
 
         /// Adds a new menu item that allows the player to cycle through a set of options.
@@ -254,7 +254,7 @@ public extension Playdate {
                 optionsCount,
                 callback,
                 userData
-            ).unsafelyUnwrapped
+            )!
         }
 
         /// Removes the menu item from the system menu.
@@ -269,7 +269,7 @@ public extension Playdate {
 
         /// Gets the title of the menu item.
         public static func getMenuItemTitle(_ menuItem: OpaquePointer) -> UnsafePointer<CChar> {
-            system.getMenuItemTitle(menuItem).unsafelyUnwrapped
+            system.getMenuItemTitle(menuItem)!
         }
 
         /// Sets the display title of the menu item.
@@ -300,7 +300,7 @@ public extension Playdate {
 
         /// Gets the userdata value associated with this menu item.
         public static func getMenuItemUserdata(_ menuItem: OpaquePointer) -> UnsafeMutableRawPointer {
-            system.getMenuItemUserdata(menuItem).unsafelyUnwrapped
+            system.getMenuItemUserdata(menuItem)!
         }
 
         /// Sets the userdata value associated with this menu item.
