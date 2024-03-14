@@ -1,5 +1,5 @@
 name=Basic PlaydateKit Example
 author=Finn Voorhees
 description=Example Playdate game using PlaydateKit
-bundleID=com.finnvoorhees.PlaydateKit
+bundleID=com.finnvoorhees.BasicPlaydateKitExample
 imagePath=
