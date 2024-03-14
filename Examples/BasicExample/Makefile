@@ -1,6 +1,5 @@
 REPO_ROOT := $(shell git rev-parse --show-toplevel)
 PRODUCT := build/BasicExample.pdx
-SRC += $(REPO_ROOT)/Sources/CPlaydate/playdate.c
 include $(REPO_ROOT)/Examples/swift.mk
 
 # MARK: - Build PlaydateKit Swift Module

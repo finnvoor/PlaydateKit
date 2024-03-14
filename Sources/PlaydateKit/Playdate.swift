@@ -7,10 +7,16 @@ public enum Playdate {
         let humanReadableText: UnsafePointer<CChar>?
     }
 
-    public static var playdateAPI: PlaydateAPI { playdate.pointee }
+    nonisolated(unsafe) public static var playdateAPI: PlaydateAPI! {
+        guard let _playdateAPI else {
+            fatalError("playdateAPI is not set! Did you forget to call Playdate.initialize(with:)?")
+        }
+        return _playdateAPI
+    }
+    nonisolated(unsafe) private static var _playdateAPI: PlaydateAPI?
 
     public static func initialize(with pointer: UnsafeMutableRawPointer) {
-        playdate = pointer.bindMemory(to: PlaydateAPI.self, capacity: 1)
+        _playdateAPI = pointer.bindMemory(to: PlaydateAPI.self, capacity: 1).pointee
     }
 }
 
