@@ -1,4 +1,4 @@
-@preconcurrency public import CPlaydate
+public import CPlaydate
 
 public extension Playdate {
     enum File {
