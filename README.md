@@ -69,7 +69,7 @@ The Makefile in the example project requires compiling the PlaydateKit source fi
 
 ## Acknowledgements
 
-PlaydateKit was inspired by and would not be possible without the excellent work done by @rauhul on [swift-playdate-examples](https://github.com/apple/swift-playdate-examples). Specifically, PlaydateKit was created due to the note in the swift-playdate-examples repo: 
+PlaydateKit was inspired by and would not be possible without the excellent work done by [@rauhul](https://github.com/rauhul) on [swift-playdate-examples](https://github.com/apple/swift-playdate-examples). Specifically, PlaydateKit was created due to the note in the swift-playdate-examples repo: 
 > It is not intended to be a full-featured Playdate SDK so please do not raise PRs to extend the Playdate Swift overlay to new areas.
 
 The example project build scripts as well as most of CPlaydate were copied from swift-playdate-examples, and as such fall under the Apache License 2.0 found [here](https://github.com/apple/swift-playdate-examples/blob/main/LICENSE.txt).
