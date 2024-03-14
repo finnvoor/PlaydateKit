@@ -2,7 +2,11 @@ Name: CPlaydate
 Tags:
 - Name: PDButtons
   EnumKind: NSOptions
+- Name: PDPeripherals
+  EnumKind: NSOptions
 - Name: PDSystemEvent
+  EnumExtensibility: open
+- Name: PDLanguage
   EnumExtensibility: open
 - Name: LCDBitmapDrawMode
   EnumExtensibility: open
@@ -51,3 +55,9 @@ Enumerators:
   SwiftName: keyReleased
 - Name: kEventLowPower
   SwiftName: lowPower
+- Name: kPDLanguageEnglish
+  SwiftName: english
+- Name: kPDLanguageJapanese
+  SwiftName: japanese
+- Name: kPDLanguageUnknown
+  SwiftName: unknown
