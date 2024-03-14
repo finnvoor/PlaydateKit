@@ -274,7 +274,7 @@ public extension Playdate {
         /// Allocates and returns a new `LCDBitmap` from the file at `path`. If there is no file at `path`, the function returns nil.
         public static func loadBitmapTable(path: StaticString) throws(Error) -> OpaquePointer? {
             var error: UnsafePointer<CChar>?
-            let bitmapTable = graphics.loadBitmapTable(path.utf8Start, nil)
+            let bitmapTable = graphics.loadBitmapTable(path.utf8Start, &error)
             if let error { throw Error(humanReadableText: error) }
             return bitmapTable
         }
