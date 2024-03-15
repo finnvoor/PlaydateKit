@@ -9,7 +9,7 @@ public extension Playdate {
         public typealias Reader = json_reader
         public typealias Value = json_value
 
-        /// Decodes a JSON file with the given `decoder`. An instance of `json_decoder` must implement decodeError.
+        /// Decodes a JSON file with the given `decoder`. An instance of `Decoder` must implement decodeError.
         /// The remaining functions are optional although you’ll probably want to implement at least didDecodeTableValue
         /// and didDecodeArrayValue. The value pointer, if set, contains the value retured from the top-level didDecodeSublist callback.
         public static func decode(
@@ -20,7 +20,7 @@ public extension Playdate {
             json.decode(&decoder, reader, &value)
         }
 
-        /// Decodes a JSON string with the given `decoder`. An instance of `json_decoder` must implement decodeError.
+        /// Decodes a JSON string with the given `decoder`. An instance of `Decoder` must implement decodeError.
         /// The remaining functions are optional although you’ll probably want to implement at least didDecodeTableValue
         /// and didDecodeArrayValue. The value pointer, if set, contains the value retured from the top-level didDecodeSublist callback.
         public static func decodeString(
@@ -31,7 +31,7 @@ public extension Playdate {
             json.decodeString(&decoder, jsonString.utf8Start, &value)
         }
 
-        /// Decodes a JSON string with the given `decoder`. An instance of `json_decoder` must implement decodeError.
+        /// Decodes a JSON string with the given `decoder`. An instance of `Decoder` must implement decodeError.
         /// The remaining functions are optional although you’ll probably want to implement at least didDecodeTableValue
         /// and didDecodeArrayValue. The value pointer, if set, contains the value retured from the top-level didDecodeSublist callback.
         public static func decodeString(
@@ -42,12 +42,17 @@ public extension Playdate {
             json.decodeString(&decoder, jsonString, &value)
         }
 
-        /// Populates the given `json_encoder` `encoder` with the functions necessary to encode arbitrary data into a JSON string.
+        /// Populates the given `Encoder` `encoder` with the functions necessary to encode arbitrary data into a JSON string.
         /// `userdata` is passed as the first argument of the given `writeFunc` write. When pretty is true the string is written
         /// with human-readable formatting.
         public static func initEncoder(
             encoder: inout Encoder,
-            writeFunc: (@convention(c) (_ userdata: UnsafeMutableRawPointer?, _ str: UnsafePointer<CChar>?, _ len: Int32) -> Void)?,
+            writeFunc: (@convention(c) (
+                _ userdata: UnsafeMutableRawPointer?,
+                _ string: UnsafePointer<CChar>?,
+                _ length: Int32
+            ) -> Void
+            )?,
             userdata: UnsafeMutableRawPointer?,
             pretty: Bool
         ) {

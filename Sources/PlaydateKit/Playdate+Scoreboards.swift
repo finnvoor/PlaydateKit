@@ -55,7 +55,10 @@ public extension Playdate {
         }
 
         public static func getScoreboards(
-            callback: @convention(c) (_ boards: UnsafeMutablePointer<BoardsList>?, _ errorMessage: UnsafePointer<CChar>?) -> Void
+            callback: @convention(c) (
+                _ boards: UnsafeMutablePointer<BoardsList>?,
+                _ errorMessage: UnsafePointer<CChar>?
+            ) -> Void
         ) -> Int32 {
             scoreboards.getScoreboards(callback)
         }
@@ -66,14 +69,20 @@ public extension Playdate {
 
         public static func getScores(
             boardID: StaticString,
-            callback: @convention(c) (_ scores: UnsafeMutablePointer<ScoresList>?, _ errorMessage: UnsafePointer<CChar>?) -> Void
+            callback: @convention(c) (
+                _ scores: UnsafeMutablePointer<ScoresList>?,
+                _ errorMessage: UnsafePointer<CChar>?
+            ) -> Void
         ) -> Int32 {
             scoreboards.getScores(boardID.utf8Start, callback)
         }
 
         public static func getScores(
             boardID: UnsafePointer<CChar>,
-            callback: @convention(c) (_ scores: UnsafeMutablePointer<ScoresList>?, _ errorMessage: UnsafePointer<CChar>?) -> Void
+            callback: @convention(c) (
+                _ scores: UnsafeMutablePointer<ScoresList>?,
+                _ errorMessage: UnsafePointer<CChar>?
+            ) -> Void
         ) -> Int32 {
             scoreboards.getScores(boardID, callback)
         }
