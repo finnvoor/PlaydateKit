@@ -13,12 +13,6 @@ public extension Playdate {
         // MARK: - Interacting with the System Menu
 
         public struct MenuItem {
-            // MARK: Lifecycle
-
-            init(pointer: OpaquePointer) {
-                self.pointer = pointer
-            }
-
             // MARK: Public
 
             /// Gets/sets the title of the menu item.
@@ -162,8 +156,8 @@ public extension Playdate {
         // MARK: - Logging
 
         /// Calls the log function, outputting an error in red to the console, then pauses execution.
-        public static func error(format: StaticString) {
-            let error = unsafeBitCast(
+        public static func logError(format: StaticString) {
+            let logError = unsafeBitCast(
                 system.error,
                 to: (@convention(c) (UnsafePointer<CChar>?) -> Void).self
             )
@@ -171,17 +165,26 @@ public extension Playdate {
                 to: CChar.self,
                 capacity: format.utf8CodeUnitCount
             ) { pointer in
-                error(pointer)
+                logError(pointer)
             }
         }
 
         /// Calls the log function, outputting an error in red to the console, then pauses execution.
-        public static func error(format: UnsafePointer<CChar>) {
-            let error = unsafeBitCast(
+        public static func logError(format: UnsafePointer<CChar>) {
+            let logError = unsafeBitCast(
                 system.error,
                 to: (@convention(c) (UnsafePointer<CChar>?) -> Void).self
             )
-            error(format)
+            logError(format)
+        }
+
+        /// Calls the log function, outputting an error in red to the console, then pauses execution.
+        public static func logError(_ error: Error) {
+            let logError = unsafeBitCast(
+                system.error,
+                to: (@convention(c) (UnsafePointer<CChar>?) -> Void).self
+            )
+            logError(error.humanReadableText)
         }
 
         /// Calls the log function.
@@ -345,9 +348,11 @@ public extension Playdate {
             system.resetElapsedTime()
         }
 
-        /// Converts the given epoch time to a PDDateTime.
-        public static func convertEpochToDateTime(_ epoch: UInt32, dateTime: inout DateTime) {
+        /// Converts the given epoch time to a DateTime.
+        public static func convertEpochToDateTime(_ epoch: UInt32) -> DateTime {
+            var dateTime = DateTime()
             system.convertEpochToDateTime(epoch, &dateTime)
+            return dateTime
         }
 
         /// Converts the given PDDateTime to an epoch time.

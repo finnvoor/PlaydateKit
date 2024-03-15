@@ -203,8 +203,8 @@ public extension Playdate {
             sprite.addDirtyRect(dirtyRect)
         }
 
-        // When `ignoresDrawOffset` is set to true, the sprite will draw in screen coordinates, ignoring the currently-set drawOffset.
-
+        /// When `ignoresDrawOffset` is set to true, the sprite will draw in screen coordinates, ignoring the currently-set drawOffset.
+        ///
         /// This only affects drawing, and should not be used on sprites being used for collisions, which will still happen in world-space.
         public static func setIgnoresDrawOffset(_ sprite: OpaquePointer, ignoresDrawOffset: Bool) {
             Sprite.sprite.setIgnoresDrawOffset(sprite, ignoresDrawOffset ? 1 : 0)
@@ -307,7 +307,7 @@ public extension Playdate {
         }
 
         /// Returns the same values as `moveWithCollisions()` but does not actually move the sprite.
-        /// The caller is responsible for freeing the returned array.
+        /// > Warning: The caller is responsible for freeing the returned array.
         public static func checkCollisions(_ sprite: OpaquePointer, goalX: Float, goalY: Float) -> (collisionInfo: UnsafeMutableBufferPointer<CollisionInfo>, actualX: Float, actualY: Float) {
             var actualX: Float = 0, actualY: Float = 0
             var length: Int32 = 0
@@ -317,7 +317,8 @@ public extension Playdate {
 
         /// Moves the given sprite towards `goalX`, `goalY` taking collisions into account and returns an array of `SpriteCollisionInfo`.
         /// `actualX`, `actualY` are set to the sprite’s position after collisions. If no collisions occurred, this will be the same as
-        /// `goalX`, `goalY`. The caller is responsible for freeing the returned array.
+        /// `goalX`, `goalY`.
+        /// > Warning: The caller is responsible for freeing the returned array.
         public static func moveWithCollisions(_ sprite: OpaquePointer, goalX: Float, goalY: Float) -> (collisionInfo: UnsafeMutableBufferPointer<CollisionInfo>, actualX: Float, actualY: Float) {
             var actualX: Float = 0, actualY: Float = 0
             var length: Int32 = 0
@@ -326,7 +327,7 @@ public extension Playdate {
         }
 
         /// Returns an array of all sprites with collision rects containing the point at `x`, `y`.
-        /// The caller is responsible for freeing the returned array.
+        /// > Warning: The caller is responsible for freeing the returned array.
         public static func querySpritesAtPoint(x: Float, y: Float) -> UnsafeMutableBufferPointer<OpaquePointer?> {
             var length: Int32 = 0
             let sprites = sprite.querySpritesAtPoint(x, y, &length)
@@ -334,7 +335,7 @@ public extension Playdate {
         }
 
         /// Returns an array of all sprites with collision rects that intersect the `width` by `height` rect at `x`, `y`.
-        /// The caller is responsible for freeing the returned array.
+        /// > Warning: The caller is responsible for freeing the returned array.
         public static func querySpritesInRect(x: Float, y: Float, width: Float, height: Float) -> UnsafeMutableBufferPointer<OpaquePointer?> {
             var length: Int32 = 0
             let sprites = sprite.querySpritesInRect(x, y, width, height, &length)
@@ -342,7 +343,7 @@ public extension Playdate {
         }
 
         /// Returns an array of all sprites with collision rects that intersect the line connecting `x1`, `y1` and `x2`, `y2`.
-        /// The caller is responsible for freeing the returned array.
+        /// > Warning: The caller is responsible for freeing the returned array.
         public static func querySpritesAlongLine(x1: Float, y1: Float, x2: Float, y2: Float) -> UnsafeMutableBufferPointer<OpaquePointer?> {
             var length: Int32 = 0
             let sprites = sprite.querySpritesAlongLine(x1, y1, x2, y2, &length)
@@ -351,7 +352,7 @@ public extension Playdate {
 
         /// Returns an array of `SpriteQueryInfo` for all sprites with collision rects that intersect the line connecting `x1`, `y1` and `x2`, `y2`.
         /// If you don’t need this information, use `querySpritesAlongLine()` as it will be faster.
-        /// The caller is responsible for freeing the returned array.
+        /// > Warning: The caller is responsible for freeing the returned array.
         public static func querySpriteInfoAlongLine(x1: Float, y1: Float, x2: Float, y2: Float) -> UnsafeMutableBufferPointer<QueryInfo> {
             var length: Int32 = 0
             let spriteInfo = sprite.querySpriteInfoAlongLine(x1, y1, x2, y2, &length)
@@ -359,7 +360,7 @@ public extension Playdate {
         }
 
         /// Returns an array of sprites that have collide rects that are currently overlapping the given sprite’s collide rect.
-        /// The caller is responsible for freeing the returned array.
+        /// > Warning: The caller is responsible for freeing the returned array.
         public static func overlappingSprites(_ sprite: OpaquePointer) -> UnsafeMutableBufferPointer<OpaquePointer?> {
             var length: Int32 = 0
             let sprites = Sprite.sprite.overlappingSprites(sprite, &length)
@@ -367,7 +368,8 @@ public extension Playdate {
         }
 
         /// Returns an array of all sprites that have collide rects that are currently overlapping. Each consecutive pair of sprites is overlapping
-        /// (eg. 0 & 1 overlap, 2 & 3 overlap, etc). The caller is responsible for freeing the returned array.
+        /// (eg. 0 & 1 overlap, 2 & 3 overlap, etc).
+        /// > Warning: The caller is responsible for freeing the returned array.
         public static func allOverlappingSprites() -> UnsafeMutableBufferPointer<OpaquePointer?> {
             var length: Int32 = 0
             let sprites = sprite.allOverlappingSprites(&length)
