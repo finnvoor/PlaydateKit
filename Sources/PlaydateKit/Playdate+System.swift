@@ -10,6 +10,47 @@ public extension Playdate {
         public typealias Peripherals = PDPeripherals
         public typealias Buttons = PDButtons
 
+        // MARK: - Interacting with the System Menu
+
+        public struct MenuItem {
+            // MARK: Lifecycle
+
+            init(pointer: OpaquePointer) {
+                self.pointer = pointer
+            }
+
+            // MARK: Public
+
+            /// Gets/sets the title of the menu item.
+            public var title: UnsafePointer<CChar> {
+                get { system.getMenuItemTitle(pointer).unsafelyUnwrapped }
+                set { system.setMenuItemTitle(pointer, newValue) }
+            }
+
+            /// Gets/sets the value of the menu item.
+            ///
+            /// For checkmark menu items, 1 means checked, 0 unchecked.
+            /// For option menu items, the value indicates the array index of the currently selected option.
+            public var value: Int32 {
+                get { system.getMenuItemValue(pointer) }
+                set { system.setMenuItemValue(pointer, newValue) }
+            }
+
+            /// Gets/sets the userdata value associated with this menu item.
+            public var userdata: UnsafeMutableRawPointer? {
+                get { system.getMenuItemUserdata(pointer) }
+                set { system.setMenuItemUserdata(pointer, newValue) }
+            }
+
+            public func setTitle(_ title: StaticString) {
+                system.setMenuItemTitle(pointer, title.utf8Start)
+            }
+
+            // MARK: Internal
+
+            let pointer: OpaquePointer
+        }
+
         /// Returns the last-read accelerometer data.
         public static var accelerometer: (x: Float, y: Float, z: Float) {
             var x: Float = 0, y: Float = 0, z: Float = 0
@@ -151,8 +192,6 @@ public extension Playdate {
             logToConsole(format)
         }
 
-        // MARK: - Interacting with the System Menu
-
         /// Adds a new menu item to the System Menu.
         /// - Parameters:
         ///   - title: The title displayed by the menu item.
@@ -163,8 +202,9 @@ public extension Playdate {
             title: StaticString,
             callback: (@convention(c) (_ userdata: UnsafeMutableRawPointer?) -> Void)?,
             userdata: UnsafeMutableRawPointer? = nil
-        ) -> OpaquePointer {
-            system.addMenuItem(title.utf8Start, callback, userdata).unsafelyUnwrapped
+        ) -> MenuItem {
+            let pointer = system.addMenuItem(title.utf8Start, callback, userdata).unsafelyUnwrapped
+            return MenuItem(pointer: pointer)
         }
 
         /// Adds a new menu item to the System Menu.
@@ -177,8 +217,9 @@ public extension Playdate {
             title: UnsafePointer<CChar>,
             callback: (@convention(c) (_ userdata: UnsafeMutableRawPointer?) -> Void)?,
             userdata: UnsafeMutableRawPointer? = nil
-        ) -> OpaquePointer {
-            system.addMenuItem(title, callback, userdata).unsafelyUnwrapped
+        ) -> MenuItem {
+            let pointer = system.addMenuItem(title, callback, userdata).unsafelyUnwrapped
+            return MenuItem(pointer: pointer)
         }
 
         /// Adds a new menu item that can be checked or unchecked by the player.
@@ -190,11 +231,12 @@ public extension Playdate {
         /// - Returns: The menu item
         @discardableResult public static func addCheckmarkMenuItem(
             title: StaticString,
-            checked: Bool,
+            checked: Bool = false,
             callback: (@convention(c) (_ userdata: UnsafeMutableRawPointer?) -> Void)?,
             userdata: UnsafeMutableRawPointer? = nil
-        ) -> OpaquePointer {
-            system.addCheckmarkMenuItem(title.utf8Start, checked ? 1 : 0, callback, userdata).unsafelyUnwrapped
+        ) -> MenuItem {
+            let pointer = system.addCheckmarkMenuItem(title.utf8Start, checked ? 1 : 0, callback, userdata).unsafelyUnwrapped
+            return MenuItem(pointer: pointer)
         }
 
         /// Adds a new menu item that can be checked or unchecked by the player.
@@ -206,11 +248,12 @@ public extension Playdate {
         /// - Returns: The menu item
         @discardableResult public static func addCheckmarkMenuItem(
             title: UnsafePointer<CChar>,
-            checked: Bool,
+            checked: Bool = false,
             callback: (@convention(c) (_ userdata: UnsafeMutableRawPointer?) -> Void)?,
             userdata: UnsafeMutableRawPointer? = nil
-        ) -> OpaquePointer {
-            system.addCheckmarkMenuItem(title, checked ? 1 : 0, callback, userdata).unsafelyUnwrapped
+        ) -> MenuItem {
+            let pointer = system.addCheckmarkMenuItem(title, checked ? 1 : 0, callback, userdata).unsafelyUnwrapped
+            return MenuItem(pointer: pointer)
         }
 
         /// Adds a new menu item that allows the player to cycle through a set of options.
@@ -218,24 +261,28 @@ public extension Playdate {
         ///   - title: The title displayed by the menu item.
         ///   - options: An array of strings representing the states this menu item can cycle through. Due to limited horizontal space,
         ///              the option strings and title should be kept short for this type of menu item.
-        ///   - optionsCount: The number of items contained in options.
         ///   - callback: The callback invoked when the menu item is selected by the user.
         ///   - userdata: The userdata to associate with the menu item.
         /// - Returns: The menu item
         @discardableResult public static func addOptionsMenuItem(
             title: StaticString,
-            options: UnsafeMutablePointer<UnsafePointer<CChar>?>?,
-            optionsCount: Int32,
+            options: [StaticString],
             callback: (@convention(c) (_ userdata: UnsafeMutableRawPointer?) -> Void)?,
-            userData: UnsafeMutableRawPointer?
-        ) -> OpaquePointer {
-            system.addOptionsMenuItem(
-                title.utf8Start,
-                options,
-                optionsCount,
-                callback,
-                userData
-            ).unsafelyUnwrapped
+            userData: UnsafeMutableRawPointer? = nil
+        ) -> MenuItem {
+            var options = options.map {
+                Optional(UnsafeRawPointer($0.utf8Start).assumingMemoryBound(to: CChar.self))
+            }
+            return options.withUnsafeMutableBufferPointer { pointer in
+                let menuItem = system.addOptionsMenuItem(
+                    title.utf8Start,
+                    pointer.baseAddress!,
+                    Int32(pointer.count),
+                    callback,
+                    userData
+                ).unsafelyUnwrapped
+                return MenuItem(pointer: menuItem)
+            }
         }
 
         /// Adds a new menu item that allows the player to cycle through a set of options.
@@ -243,75 +290,33 @@ public extension Playdate {
         ///   - title: The title displayed by the menu item.
         ///   - options: An array of strings representing the states this menu item can cycle through. Due to limited horizontal space,
         ///              the option strings and title should be kept short for this type of menu item.
-        ///   - optionsCount: The number of items contained in options.
         ///   - callback: The callback invoked when the menu item is selected by the user.
         ///   - userdata: The userdata to associate with the menu item.
         /// - Returns: The menu item
         @discardableResult public static func addOptionsMenuItem(
             title: UnsafePointer<CChar>,
-            options: UnsafeMutablePointer<UnsafePointer<CChar>?>?,
-            optionsCount: Int32,
+            options: UnsafeMutableBufferPointer<UnsafePointer<CChar>?>,
             callback: (@convention(c) (_ userdata: UnsafeMutableRawPointer?) -> Void)?,
-            userData: UnsafeMutableRawPointer?
-        ) -> OpaquePointer {
-            system.addOptionsMenuItem(
+            userData: UnsafeMutableRawPointer? = nil
+        ) -> MenuItem {
+            let pointer = system.addOptionsMenuItem(
                 title,
-                options,
-                optionsCount,
+                options.baseAddress,
+                Int32(options.count),
                 callback,
                 userData
             ).unsafelyUnwrapped
+            return MenuItem(pointer: pointer)
         }
 
         /// Removes the menu item from the system menu.
-        public static func removeMenuItem(_ menuItem: OpaquePointer) {
-            system.removeMenuItem(menuItem)
+        public static func removeMenuItem(_ menuItem: MenuItem) {
+            system.removeMenuItem(menuItem.pointer)
         }
 
         /// Removes all custom menu items from the system menu.
         public static func removeAllMenuItems() {
             system.removeAllMenuItems()
-        }
-
-        /// Gets the title of the menu item.
-        public static func getMenuItemTitle(_ menuItem: OpaquePointer) -> UnsafePointer<CChar> {
-            system.getMenuItemTitle(menuItem).unsafelyUnwrapped
-        }
-
-        /// Sets the display title of the menu item.
-        public static func setMenuItemTitle(_ menuItem: OpaquePointer, title: StaticString) {
-            system.setMenuItemTitle(menuItem, title.utf8Start)
-        }
-
-        /// Sets the display title of the menu item.
-        public static func setMenuItemTitle(_ menuItem: OpaquePointer, title: UnsafePointer<CChar>) {
-            system.setMenuItemTitle(menuItem, title)
-        }
-
-        /// Gets the value of the menu item.
-        ///
-        /// For checkmark menu items, 1 means checked, 0 unchecked.
-        /// For option menu items, the value indicates the array index of the currently selected option.
-        public static func getMenuItemValue(_ menuItem: OpaquePointer) -> Int32 {
-            system.getMenuItemValue(menuItem)
-        }
-
-        /// Sets the value of the menu item.
-        ///
-        /// For checkmark menu items, 1 means checked, 0 unchecked.
-        /// For option menu items, the value indicates the array index of the currently selected option.
-        public static func setMenuItemValue(_ menuItem: OpaquePointer, value: Int32) {
-            system.setMenuItemValue(menuItem, value)
-        }
-
-        /// Gets the userdata value associated with this menu item.
-        public static func getMenuItemUserdata(_ menuItem: OpaquePointer) -> UnsafeMutableRawPointer {
-            system.getMenuItemUserdata(menuItem).unsafelyUnwrapped
-        }
-
-        /// Sets the userdata value associated with this menu item.
-        public static func setMenuItemUserdata(_ menuItem: OpaquePointer, userdata: UnsafeMutableRawPointer) {
-            system.setMenuItemUserdata(menuItem, userdata)
         }
 
         /// Returns the number of seconds (and sets milliseconds if not NULL) elapsed since midnight (hour 0), January 1, 2000.
