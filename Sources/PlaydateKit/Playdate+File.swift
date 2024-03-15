@@ -70,12 +70,6 @@ public extension Playdate {
             let pointer: UnsafeMutableRawPointer
         }
 
-        /// Returns human-readable text describing the most recent error
-        /// (usually indicated by a thrown error from a filesystem function).
-        public static var lastError: Error {
-            Error(humanReadableText: file.geterr())
-        }
-
         /// Calls the given callback function for every file at path. Subfolders are indicated by a trailing slash '/' in filename.
         /// `listFiles()` does not recurse into subfolders. If `showHidden` is true, files beginning with a period will be included;
         /// otherwise, they are skipped. Throws if no folder exists at path or it can’t be opened.
@@ -185,6 +179,12 @@ public extension Playdate {
         }
 
         // MARK: Private
+
+        /// Returns human-readable text describing the most recent error
+        /// (usually indicated by a thrown error from a filesystem function).
+        private static var lastError: Error {
+            Error(humanReadableText: file.geterr())
+        }
 
         private static var file: playdate_file { playdateAPI.file.pointee }
     }

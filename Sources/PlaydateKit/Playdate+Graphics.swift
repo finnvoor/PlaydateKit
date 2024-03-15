@@ -7,58 +7,73 @@ public extension Playdate {
         public enum Video {
             // MARK: Public
 
-            /// Opens the pdv file at path and returns a new video player object for rendering its frames.
-            public static func loadVideo(path: StaticString) -> OpaquePointer {
-                video.loadVideo(path.utf8Start).unsafelyUnwrapped
-            }
+            public class Player {
+                // MARK: Lifecycle
 
-            /// Frees the given video player.
-            public static func freePlayer(_ player: OpaquePointer) {
-                video.freePlayer(player)
-            }
-
-            /// Sets the rendering destination for the video player to the given bitmap.
-            public static func setContext(player: OpaquePointer, context: OpaquePointer) throws(Error) {
-                guard video.setContext(player, context) != 0 else {
-                    throw getError(player)
+                /// Opens the pdv file at path and returns a new video player object for rendering its frames.
+                public init(path: StaticString) {
+                    pointer = video.loadVideo(path.utf8Start).unsafelyUnwrapped
                 }
-            }
 
-            /// Gets the rendering destination for the video player. If no rendering context has been set, a context bitmap with the same
-            /// dimensions as the vieo will be allocated.
-            public static func getContext(player: OpaquePointer) -> OpaquePointer {
-                video.getContext(player).unsafelyUnwrapped
-            }
-
-            /// Sets the rendering destination for the video player to the screen.
-            public static func useScreenContext(_ player: OpaquePointer) {
-                video.useScreenContext(player)
-            }
-
-            /// Renders frame number `frameNumber` into the current context.
-            public static func renderFrame(player: OpaquePointer, frameNumber: Int32) throws(Error) {
-                guard video.renderFrame(player, frameNumber) != 0 else {
-                    throw getError(player)
+                /// Opens the pdv file at path and returns a new video player object for rendering its frames.
+                public init(path: UnsafePointer<CChar>) {
+                    pointer = video.loadVideo(path).unsafelyUnwrapped
                 }
-            }
 
-            /// Returns human-readable text describing the most recent error
-            /// (usually indicated by a -1 return from a filesystem function).
-            public static func getError(_ player: OpaquePointer) -> Error {
-                Error(humanReadableText: video.getError(player))
-            }
+                deinit {
+                    video.freePlayer(pointer)
+                }
 
-            /// Retrieves information about the video.
-            public static func getInfo(player: OpaquePointer) -> (
-                width: Int32, height: Int32,
-                frameRate: Float,
-                frameCount: Int32, currentFrame: Int32
-            ) {
-                var width: Int32 = 0, height: Int32 = 0
-                var frameRate: Float = 0
-                var frameCount: Int32 = 0, currentFrame: Int32 = 0
-                video.getInfo(player, &width, &height, &frameRate, &frameCount, &currentFrame)
-                return (width, height, frameRate, frameCount, currentFrame)
+                // MARK: Public
+
+                /// Retrieves information about the video.
+                public var info: (
+                    width: Int32, height: Int32,
+                    frameRate: Float,
+                    frameCount: Int32, currentFrame: Int32
+                ) {
+                    var width: Int32 = 0, height: Int32 = 0
+                    var frameRate: Float = 0
+                    var frameCount: Int32 = 0, currentFrame: Int32 = 0
+                    video.getInfo(pointer, &width, &height, &frameRate, &frameCount, &currentFrame)
+                    return (width, height, frameRate, frameCount, currentFrame)
+                }
+
+                /// Gets the rendering destination for the video player. If no rendering context has been set, a context bitmap with the same
+                /// dimensions as the vieo will be allocated.
+                public var context: OpaquePointer {
+                    video.getContext(pointer).unsafelyUnwrapped
+                }
+
+                /// Sets the rendering destination for the video player to the given bitmap.
+                public func setContext(_ context: OpaquePointer) throws(Error) {
+                    guard video.setContext(pointer, context) != 0 else {
+                        throw error
+                    }
+                }
+
+                /// Sets the rendering destination for the video player to the screen.
+                public func useScreenContext() {
+                    video.useScreenContext(pointer)
+                }
+
+                /// Renders frame number `frameNumber` into the current context.
+                public func renderFrame(_ frameNumber: Int32) throws(Error) {
+                    guard video.renderFrame(pointer, frameNumber) != 0 else {
+                        throw error
+                    }
+                }
+
+                // MARK: Internal
+
+                let pointer: OpaquePointer
+
+                // MARK: Private
+
+                /// Returns the most recent error
+                private var error: Error {
+                    Error(humanReadableText: video.getError(pointer))
+                }
             }
 
             // MARK: Private
