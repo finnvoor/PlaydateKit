@@ -137,6 +137,21 @@ public extension Playdate {
             system.getLanguage()
         }
 
+        /// The accelerometer is off by default, to save a bit of power. If you will be using the accelerometer in your game,
+        /// you’ll first need to call `startAccelerometer()` then wait for the next update cycle before reading its values.
+        /// If you won’t be using the accelerometer again for a while, calling `stopAccelerometer()` will put it back into a
+        /// low-power idle state. (Though, to be honest, the accelerometer draws so little power
+        /// when it’s running you’d never notice the difference.)
+        public static var accelerometerIsEnabled = false {
+            didSet {
+                if accelerometerIsEnabled {
+                    system.setPeripheralsEnabled(.accelerometer)
+                } else {
+                    system.setPeripheralsEnabled(.none)
+                }
+            }
+        }
+
         // MARK: - Memory allocation
 
         /// Allocates heap space if `ptr` is NULL, else reallocates the given pointer. If `size` is zero, frees the given pointer.
@@ -378,13 +393,6 @@ public extension Playdate {
         /// (If you don’t know what I’m talking about, you don’t need this. :smile:)
         public static func clearICache() {
             system.clearICache()
-        }
-
-        /// By default, the accelerometer is disabled to save (a small amount of) power.
-        /// To use a peripheral, it must first be enabled via this function. Accelerometer data is not available
-        /// until the next update cycle after it’s enabled.
-        public static func setPeripheralsEnabled(_ peripherals: Peripherals) {
-            system.setPeripheralsEnabled(peripherals)
         }
 
         /// Disables or enables the 3 minute auto lock feature. When called, the timer is reset to 3 minutes.

@@ -11,7 +11,10 @@ public extension Playdate {
         public static func addScore(
             boardID: StaticString,
             value: UInt32,
-            callback: @convention(c) (_ score: UnsafeMutablePointer<Score>?, _ errorMessage: UnsafePointer<CChar>?) -> Void
+            callback: (@convention(c) (
+                _ score: UnsafeMutablePointer<Score>?,
+                _ errorMessage: UnsafePointer<CChar>?
+            ) -> Void)? = nil
         ) -> Int32 {
             scoreboards.addScore(boardID.utf8Start, value, callback)
         }
@@ -19,21 +22,30 @@ public extension Playdate {
         public static func addScore(
             boardID: UnsafePointer<CChar>,
             value: UInt32,
-            callback: @convention(c) (_ score: UnsafeMutablePointer<Score>?, _ errorMessage: UnsafePointer<CChar>?) -> Void
+            callback: (@convention(c) (
+                _ score: UnsafeMutablePointer<Score>?,
+                _ errorMessage: UnsafePointer<CChar>?
+            ) -> Void)? = nil
         ) -> Int32 {
             scoreboards.addScore(boardID, value, callback)
         }
 
         public static func getPersonalBest(
             boardID: StaticString,
-            callback: @convention(c) (_ score: UnsafeMutablePointer<Score>?, _ errorMessage: UnsafePointer<CChar>?) -> Void
+            callback: (@convention(c) (
+                _ score: UnsafeMutablePointer<Score>?,
+                _ errorMessage: UnsafePointer<CChar>?
+            ) -> Void)? = nil
         ) -> Int32 {
             scoreboards.getPersonalBest(boardID.utf8Start, callback)
         }
 
         public static func getPersonalBest(
             boardID: UnsafePointer<CChar>,
-            callback: @convention(c) (_ score: UnsafeMutablePointer<Score>?, _ errorMessage: UnsafePointer<CChar>?) -> Void
+            callback: (@convention(c) (
+                _ score: UnsafeMutablePointer<Score>?,
+                _ errorMessage: UnsafePointer<CChar>?
+            ) -> Void)? = nil
         ) -> Int32 {
             scoreboards.getPersonalBest(boardID, callback)
         }

@@ -61,3 +61,7 @@ Enumerators:
   SwiftName: japanese
 - Name: kPDLanguageUnknown
   SwiftName: unknown
+- Name: kNone
+  SwiftName: none
+- Name: kAccelerometer
+  SwiftName: accelerometer
