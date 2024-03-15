@@ -26,7 +26,7 @@ public extension Playdate {
             get { _refreshRate }
             set {
                 var refreshRate = newValue
-                if (0...50) ~= refreshRate {
+                if !((0...50) ~= refreshRate) {
                     System.error(format: "refreshRate must be between 0...50")
                     refreshRate = min(max(refreshRate, 0), 50)
                 }

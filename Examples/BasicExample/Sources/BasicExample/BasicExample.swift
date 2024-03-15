@@ -2,8 +2,8 @@ import PlaydateKit
 
 /// The update function should return true to tell the system to update the display, or false if update isn’t needed.
 func update() -> Bool {
-    // update loop
-    false
+    Playdate.System.drawFPS(x: 0, y: 0)
+    return true
 }
 
 @_cdecl("eventHandler") func eventHandler(
