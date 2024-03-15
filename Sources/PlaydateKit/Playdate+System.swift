@@ -136,7 +136,7 @@ public extension Playdate {
         /// If you won’t be using the accelerometer again for a while, calling `stopAccelerometer()` will put it back into a
         /// low-power idle state. (Though, to be honest, the accelerometer draws so little power
         /// when it’s running you’d never notice the difference.)
-        public static var accelerometerIsEnabled = false {
+        public nonisolated(unsafe) static var accelerometerIsEnabled = false {
             didSet {
                 if accelerometerIsEnabled {
                     system.setPeripheralsEnabled(.accelerometer)
@@ -148,9 +148,9 @@ public extension Playdate {
 
         // MARK: - Memory allocation
 
-        /// Allocates heap space if `ptr` is NULL, else reallocates the given pointer. If `size` is zero, frees the given pointer.
-        public static func realloc(ptr: UnsafeMutableRawPointer?, size: Int) -> UnsafeMutableRawPointer {
-            system.realloc(ptr, size).unsafelyUnwrapped
+        /// Allocates heap space if `pointer` is nil, else reallocates the given pointer. If `size` is zero, frees the given pointer.
+        public static func realloc(pointer: UnsafeMutableRawPointer?, size: Int) -> UnsafeMutableRawPointer {
+            system.realloc(pointer, size).unsafelyUnwrapped
         }
 
         // MARK: - Logging
@@ -455,8 +455,6 @@ public extension Playdate {
         // MARK: Private
 
         private nonisolated(unsafe) static var buttonCallback: ((
-            // MARK: Private
-
             _ button: Buttons,
             _ down: Bool,
             _ when: UInt32,

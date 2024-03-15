@@ -68,7 +68,7 @@ public extension Playdate {
         }
 
         /// Sets the given sprite's image to the given bitmap.
-        public static func setImage(_ sprite: OpaquePointer, image: OpaquePointer, flip: Graphics.BitmapFlip) {
+        public static func setImage(_ sprite: OpaquePointer, image: OpaquePointer, flip: Graphics.Bitmap.Flip) {
             Sprite.sprite.setImage(sprite, image, flip)
         }
 
@@ -103,17 +103,17 @@ public extension Playdate {
         }
 
         /// Sets the mode for drawing the sprite’s bitmap.
-        public static func setDrawMode(_ sprite: OpaquePointer, drawMode: Graphics.BitmapDrawMode) {
+        public static func setDrawMode(_ sprite: OpaquePointer, drawMode: Graphics.Bitmap.DrawMode) {
             Sprite.sprite.setDrawMode(sprite, drawMode)
         }
 
         /// Flips the bitmap.
-        public static func setImageFlip(_ sprite: OpaquePointer, flip: Graphics.BitmapFlip) {
+        public static func setImageFlip(_ sprite: OpaquePointer, flip: Graphics.Bitmap.Flip) {
             Sprite.sprite.setImageFlip(sprite, flip)
         }
 
         /// Returns the flip setting of the sprite’s bitmap.
-        public static func getImageFlip(_ sprite: OpaquePointer) -> Graphics.BitmapFlip {
+        public static func getImageFlip(_ sprite: OpaquePointer) -> Graphics.Bitmap.Flip {
             Sprite.sprite.getImageFlip(sprite)
         }
 

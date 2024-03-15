@@ -10,8 +10,6 @@ public enum Playdate {
     }
 
     public nonisolated(unsafe) static var playdateAPI: PlaydateAPI! {
-        // MARK: Internal
-
         guard let _playdateAPI else {
             fatalError("playdateAPI is not set! Did you forget to call Playdate.initialize(with:)?")
         }
