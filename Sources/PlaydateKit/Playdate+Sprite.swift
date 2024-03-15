@@ -4,6 +4,11 @@ public extension Playdate {
     enum Sprite {
         // MARK: Public
 
+        public typealias Rect = PDRect
+        public typealias CollisionResponseType = SpriteCollisionResponseType
+        public typealias CollisionInfo = SpriteCollisionInfo
+        public typealias QueryInfo = SpriteQueryInfo
+
         /// Allocates and returns a new LCDSprite.
         public static func newSprite() -> OpaquePointer {
             sprite.newSprite().unsafelyUnwrapped
@@ -22,12 +27,12 @@ public extension Playdate {
         // MARK: - Properties
 
         /// Sets the bounds of the given sprite with `bounds`.
-        public static func setBounds(_ sprite: OpaquePointer, bounds: PDRect) {
+        public static func setBounds(_ sprite: OpaquePointer, bounds: Rect) {
             Sprite.sprite.setBounds(sprite, bounds)
         }
 
         /// Returns the bounds of the given sprite as an `PDRect`.
-        public static func getBounds(_ sprite: OpaquePointer) -> PDRect {
+        public static func getBounds(_ sprite: OpaquePointer) -> Rect {
             Sprite.sprite.getBounds(sprite)
         }
 
@@ -63,7 +68,7 @@ public extension Playdate {
         }
 
         /// Sets the given sprite's image to the given bitmap.
-        public static func setImage(_ sprite: OpaquePointer, image: OpaquePointer, flip: LCDBitmapFlip) {
+        public static func setImage(_ sprite: OpaquePointer, image: OpaquePointer, flip: Graphics.BitmapFlip) {
             Sprite.sprite.setImage(sprite, image, flip)
         }
 
@@ -98,17 +103,17 @@ public extension Playdate {
         }
 
         /// Sets the mode for drawing the sprite’s bitmap.
-        public static func setDrawMode(_ sprite: OpaquePointer, drawMode: LCDBitmapDrawMode) {
+        public static func setDrawMode(_ sprite: OpaquePointer, drawMode: Graphics.BitmapDrawMode) {
             Sprite.sprite.setDrawMode(sprite, drawMode)
         }
 
         /// Flips the bitmap.
-        public static func setImageFlip(_ sprite: OpaquePointer, flip: LCDBitmapFlip) {
+        public static func setImageFlip(_ sprite: OpaquePointer, flip: Graphics.BitmapFlip) {
             Sprite.sprite.setImageFlip(sprite, flip)
         }
 
         /// Returns the flip setting of the sprite’s bitmap.
-        public static func getImageFlip(_ sprite: OpaquePointer) -> LCDBitmapFlip {
+        public static func getImageFlip(_ sprite: OpaquePointer) -> Graphics.BitmapFlip {
             Sprite.sprite.getImageFlip(sprite)
         }
 
@@ -134,7 +139,7 @@ public extension Playdate {
         }
 
         /// Sets the clipping rectangle for sprite drawing.
-        public static func setClipRect(_ sprite: OpaquePointer, clipRect: LCDRect) {
+        public static func setClipRect(_ sprite: OpaquePointer, clipRect: Graphics.Rect) {
             Sprite.sprite.setClipRect(sprite, clipRect)
         }
 
@@ -144,7 +149,7 @@ public extension Playdate {
         }
 
         /// Sets the clipping rectangle for all sprites with a Z index within `startZ` and `endZ` inclusive.
-        public static func setClipRectsInRange(clipRect: LCDRect, startZ: Int32, endZ: Int32) {
+        public static func setClipRectsInRange(clipRect: Graphics.Rect, startZ: Int32, endZ: Int32) {
             sprite.setClipRectsInRange(clipRect, startZ, endZ)
         }
 
@@ -194,7 +199,7 @@ public extension Playdate {
 
         /// Marks the given dirtyRect (in screen coordinates) as needing a redraw. Graphics drawing functions now call this
         /// automatically, adding their drawn areas to the sprite’s dirty list, so there’s usually no need to call this manually.
-        public static func addDirtyRect(_ dirtyRect: LCDRect) {
+        public static func addDirtyRect(_ dirtyRect: Graphics.Rect) {
             sprite.addDirtyRect(dirtyRect)
         }
 
@@ -206,13 +211,13 @@ public extension Playdate {
         }
 
         /// Sets the update function for the given sprite.
-        public static func setUpdateFunction(_ sprite: OpaquePointer, updateFunction: (@convention(c) (OpaquePointer?) -> Void)?) {
+        public static func setUpdateFunction(_ sprite: OpaquePointer, updateFunction: (@convention(c) (_ sprite: OpaquePointer?) -> Void)?) {
             Sprite.sprite.setUpdateFunction(sprite, updateFunction)
         }
 
         /// Sets the draw function for the given sprite. Note that the callback is only called when the
         /// sprite is on screen and has a size specified via `setSize()` or `setBounds()`.
-        public static func setDrawFunction(_ sprite: OpaquePointer, drawFunction: (@convention(c) (OpaquePointer?, PDRect, PDRect) -> Void)?) {
+        public static func setDrawFunction(_ sprite: OpaquePointer, drawFunction: (@convention(c) (_ sprite: OpaquePointer?, _ bounds: Rect, _ drawRect: Rect) -> Void)?) {
             Sprite.sprite.setDrawFunction(sprite, drawFunction)
         }
 
@@ -282,12 +287,12 @@ public extension Playdate {
         }
 
         /// Marks the area of the given sprite, relative to its bounds, to be checked for collisions with other sprites' collide rects.
-        public static func setCollideRect(_ sprite: OpaquePointer, collideRect: PDRect) {
+        public static func setCollideRect(_ sprite: OpaquePointer, collideRect: Rect) {
             Sprite.sprite.setCollideRect(sprite, collideRect)
         }
 
         /// Returns the given sprite’s collide rect.
-        public static func getCollideRect(_ sprite: OpaquePointer) -> PDRect? {
+        public static func getCollideRect(_ sprite: OpaquePointer) -> Rect? {
             Sprite.sprite.getCollideRect(sprite)
         }
 
@@ -297,76 +302,76 @@ public extension Playdate {
         }
 
         /// Set a callback that returns a `SpriteCollisionResponseType` for a collision between `sprite` and other.
-        public static func setCollisionResponseFunction(_ sprite: OpaquePointer, function: (@convention(c) (OpaquePointer?, OpaquePointer?) -> SpriteCollisionResponseType)?) {
+        public static func setCollisionResponseFunction(_ sprite: OpaquePointer, function: (@convention(c) (_ sprite: OpaquePointer?, _ other: OpaquePointer?) -> CollisionResponseType)?) {
             Sprite.sprite.setCollisionResponseFunction(sprite, function)
         }
 
         /// Returns the same values as `moveWithCollisions()` but does not actually move the sprite.
         /// The caller is responsible for freeing the returned array.
-        public static func checkCollisions(_ sprite: OpaquePointer, goalX: Float, goalY: Float) -> (collisionInfo: UnsafeMutablePointer<SpriteCollisionInfo>?, length: Int32, actualX: Float, actualY: Float) {
+        public static func checkCollisions(_ sprite: OpaquePointer, goalX: Float, goalY: Float) -> (collisionInfo: UnsafeMutableBufferPointer<CollisionInfo>, actualX: Float, actualY: Float) {
             var actualX: Float = 0, actualY: Float = 0
             var length: Int32 = 0
             let collisionInfo = Sprite.sprite.checkCollisions(sprite, goalX, goalY, &actualX, &actualY, &length)
-            return (collisionInfo, length, actualX, actualY)
+            return (UnsafeMutableBufferPointer(start: collisionInfo, count: Int(length)), actualX, actualY)
         }
 
         /// Moves the given sprite towards `goalX`, `goalY` taking collisions into account and returns an array of `SpriteCollisionInfo`.
         /// `length` is set to the size of the array and `actualX`, `actualY` are set to the sprite’s position after collisions.
         /// If no collisions occurred, this will be the same as `goalX`, `goalY`. The caller is responsible for freeing the returned array.
-        public static func moveWithCollisions(_ sprite: OpaquePointer, goalX: Float, goalY: Float) -> (collisionInfo: UnsafeMutablePointer<SpriteCollisionInfo>?, length: Int32, actualX: Float, actualY: Float) {
+        public static func moveWithCollisions(_ sprite: OpaquePointer, goalX: Float, goalY: Float) -> (collisionInfo: UnsafeMutableBufferPointer<CollisionInfo>, actualX: Float, actualY: Float) {
             var actualX: Float = 0, actualY: Float = 0
             var length: Int32 = 0
             let collisionInfo = Sprite.sprite.moveWithCollisions(sprite, goalX, goalY, &actualX, &actualY, &length)
-            return (collisionInfo, length, actualX, actualY)
+            return (UnsafeMutableBufferPointer(start: collisionInfo, count: Int(length)), actualX, actualY)
         }
 
         /// Returns an array of all sprites with collision rects containing the point at `x`, `y`.
         /// `length` is set to the size of the array. The caller is responsible for freeing the returned array.
-        public static func querySpritesAtPoint(x: Float, y: Float) -> (sprites: UnsafeMutablePointer<OpaquePointer?>?, length: Int32) {
+        public static func querySpritesAtPoint(x: Float, y: Float) -> UnsafeMutableBufferPointer<OpaquePointer?> {
             var length: Int32 = 0
             let sprites = sprite.querySpritesAtPoint(x, y, &length)
-            return (sprites, length)
+            return UnsafeMutableBufferPointer(start: sprites, count: Int(length))
         }
 
         /// Returns an array of all sprites with collision rects that intersect the `width` by `height` rect at `x`, `y`.
         /// `length` is set to the size of the array. The caller is responsible for freeing the returned array.
-        public static func querySpritesInRect(x: Float, y: Float, width: Float, height: Float) -> (sprites: UnsafeMutablePointer<OpaquePointer?>?, length: Int32) {
+        public static func querySpritesInRect(x: Float, y: Float, width: Float, height: Float) -> UnsafeMutableBufferPointer<OpaquePointer?> {
             var length: Int32 = 0
             let sprites = sprite.querySpritesInRect(x, y, width, height, &length)
-            return (sprites, length)
+            return UnsafeMutableBufferPointer(start: sprites, count: Int(length))
         }
 
         /// Returns an array of all sprites with collision rects that intersect the line connecting `x1`, `y1` and `x2`, `y2`.
         /// `length` is set to the size of the array. The caller is responsible for freeing the returned array.
-        public static func querySpritesAlongLine(x1: Float, y1: Float, x2: Float, y2: Float) -> (sprites: UnsafeMutablePointer<OpaquePointer?>?, length: Int32) {
+        public static func querySpritesAlongLine(x1: Float, y1: Float, x2: Float, y2: Float) -> UnsafeMutableBufferPointer<OpaquePointer?> {
             var length: Int32 = 0
             let sprites = sprite.querySpritesAlongLine(x1, y1, x2, y2, &length)
-            return (sprites, length)
+            return UnsafeMutableBufferPointer(start: sprites, count: Int(length))
         }
 
         /// Returns an array of `SpriteQueryInfo` for all sprites with collision rects that intersect the line connecting `x1`, `y1` and `x2`, `y2`.
         /// `length` is set to the size of the array. If you don’t need this information, use `querySpritesAlongLine()` as it will be faster.
         /// The caller is responsible for freeing the returned array.
-        public static func querySpriteInfoAlongLine(x1: Float, y1: Float, x2: Float, y2: Float) -> (sprites: UnsafeMutablePointer<SpriteQueryInfo>?, length: Int32) {
+        public static func querySpriteInfoAlongLine(x1: Float, y1: Float, x2: Float, y2: Float) -> UnsafeMutableBufferPointer<QueryInfo> {
             var length: Int32 = 0
-            let sprites = sprite.querySpriteInfoAlongLine(x1, y1, x2, y2, &length)
-            return (sprites, length)
+            let spriteInfo = sprite.querySpriteInfoAlongLine(x1, y1, x2, y2, &length)
+            return UnsafeMutableBufferPointer(start: spriteInfo, count: Int(length))
         }
 
         /// Returns an array of sprites that have collide rects that are currently overlapping the given sprite’s collide rect.
         /// `length` is set to the size of the array. The caller is responsible for freeing the returned array.
-        public static func overlappingSprites(_ sprite: OpaquePointer) -> (sprites: UnsafeMutablePointer<OpaquePointer?>?, length: Int32) {
+        public static func overlappingSprites(_ sprite: OpaquePointer) -> UnsafeMutableBufferPointer<OpaquePointer?> {
             var length: Int32 = 0
             let sprites = Sprite.sprite.overlappingSprites(sprite, &length)
-            return (sprites, length)
+            return UnsafeMutableBufferPointer(start: sprites, count: Int(length))
         }
 
         /// Returns an array of all sprites that have collide rects that are currently overlapping. Each consecutive pair of sprites is overlapping
         /// (eg. 0 & 1 overlap, 2 & 3 overlap, etc). `length` is set to the size of the array. The caller is responsible for freeing the returned array.
-        public static func allOverlappingSprites() -> (sprites: UnsafeMutablePointer<OpaquePointer?>?, length: Int32) {
+        public static func allOverlappingSprites() -> UnsafeMutableBufferPointer<OpaquePointer?> {
             var length: Int32 = 0
             let sprites = sprite.allOverlappingSprites(&length)
-            return (sprites, length)
+            return UnsafeMutableBufferPointer(start: sprites, count: Int(length))
         }
 
         // MARK: Private

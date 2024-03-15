@@ -16,37 +16,63 @@ public extension Playdate {
             display.getWidth()
         }
 
-        /// If inverted is true, the frame buffer is drawn inverted—black instead of white, and vice versa.
-        public static func setInverted(_ inverted: Bool) {
-            display.setInverted(inverted ? 1 : 0)
-        }
-
-        /// Adds a mosaic effect to the display. Valid x and y values are between 0 and 3, inclusive.
-        public static func setMosaic(x: UInt32, y: UInt32) {
-            display.setMosaic(x, y)
-        }
-
-        /// Flips the display on the x or y axis, or both.
-        public static func setFlipped(x: Bool, y: Bool) {
-            display.setFlipped(x ? 1 : 0, y ? 1 : 0)
-        }
-
-        /// Sets the nominal refresh rate in frames per second. The default is 30 fps, which is a recommended
+        /// The nominal refresh rate in frames per second. The default is 30 fps, which is a recommended
         /// figure that balances animation smoothness with performance and power considerations. Maximum is 50 fps.
         ///
-        /// If rate is 0, the game’s update callback (either Lua’s playdate.update() or the function specified by playdate→system→setUpdateCallback()) is called as soon as possible.
+        /// If rate is 0, the game’s update callback (the function specified by `Playdate.updateCallback`) is called as soon as possible.
         /// Since the display refreshes line-by-line, and unchanged lines aren’t sent to the display,
         /// the update cycle will be faster than 30 times a second but at an indeterminate rate.
-        public static func setRefreshRate(_ rate: Float) {
-            display.setRefreshRate(rate)
+        public static var refreshRate: Float {
+            get { _refreshRate }
+            set {
+                var refreshRate = newValue
+                if (0...50) ~= refreshRate {
+                    System.error(format: "refreshRate must be between 0...50")
+                    refreshRate = min(max(refreshRate, 0), 50)
+                }
+                _refreshRate = refreshRate
+                display.setRefreshRate(refreshRate)
+            }
+        }
+
+        /// If inverted is true, the frame buffer is drawn inverted—black instead of white, and vice versa.
+        public static var inverted: Bool {
+            get { _inverted }
+            set {
+                _inverted = newValue
+                display.setInverted(newValue ? 1 : 0)
+            }
         }
 
         /// Sets the display scale factor. Valid values for scale are 1, 2, 4, and 8.
         ///
         /// The top-left corner of the frame buffer is scaled up to fill the display; e.g., if the scale is set to 4,
         /// the pixels in rectangle [0,100] x [0,60] are drawn on the screen as 4 x 4 squares.
-        public static func setScale(_ scale: UInt32) {
-            display.setScale(scale)
+        public static var scale: UInt32 {
+            get { _scale }
+            set {
+                var scale = newValue
+                if !([1, 2, 4, 8].contains(scale)) {
+                    System.error(format: "scale must be 1, 2, 4, or 8")
+                    scale = 1
+                }
+                _scale = scale
+                display.setScale(scale)
+            }
+        }
+
+        /// Flips the display on the x or y axis, or both.
+        public static var flipped: (x: Bool, y: Bool) {
+            get { _flipped }
+            set {
+                _flipped = newValue
+                display.setFlipped(newValue.x ? 1 : 0, newValue.y ? 1 : 0)
+            }
+        }
+
+        /// Adds a mosaic effect to the display. Valid x and y values are between 0 and 3, inclusive.
+        public static func setMosaic(x: UInt32, y: UInt32) {
+            display.setMosaic(x, y)
         }
 
         /// Offsets the display by the given amount.
@@ -56,6 +82,16 @@ public extension Playdate {
         }
 
         // MARK: Private
+
+        private nonisolated(unsafe) static var _flipped: (x: Bool, y: Bool) = (false, false)
+
+        // MARK: Private
+
+        private nonisolated(unsafe) static var _scale: UInt32 = 1
+
+        private nonisolated(unsafe) static var _inverted = false
+
+        private nonisolated(unsafe) static var _refreshRate: Float = 30
 
         private static var display: playdate_display { playdateAPI.display.pointee }
     }

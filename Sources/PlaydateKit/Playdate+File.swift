@@ -4,6 +4,8 @@ public extension Playdate {
     enum File {
         // MARK: Public
 
+        public typealias Options = FileOptions
+
         /// Returns human-readable text describing the most recent error
         /// (usually indicated by a -1 return from a filesystem function).
         public static var lastError: Error {
@@ -114,7 +116,7 @@ public extension Playdate {
         /// The function returns `nil` if a file at path cannot be opened, and `lastError` will describe the error.
         /// The filesystem has a limit of 64 simultaneous open files. The returned file handle should be closed,
         /// not freed, when it is no longer in use.
-        public static func open(path: StaticString, mode: FileOptions) -> UnsafeMutableRawPointer? {
+        public static func open(path: StaticString, mode: Options) -> UnsafeMutableRawPointer? {
             file.open(path.utf8Start, mode)
         }
 
@@ -124,7 +126,7 @@ public extension Playdate {
         /// The function returns `nil` if a file at path cannot be opened, and `lastError` will describe the error.
         /// The filesystem has a limit of 64 simultaneous open files. The returned file handle should be closed,
         /// not freed, when it is no longer in use.
-        public static func open(path: UnsafePointer<CChar>, mode: FileOptions) -> UnsafeMutableRawPointer? {
+        public static func open(path: UnsafePointer<CChar>, mode: Options) -> UnsafeMutableRawPointer? {
             file.open(path, mode)
         }
 

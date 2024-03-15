@@ -66,6 +66,15 @@ public extension Playdate {
             private static var video: playdate_video { graphics.video.pointee }
         }
 
+        public typealias BitmapDrawMode = LCDBitmapDrawMode
+        public typealias LineCapStyle = LCDLineCapStyle
+        public typealias Color = LCDColor
+        public typealias BitmapFlip = LCDBitmapFlip
+        public typealias Rect = LCDRect
+        public typealias StringEncoding = PDStringEncoding
+        public typealias PolygonFillRule = LCDPolygonFillRule
+        public typealias SolidColor = LCDSolidColor
+
         /// The tracking to use when drawing text.
         public static var textTracking: Int32 {
             get { graphics.getTextTracking() }
@@ -97,7 +106,7 @@ public extension Playdate {
         }
 
         /// Sets the mode used for drawing bitmaps. Note that text drawing uses bitmaps, so this affects how fonts are displayed as well.
-        public static func setDrawMode(_ mode: LCDBitmapDrawMode) {
+        public static func setDrawMode(_ mode: BitmapDrawMode) {
             graphics.setDrawMode(mode)
         }
 
@@ -118,7 +127,7 @@ public extension Playdate {
         }
 
         /// Sets the end cap style used in the line drawing functions.
-        public static func setLineCapStyle(_ style: LCDLineCapStyle) {
+        public static func setLineCapStyle(_ style: LineCapStyle) {
             graphics.setLineCapStyle(style)
         }
 
@@ -133,7 +142,7 @@ public extension Playdate {
         }
 
         /// Clears `bitmap`, filling with the given `bgcolor`.
-        public static func clearBitmap(_ bitmap: OpaquePointer, bgColor: LCDColor) {
+        public static func clearBitmap(_ bitmap: OpaquePointer, bgColor: Color) {
             graphics.clearBitmap(bitmap, bgColor)
         }
 
@@ -149,18 +158,18 @@ public extension Playdate {
             bitmap1: OpaquePointer,
             x1: Int32,
             y1: Int32,
-            flip1: LCDBitmapFlip,
+            flip1: BitmapFlip,
             bitmap2: OpaquePointer,
             x2: Int32,
             y2: Int32,
-            flip2: LCDBitmapFlip,
-            rect: LCDRect
+            flip2: BitmapFlip,
+            rect: Rect
         ) -> Bool {
             graphics.checkMaskCollision(bitmap1, x1, y1, flip1, bitmap2, x2, y2, flip2, rect) != 0
         }
 
         /// Draws the `bitmap` with its upper-left corner at location `x`, `y`, using the given `flip` orientation.
-        public static func drawBitmap(_ bitmap: OpaquePointer, x: Int32, y: Int32, flip: LCDBitmapFlip) {
+        public static func drawBitmap(_ bitmap: OpaquePointer, x: Int32, y: Int32, flip: BitmapFlip) {
             graphics.drawBitmap(bitmap, x, y, flip)
         }
 
@@ -244,12 +253,12 @@ public extension Playdate {
         }
 
         /// Allocates and returns a new `width` by `height` `LCDBitmap` filled with `bgcolor`.
-        public static func newBitmap(width: Int32, height: Int32, bgColor: LCDColor) -> OpaquePointer {
+        public static func newBitmap(width: Int32, height: Int32, bgColor: Color) -> OpaquePointer {
             graphics.newBitmap(width, height, bgColor).unsafelyUnwrapped
         }
 
         /// Draws the `bitmap` with its upper-left corner at location `x`, `y` tiled inside a `width` by `height` rectangle.
-        public static func tileBitmap(_ bitmap: OpaquePointer, x: Int32, y: Int32, width: Int32, height: Int32, flip: LCDBitmapFlip) {
+        public static func tileBitmap(_ bitmap: OpaquePointer, x: Int32, y: Int32, width: Int32, height: Int32, flip: BitmapFlip) {
             graphics.tileBitmap(bitmap, x, y, width, height, flip)
         }
 
@@ -323,7 +332,7 @@ public extension Playdate {
         public static func drawText(
             _ text: UnsafeRawPointer?,
             length: Int,
-            encoding: PDStringEncoding,
+            encoding: StringEncoding,
             x: Int32,
             y: Int32
         ) -> Int32 {
@@ -366,7 +375,7 @@ public extension Playdate {
             _ font: OpaquePointer,
             text: UnsafeRawPointer,
             length: Int,
-            encoding: PDStringEncoding,
+            encoding: StringEncoding,
             tracking: Int32
         ) -> Int32 {
             graphics.getTextWidth(font, text, length, encoding, tracking)
@@ -407,7 +416,7 @@ public extension Playdate {
             lineWidth: Int32,
             startAngle: Float,
             endAngle: Float,
-            color: LCDColor
+            color: Color
         ) {
             graphics.drawEllipse(x, y, width, height, lineWidth, startAngle, endAngle, color)
         }
@@ -421,45 +430,45 @@ public extension Playdate {
             height: Int32,
             startAngle: Float,
             endAngle: Float,
-            color: LCDColor
+            color: Color
         ) {
             graphics.fillEllipse(x, y, width, height, startAngle, endAngle, color)
         }
 
         /// Draws a line from `x1`, `y1` to `x2`, `y2` with a stroke width of `lineWidth`.
-        public static func drawLine(x1: Int32, y1: Int32, x2: Int32, y2: Int32, lineWidth: Int32, color: LCDColor) {
+        public static func drawLine(x1: Int32, y1: Int32, x2: Int32, y2: Int32, lineWidth: Int32, color: Color) {
             graphics.drawLine(x1, y1, x2, y2, lineWidth, color)
         }
 
         /// Draws a `width` by `height` rect at `x`, `y`.
-        public static func drawRect(x: Int32, y: Int32, width: Int32, height: Int32, color: LCDColor) {
+        public static func drawRect(x: Int32, y: Int32, width: Int32, height: Int32, color: Color) {
             graphics.drawRect(x, y, width, height, color)
         }
 
         /// Draws a filled `width` by `height` rect at `x`, `y`.
-        public static func fillRect(x: Int32, y: Int32, width: Int32, height: Int32, color: LCDColor) {
+        public static func fillRect(x: Int32, y: Int32, width: Int32, height: Int32, color: Color) {
             graphics.fillRect(x, y, width, height, color)
         }
 
         /// Draws a filled triangle with points at `x1`, `y1`, `x2`, `y2`, and `x3`, `y3`.
-        public static func fillTriangle(x1: Int32, y1: Int32, x2: Int32, y2: Int32, x3: Int32, y3: Int32, color: LCDColor) {
+        public static func fillTriangle(x1: Int32, y1: Int32, x2: Int32, y2: Int32, x3: Int32, y3: Int32, color: Color) {
             graphics.fillTriangle(x1, y1, x2, y2, x3, y3, color)
         }
 
         /// Fills the polygon with vertices at the given coordinates (an array of 2*nPoints ints containing alternating x and y values)
         /// using the given `color` and fill, or winding, rule. See https://en.wikipedia.org/wiki/Nonzero-rule
         /// for an explanation of the winding rule. An edge between the last vertex and the first is assumed.
-        public static func fillPolygon(numberOfPoints: Int32, points: UnsafeMutablePointer<UInt32>, color: LCDColor, fillRule: LCDPolygonFillRule) {
+        public static func fillPolygon(numberOfPoints: Int32, points: UnsafeMutablePointer<UInt32>, color: Color, fillRule: PolygonFillRule) {
             graphics.fillPolygon(numberOfPoints, points, color, fillRule)
         }
 
         /// Clears the entire display, filling it with `color`.
-        public static func clear(color: LCDColor) {
+        public static func clear(color: Color) {
             graphics.clear(color)
         }
 
         /// Sets the background color shown when the display is offset or for clearing dirty areas in the sprite system.
-        public static func setBackgroundColor(color: LCDSolidColor) {
+        public static func setBackgroundColor(color: SolidColor) {
             graphics.setBackgroundColor(color)
         }
 
@@ -513,8 +522,8 @@ public extension Playdate {
         }
 
         /// Returns a color using an 8 x 8 pattern using the given `bitmap`. `x`, `y` indicates the top left corner of the 8 x 8 pattern.
-        public static func colorFromPattern(bitmap: OpaquePointer, x: Int32, y: Int32) -> LCDColor {
-            var color: LCDColor = 0
+        public static func colorFromPattern(bitmap: OpaquePointer, x: Int32, y: Int32) -> Color {
+            var color: Color = 0
             graphics.setColorToPattern(&color, bitmap, x, y)
             return color
         }

@@ -1,21 +1,25 @@
-public import CPlaydate
 import PlaydateKit
 
-@_cdecl("update") func update(_: UnsafeMutableRawPointer!) -> Int32 { 1 }
+/// The update function should return true to tell the system to update the display, or false if update isn’t needed.
+func update() -> Bool {
+    // update loop
+    false
+}
 
-@_cdecl("eventHandler") public func eventHandler(
+@_cdecl("eventHandler") func eventHandler(
     pointer: UnsafeMutableRawPointer!,
-    event: PDSystemEvent,
+    event: Playdate.System.Event,
     _: UInt32
 ) -> Int32 {
-    let playdate = pointer.bindMemory(to: PlaydateAPI.self, capacity: 1)
-    if event == .initialize {
-        Playdate.initialize(with: playdate)
-        Playdate.System.setUpdateCallback(update: update, userdata: nil)
+    switch event {
+    case .initialize:
+        Playdate.initialize(with: pointer)
+        Playdate.System.updateCallback = update
 
-        _ = Playdate.System.addMenuItem(title: "PlaydateKit") { _ in
+        Playdate.System.addMenuItem(title: "PlaydateKit") { _ in
             Playdate.System.logToConsole(format: "PlaydateKit selected!")
         }
+    default: break
     }
     return 0
 }

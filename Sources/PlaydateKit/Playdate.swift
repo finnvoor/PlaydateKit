@@ -22,6 +22,9 @@ public enum Playdate {
 
     public static func initialize(with pointer: UnsafeMutableRawPointer) {
         _playdateAPI = pointer.bindMemory(to: PlaydateAPI.self, capacity: 1).pointee
+        System.setUpdateCallback(update: { _ in
+            (System.updateCallback?() ?? false) ? 1 : 0
+        }, userdata: nil)
     }
 }
 

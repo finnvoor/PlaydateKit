@@ -4,6 +4,12 @@ public extension Playdate {
     enum System {
         // MARK: Public
 
+        public typealias Event = PDSystemEvent
+        public typealias Language = PDLanguage
+        public typealias DateTime = PDDateTime
+        public typealias Peripherals = PDPeripherals
+        public typealias Buttons = PDButtons
+
         /// Returns the last-read accelerometer data.
         public static var accelerometer: (x: Float, y: Float, z: Float) {
             var x: Float = 0, y: Float = 0, z: Float = 0
@@ -86,7 +92,7 @@ public extension Playdate {
         }
 
         /// Returns the current language of the system.
-        public static var language: PDLanguage {
+        public static var language: Language {
             system.getLanguage()
         }
 
@@ -153,9 +159,9 @@ public extension Playdate {
         ///   - callback: The callback invoked when the menu item is selected by the user.
         ///   - userdata: The userdata to associate with the menu item.
         /// - Returns: The menu item
-        public static func addMenuItem(
+        @discardableResult public static func addMenuItem(
             title: StaticString,
-            callback: (@convention(c) (UnsafeMutableRawPointer?) -> Void)?,
+            callback: (@convention(c) (_ userdata: UnsafeMutableRawPointer?) -> Void)?,
             userdata: UnsafeMutableRawPointer? = nil
         ) -> OpaquePointer {
             system.addMenuItem(title.utf8Start, callback, userdata).unsafelyUnwrapped
@@ -167,9 +173,9 @@ public extension Playdate {
         ///   - callback: The callback invoked when the menu item is selected by the user.
         ///   - userdata: The userdata to associate with the menu item.
         /// - Returns: The menu item
-        public static func addMenuItem(
+        @discardableResult public static func addMenuItem(
             title: UnsafePointer<CChar>,
-            callback: (@convention(c) (UnsafeMutableRawPointer?) -> Void)?,
+            callback: (@convention(c) (_ userdata: UnsafeMutableRawPointer?) -> Void)?,
             userdata: UnsafeMutableRawPointer? = nil
         ) -> OpaquePointer {
             system.addMenuItem(title, callback, userdata).unsafelyUnwrapped
@@ -182,10 +188,10 @@ public extension Playdate {
         ///   - callback: The callback invoked when the menu item is selected by the user.
         ///   - userdata: The userdata to associate with the menu item.
         /// - Returns: The menu item
-        public static func addCheckmarkMenuItem(
+        @discardableResult public static func addCheckmarkMenuItem(
             title: StaticString,
             checked: Bool,
-            callback: (@convention(c) (UnsafeMutableRawPointer?) -> Void)?,
+            callback: (@convention(c) (_ userdata: UnsafeMutableRawPointer?) -> Void)?,
             userdata: UnsafeMutableRawPointer? = nil
         ) -> OpaquePointer {
             system.addCheckmarkMenuItem(title.utf8Start, checked ? 1 : 0, callback, userdata).unsafelyUnwrapped
@@ -198,10 +204,10 @@ public extension Playdate {
         ///   - callback: The callback invoked when the menu item is selected by the user.
         ///   - userdata: The userdata to associate with the menu item.
         /// - Returns: The menu item
-        public static func addCheckmarkMenuItem(
+        @discardableResult public static func addCheckmarkMenuItem(
             title: UnsafePointer<CChar>,
             checked: Bool,
-            callback: (@convention(c) (UnsafeMutableRawPointer?) -> Void)?,
+            callback: (@convention(c) (_ userdata: UnsafeMutableRawPointer?) -> Void)?,
             userdata: UnsafeMutableRawPointer? = nil
         ) -> OpaquePointer {
             system.addCheckmarkMenuItem(title, checked ? 1 : 0, callback, userdata).unsafelyUnwrapped
@@ -216,11 +222,11 @@ public extension Playdate {
         ///   - callback: The callback invoked when the menu item is selected by the user.
         ///   - userdata: The userdata to associate with the menu item.
         /// - Returns: The menu item
-        public static func addOptionsMenuItem(
+        @discardableResult public static func addOptionsMenuItem(
             title: StaticString,
             options: UnsafeMutablePointer<UnsafePointer<CChar>?>?,
             optionsCount: Int32,
-            callback: (@convention(c) (UnsafeMutableRawPointer?) -> Void)?,
+            callback: (@convention(c) (_ userdata: UnsafeMutableRawPointer?) -> Void)?,
             userData: UnsafeMutableRawPointer?
         ) -> OpaquePointer {
             system.addOptionsMenuItem(
@@ -241,11 +247,11 @@ public extension Playdate {
         ///   - callback: The callback invoked when the menu item is selected by the user.
         ///   - userdata: The userdata to associate with the menu item.
         /// - Returns: The menu item
-        public static func addOptionsMenuItem(
+        @discardableResult public static func addOptionsMenuItem(
             title: UnsafePointer<CChar>,
             options: UnsafeMutablePointer<UnsafePointer<CChar>?>?,
             optionsCount: Int32,
-            callback: (@convention(c) (UnsafeMutableRawPointer?) -> Void)?,
+            callback: (@convention(c) (_ userdata: UnsafeMutableRawPointer?) -> Void)?,
             userData: UnsafeMutableRawPointer?
         ) -> OpaquePointer {
             system.addOptionsMenuItem(
@@ -320,12 +326,12 @@ public extension Playdate {
         }
 
         /// Converts the given epoch time to a PDDateTime.
-        public static func convertEpochToDateTime(_ epoch: UInt32, dateTime: inout PDDateTime) {
+        public static func convertEpochToDateTime(_ epoch: UInt32, dateTime: inout DateTime) {
             system.convertEpochToDateTime(epoch, &dateTime)
         }
 
         /// Converts the given PDDateTime to an epoch time.
-        public static func convertDateTimeToEpoch(_ dateTime: PDDateTime) -> UInt32 {
+        public static func convertDateTimeToEpoch(_ dateTime: DateTime) -> UInt32 {
             var dateTime = dateTime
             return system.convertDateTimeToEpoch(&dateTime)
         }
@@ -349,21 +355,11 @@ public extension Playdate {
             system.setMenuImage(bitmap, xOffset)
         }
 
-        /// Replaces the default Lua run loop function with a custom update function.
-        ///
-        /// The update function should return a non-zero number to tell the system to update the display, or zero if update isn’t needed.
-        public static func setUpdateCallback(
-            update: @convention(c) (UnsafeMutableRawPointer?) -> Int32,
-            userdata: UnsafeMutableRawPointer?
-        ) {
-            system.setUpdateCallback(update, userdata)
-        }
-
         /// Provides a callback to receive messages sent to the device over the serial port using the msg command.
         ///
         /// If no device is connected, you can send these messages to a game in the simulator by entering `!msg <message>` in the Lua console.
         public static func setSerialMessageCallback(
-            callback: @convention(c) (UnsafePointer<CChar>?) -> Void
+            callback: @convention(c) (_ message: UnsafePointer<CChar>?) -> Void
         ) {
             system.setSerialMessageCallback(callback)
         }
@@ -382,7 +378,7 @@ public extension Playdate {
         /// By default, the accelerometer is disabled to save (a small amount of) power.
         /// To use a peripheral, it must first be enabled via this function. Accelerometer data is not available
         /// until the next update cycle after it’s enabled.
-        public static func setPeripheralsEnabled(_ peripherals: PDPeripherals) {
+        public static func setPeripheralsEnabled(_ peripherals: Peripherals) {
             system.setPeripheralsEnabled(peripherals)
         }
 
@@ -402,14 +398,52 @@ public extension Playdate {
         /// the queue size should be extended until all button presses are caught. The function should return 0 on success or a non-zero
         /// value to signal an error.
         public static func setButtonCallback(
-            callback: (@convention(c) (PDButtons, Int32, UInt32, UnsafeMutableRawPointer?) -> Int32)?,
-            buttonud: UnsafeMutableRawPointer?, // ???
+            callback: ((
+                _ button: Buttons,
+                _ down: Bool,
+                _ when: UInt32,
+                _ userdata: UnsafeMutableRawPointer?
+            ) -> Bool)?,
+            buttonUserdata: UnsafeMutableRawPointer?,
             queueSize: Int32
         ) {
-            system.setButtonCallback(callback, buttonud, queueSize)
+            buttonCallback = callback
+            if callback != nil {
+                system.setButtonCallback({ button, down, when, userdata in
+                    (System.buttonCallback?(button, down != 0, when, userdata) ?? false) ? 1 : 0
+                }, buttonUserdata, queueSize)
+            } else {
+                system.setButtonCallback(nil, buttonUserdata, queueSize)
+            }
+        }
+
+        /// A custom update function.
+        ///
+        /// The update function should return true to tell the system to update the display, or false if update isn’t needed.
+        public nonisolated(unsafe) static var updateCallback: (() -> Bool)? = nil
+
+        // MARK: Internal
+
+        /// Replaces the default Lua run loop function with a custom update function.
+        ///
+        /// The update function should return a non-zero number to tell the system to update the display, or zero if update isn’t needed.
+        static func setUpdateCallback(
+            update: (@convention(c) (_ userdata: UnsafeMutableRawPointer?) -> Int32)?,
+            userdata: UnsafeMutableRawPointer?
+        ) {
+            system.setUpdateCallback(update, userdata)
         }
 
         // MARK: Private
+
+        private nonisolated(unsafe) static var buttonCallback: ((
+            // MARK: Private
+
+            _ button: Buttons,
+            _ down: Bool,
+            _ when: UInt32,
+            _ userdata: UnsafeMutableRawPointer?
+        ) -> Bool)?
 
         private static var system: playdate_sys { playdateAPI.system.pointee }
     }
