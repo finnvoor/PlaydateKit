@@ -62,7 +62,7 @@ The easiest way to set up a game with PlaydateKit is to add the boilerplate entr
 
 ```swift
 // Boilerplate entry code
-nonisolated(unsafe) var game: BasicExample! // Replace with your PlaydateGame type
+nonisolated(unsafe) var game: MyPlaydateGame! // Replace with your PlaydateGame type
 @_cdecl("eventHandler") func eventHandler(
     pointer: UnsafeMutableRawPointer!,
     event: Playdate.System.Event,
@@ -71,7 +71,7 @@ nonisolated(unsafe) var game: BasicExample! // Replace with your PlaydateGame ty
     switch event {
     case .initialize:
         Playdate.initialize(with: pointer)
-        game = BasicExample() // Replace with your PlaydateGame type
+        game = MyPlaydateGame() // Replace with your PlaydateGame type
         Playdate.System.updateCallback = game.update
     default:
         game.handle(event)
