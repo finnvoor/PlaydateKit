@@ -13,13 +13,11 @@
 
 # PlaydateKit
 
-PlaydateKit provides easy to use Swift bindings for the Playdate C API. PlaydateKit aims to be as Swift-y as possible, replacing error pointers with throwable functions, avoiding the use of pointers as much as possible, and adding documentation comments to all functions (taken directly from the Playdate SDK docs).
-
-PlaydateKit is still very much WIP. 
+PlaydateKit provides easy to use Swift bindings for the Playdate C API. PlaydateKit aims to be as Swift-y as possible, replacing error pointers with throwable functions, avoiding the use of pointers and memory management as much as possible, and adding documentation comments to all functions (copied from the Playdate SDK docs).
 
 ## Status
 
-PlaydateKit aims to provide full coverage of the Playdate C API. To start out with, the Swift API closely follows the C API, meaning it is completely functional. I would like to make it more object-oriented soon, meaning wrapper types for things like bitmaps, sprites, etc. 
+PlaydateKit aims to provide full coverage of the Playdate C API. PlaydateKit adds wrapper types for some values (Sprite, Bitmap, FileHandle, etc) that automatically manage the allocation/deallocation of resources. While I have attempted to closely follow the C API specifications, much of it is untested, so if you run into an unexpected issue or can't do something with the Swift API, please open an issue!
 
 Currently, the following sections of the API are implemented:
 
@@ -74,4 +72,4 @@ The Makefile in the example project requires compiling the PlaydateKit source fi
 PlaydateKit was inspired by and would not be possible without the excellent work done by [@rauhul](https://github.com/rauhul) on [swift-playdate-examples](https://github.com/apple/swift-playdate-examples). Specifically, PlaydateKit was created due to the note in the swift-playdate-examples repo: 
 > It is not intended to be a full-featured Playdate SDK so please do not raise PRs to extend the Playdate Swift overlay to new areas.
 
-The example project build scripts as well as most of CPlaydate were copied from swift-playdate-examples, and as such fall under the Apache License 2.0 found [here](https://github.com/apple/swift-playdate-examples/blob/main/LICENSE.txt).
+The example project build scripts were mostly copied from swift-playdate-examples, and as such fall under the Apache License 2.0 found [here](https://github.com/apple/swift-playdate-examples/blob/main/LICENSE.txt).
