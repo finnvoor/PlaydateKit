@@ -437,7 +437,7 @@ public extension Playdate {
 
         /// A custom update function.
         ///
-        /// The update function should return true to tell the system to update the display, or false if update isn’t needed.
+        /// The update function should return true to tell the system to update the display, or false if an update isn’t needed.
         public nonisolated(unsafe) static var updateCallback: (() -> Bool)? = nil
 
         // MARK: Internal
