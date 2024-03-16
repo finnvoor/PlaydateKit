@@ -30,22 +30,22 @@ public extension Playdate {
                 return writtenCount
             }
 
-            /// Reads up to `len` bytes from the file handle into the buffer `buf`. Returns the number of bytes read (0 indicating end of file)
+            /// Reads up to `length` bytes from the file handle into the buffer `buffer`. Returns the number of bytes read (0 indicating end of file)
             public func read(
-                buf: UnsafeMutableRawPointer,
-                len: UInt32
+                buffer: UnsafeMutableRawPointer,
+                length: UInt32
             ) throws(Error) -> Int32 {
-                let readCount = file.read(pointer, buf, len)
+                let readCount = file.read(pointer, buffer, length)
                 guard readCount != -1 else { throw lastError }
                 return readCount
             }
 
-            /// Sets the read/write offset in the file handle to `pos`, relative to the `seek`.
+            /// Sets the read/write offset in the file handle to `position`, relative to the `seek`.
             public func seek(
-                to pos: Int32,
+                to position: Int32,
                 seek: Seek = .current
             ) throws(Error) {
-                guard file.seek(pointer, pos, seek.rawValue) == 0 else { throw lastError }
+                guard file.seek(pointer, position, seek.rawValue) == 0 else { throw lastError }
             }
 
             /// Returns the current read/write offset in the given file handle
@@ -55,12 +55,11 @@ public extension Playdate {
                 return offset
             }
 
-            /// Writes the buffer of bytes buf to the file. Returns the number of bytes written
+            /// Writes the buffer of bytes `buffer` to the file. Returns the number of bytes written
             public func write(
-                buf: UnsafeRawPointer,
-                len: UInt32
+                buffer: UnsafeRawBufferPointer
             ) throws(Error) -> Int32 {
-                let writtenCount = file.write(pointer, buf, len)
+                let writtenCount = file.write(pointer, buffer.baseAddress, UInt32(buffer.count))
                 guard writtenCount != 1 else { throw lastError }
                 return writtenCount
             }

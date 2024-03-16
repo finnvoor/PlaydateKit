@@ -188,6 +188,7 @@ public extension Playdate {
 
         public typealias LineCapStyle = LCDLineCapStyle
         public typealias Color = LCDColor
+        public typealias Pattern = LCDPattern
         public typealias Rect = LCDRect
         public typealias StringEncoding = PDStringEncoding
         public typealias PolygonFillRule = LCDPolygonFillRule

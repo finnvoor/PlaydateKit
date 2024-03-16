@@ -376,8 +376,8 @@ public extension Playdate {
         /// to animate to a position offset left by xoffset pixels as the menu is animated in.
         ///
         /// This function could be called in response to the kEventPause event in your implementation of eventHandler().
-        public static func setMenuImage(_ bitmap: OpaquePointer, xOffset: Int32) {
-            system.setMenuImage(bitmap, xOffset)
+        public static func setMenuImage(_ bitmap: Graphics.Bitmap, xOffset: Int32 = 0) {
+            system.setMenuImage(bitmap.pointer, xOffset)
         }
 
         /// Provides a callback to receive messages sent to the device over the serial port using the msg command.
@@ -390,7 +390,7 @@ public extension Playdate {
         }
 
         /// Calculates the current frames per second and draws that value at `x`, `y`.
-        public static func drawFPS(x: Int32, y: Int32) {
+        public static func drawFPS(x: Int32 = 0, y: Int32 = 0) {
             system.drawFPS(x, y)
         }
 
@@ -422,8 +422,8 @@ public extension Playdate {
                 _ when: UInt32,
                 _ userdata: UnsafeMutableRawPointer?
             ) -> Bool)?,
-            buttonUserdata: UnsafeMutableRawPointer?,
-            queueSize: Int32
+            buttonUserdata: UnsafeMutableRawPointer? = nil,
+            queueSize: Int32 = 5
         ) {
             buttonCallback = callback
             if callback != nil {
@@ -447,7 +447,7 @@ public extension Playdate {
         /// The update function should return a non-zero number to tell the system to update the display, or zero if update isn’t needed.
         static func setUpdateCallback(
             update: (@convention(c) (_ userdata: UnsafeMutableRawPointer?) -> Int32)?,
-            userdata: UnsafeMutableRawPointer?
+            userdata: UnsafeMutableRawPointer? = nil
         ) {
             system.setUpdateCallback(update, userdata)
         }
