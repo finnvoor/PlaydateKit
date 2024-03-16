@@ -1,11 +1,24 @@
 import PlaydateKit
 
-/// The update function should return true to tell the system to update the display, or false if update isn’t needed.
-func update() -> Bool {
-    Playdate.System.drawFPS(x: 0, y: 0)
-    return true
+final class BasicExample: PlaydateGame {
+    init() {
+        Playdate.System.addMenuItem(title: "PlaydateKit") { _ in
+            Playdate.System.logToConsole(format: "PlaydateKit selected!")
+        }
+    }
+
+    func update() -> Bool {
+        Playdate.System.drawFPS(x: 0, y: 0)
+        return true
+    }
+
+    func gameWillPause() {
+        Playdate.System.logToConsole(format: "Paused!")
+    }
 }
 
+// Boilerplate entry code
+nonisolated(unsafe) var game: BasicExample!
 @_cdecl("eventHandler") func eventHandler(
     pointer: UnsafeMutableRawPointer!,
     event: Playdate.System.Event,
@@ -14,12 +27,10 @@ func update() -> Bool {
     switch event {
     case .initialize:
         Playdate.initialize(with: pointer)
-        Playdate.System.updateCallback = update
-
-        Playdate.System.addMenuItem(title: "PlaydateKit") { _ in
-            Playdate.System.logToConsole(format: "PlaydateKit selected!")
-        }
-    default: break
+        game = BasicExample()
+        Playdate.System.updateCallback = game.update
+    default:
+        game.handle(event)
     }
     return 0
 }

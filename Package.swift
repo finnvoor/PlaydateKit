@@ -11,10 +11,7 @@ guard let home = ProcessInfo.processInfo.environment["HOME"] else {
 
 let package = Package(
     name: "PlaydateKit",
-    products: [
-        .library(name: "PlaydateKit", targets: ["PlaydateKit"]),
-        .library(name: "CPlaydate", targets: ["CPlaydate"]),
-    ],
+    products: [.library(name: "PlaydateKit", targets: ["PlaydateKit"])],
     targets: [
         .target(name: "PlaydateKit", dependencies: ["CPlaydate"], swiftSettings: [
             .enableExperimentalFeature("Embedded"),

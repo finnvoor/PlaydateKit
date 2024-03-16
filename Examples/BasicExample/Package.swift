@@ -26,19 +26,12 @@ let swiftSettingsSimulator: [SwiftSetting] = [
 
 let package = Package(
     name: "BasicExample",
-    products: [
-        .library(name: "BasicExample", targets: ["BasicExample"])
-    ],
-    dependencies: [
-        .package(path: "../..")
-    ],
+    products: [.library(name: "BasicExample", targets: ["BasicExample"])],
+    dependencies: [.package(path: "../..")],
     targets: [
         .target(
             name: "BasicExample",
-            dependencies: [
-                .product(name: "PlaydateKit", package: "PlaydateKit"),
-                .product(name: "CPlaydate", package: "PlaydateKit")
-            ],
+            dependencies: [.product(name: "PlaydateKit", package: "PlaydateKit")],
             swiftSettings: swiftSettingsSimulator
         )
     ]
