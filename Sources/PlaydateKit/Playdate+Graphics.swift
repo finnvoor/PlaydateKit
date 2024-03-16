@@ -453,8 +453,8 @@ public extension Playdate {
             _ bitmap: Bitmap,
             x: Int32,
             y: Int32,
-            xScale: Float,
-            yScale: Float
+            xScale: Float = 1,
+            yScale: Float = 1
         ) {
             graphics.drawScaledBitmap(bitmap.pointer, x, y, xScale, yScale)
         }
@@ -469,14 +469,21 @@ public extension Playdate {
             degrees: Float,
             centerX: Float,
             centerY: Float,
-            xScale: Float,
-            yScale: Float
+            xScale: Float = 1,
+            yScale: Float = 1
         ) {
             graphics.drawRotatedBitmap(bitmap.pointer, x, y, degrees, centerX, centerY, xScale, yScale)
         }
 
         /// Draws the `bitmap` with its upper-left corner at location `x`, `y` tiled inside a `width` by `height` rectangle.
-        public static func tileBitmap(_ bitmap: Bitmap, x: Int32, y: Int32, width: Int32, height: Int32, flip: Bitmap.Flip) {
+        public static func tileBitmap(
+            _ bitmap: Bitmap,
+            x: Int32,
+            y: Int32,
+            width: Int32,
+            height: Int32,
+            flip: Bitmap.Flip
+        ) {
             graphics.tileBitmap(bitmap.pointer, x, y, width, height, flip)
         }
 
@@ -500,10 +507,10 @@ public extension Playdate {
             y: Int32,
             width: Int32,
             height: Int32,
-            lineWidth: Int32,
-            startAngle: Float,
-            endAngle: Float,
-            color: Color
+            lineWidth: Int32 = 1,
+            startAngle: Float = 0,
+            endAngle: Float = 360,
+            color: Color = LCDColor(LCDSolidColor.black.rawValue)
         ) {
             graphics.drawEllipse(x, y, width, height, lineWidth, startAngle, endAngle, color)
         }
@@ -515,42 +522,73 @@ public extension Playdate {
             y: Int32,
             width: Int32,
             height: Int32,
-            startAngle: Float,
-            endAngle: Float,
-            color: Color
+            startAngle: Float = 0,
+            endAngle: Float = 360,
+            color: Color = LCDColor(LCDSolidColor.black.rawValue)
         ) {
             graphics.fillEllipse(x, y, width, height, startAngle, endAngle, color)
         }
 
         /// Draws a line from `x1`, `y1` to `x2`, `y2` with a stroke width of `lineWidth`.
-        public static func drawLine(x1: Int32, y1: Int32, x2: Int32, y2: Int32, lineWidth: Int32, color: Color) {
+        public static func drawLine(
+            x1: Int32,
+            y1: Int32,
+            x2: Int32,
+            y2: Int32,
+            lineWidth: Int32 = 1,
+            color: Color = LCDColor(LCDSolidColor.black.rawValue)
+        ) {
             graphics.drawLine(x1, y1, x2, y2, lineWidth, color)
         }
 
         /// Draws a `width` by `height` rect at `x`, `y`.
-        public static func drawRect(x: Int32, y: Int32, width: Int32, height: Int32, color: Color) {
+        public static func drawRect(
+            x: Int32,
+            y: Int32,
+            width: Int32,
+            height: Int32,
+            color: Color = LCDColor(LCDSolidColor.black.rawValue)
+        ) {
             graphics.drawRect(x, y, width, height, color)
         }
 
         /// Draws a filled `width` by `height` rect at `x`, `y`.
-        public static func fillRect(x: Int32, y: Int32, width: Int32, height: Int32, color: Color) {
+        public static func fillRect(
+            x: Int32,
+            y: Int32,
+            width: Int32,
+            height: Int32,
+            color: Color = LCDColor(LCDSolidColor.black.rawValue)
+        ) {
             graphics.fillRect(x, y, width, height, color)
         }
 
         /// Draws a filled triangle with points at `x1`, `y1`, `x2`, `y2`, and `x3`, `y3`.
-        public static func fillTriangle(x1: Int32, y1: Int32, x2: Int32, y2: Int32, x3: Int32, y3: Int32, color: Color) {
+        public static func fillTriangle(
+            x1: Int32,
+            y1: Int32,
+            x2: Int32,
+            y2: Int32,
+            x3: Int32,
+            y3: Int32,
+            color: Color = LCDColor(LCDSolidColor.black.rawValue)
+        ) {
             graphics.fillTriangle(x1, y1, x2, y2, x3, y3, color)
         }
 
         /// Fills the polygon with vertices at the given coordinates (an array of 2*nPoints ints containing alternating x and y values)
         /// using the given `color` and fill, or winding, rule. See https://en.wikipedia.org/wiki/Nonzero-rule
         /// for an explanation of the winding rule. An edge between the last vertex and the first is assumed.
-        public static func fillPolygon(points: UnsafeMutableBufferPointer<UInt32>, color: Color, fillRule: PolygonFillRule) {
+        public static func fillPolygon(
+            points: UnsafeMutableBufferPointer<UInt32>,
+            color: Color = LCDColor(LCDSolidColor.black.rawValue),
+            fillRule: PolygonFillRule
+        ) {
             graphics.fillPolygon(Int32(points.count), points.baseAddress, color, fillRule)
         }
 
         /// Clears the entire display, filling it with `color`.
-        public static func clear(color: Color) {
+        public static func clear(color: Color = LCDColor(LCDSolidColor.clear.rawValue)) {
             graphics.clear(color)
         }
 
