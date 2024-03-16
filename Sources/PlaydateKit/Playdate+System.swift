@@ -413,8 +413,8 @@ public extension Playdate {
         /// As an alternative to polling for button presses using getButtonState(), this function allows a callback function to be set.
         /// The function is called for each button up/down event (possibly multiple events on the same button) that occurred during
         /// the previous update cycle. At the default 30 FPS, a queue size of 5 should be adequate. At lower frame rates/longer frame times,
-        /// the queue size should be extended until all button presses are caught. The function should return 0 on success or a non-zero
-        /// value to signal an error.
+        /// the queue size should be extended until all button presses are caught. The function should return true on success or false
+        /// to signal an error.
         public static func setButtonCallback(
             callback: ((
                 _ button: Buttons,
@@ -428,7 +428,7 @@ public extension Playdate {
             buttonCallback = callback
             if callback != nil {
                 system.setButtonCallback({ button, down, when, userdata in
-                    (System.buttonCallback?(button, down != 0, when, userdata) ?? false) ? 1 : 0
+                    (System.buttonCallback?(button, down != 0, when, userdata) ?? false) ? 0 : 1
                 }, buttonUserdata, queueSize)
             } else {
                 system.setButtonCallback(nil, buttonUserdata, queueSize)

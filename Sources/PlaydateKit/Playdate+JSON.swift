@@ -9,9 +9,9 @@ public extension Playdate {
         public typealias Reader = json_reader
         public typealias Value = json_value
 
-        /// Decodes a JSON file with the given `decoder`. An instance of `Decoder` must implement decodeError.
-        /// The remaining functions are optional although you’ll probably want to implement at least didDecodeTableValue
-        /// and didDecodeArrayValue. The value pointer, if set, contains the value retured from the top-level didDecodeSublist callback.
+        /// Decodes a JSON file with the given `decoder`. An instance of `Decoder` must implement `decodeError`.
+        /// The remaining functions are optional although you’ll probably want to implement at least `didDecodeTableValue`
+        /// and `didDecodeArrayValue`. The `value` pointer, if set, contains the value returned from the top-level `didDecodeSublist` callback.
         public static func decode(
             using decoder: inout Decoder,
             reader: Reader,
@@ -20,9 +20,9 @@ public extension Playdate {
             json.decode(&decoder, reader, &value)
         }
 
-        /// Decodes a JSON string with the given `decoder`. An instance of `Decoder` must implement decodeError.
-        /// The remaining functions are optional although you’ll probably want to implement at least didDecodeTableValue
-        /// and didDecodeArrayValue. The value pointer, if set, contains the value retured from the top-level didDecodeSublist callback.
+        /// Decodes a JSON string with the given `decoder`. An instance of `Decoder` must implement `decodeError`.
+        /// The remaining functions are optional although you’ll probably want to implement at least `didDecodeTableValue`
+        /// and `didDecodeArrayValue`. The `value` pointer, if set, contains the value returned from the top-level `didDecodeSublist` callback.
         public static func decodeString(
             using decoder: inout Decoder,
             jsonString: StaticString,
@@ -31,9 +31,9 @@ public extension Playdate {
             json.decodeString(&decoder, jsonString.utf8Start, &value)
         }
 
-        /// Decodes a JSON string with the given `decoder`. An instance of `Decoder` must implement decodeError.
-        /// The remaining functions are optional although you’ll probably want to implement at least didDecodeTableValue
-        /// and didDecodeArrayValue. The value pointer, if set, contains the value retured from the top-level didDecodeSublist callback.
+        /// Decodes a JSON string with the given `decoder`. An instance of `Decoder` must implement `decodeError`.
+        /// The remaining functions are optional although you’ll probably want to implement at least `didDecodeTableValue`
+        /// and `didDecodeArrayValue`. The `value` pointer, if set, contains the value returned from the top-level `didDecodeSublist` callback.
         public static func decodeString(
             using decoder: inout Decoder,
             jsonString: UnsafeMutablePointer<CChar>,
@@ -43,7 +43,7 @@ public extension Playdate {
         }
 
         /// Populates the given `Encoder` `encoder` with the functions necessary to encode arbitrary data into a JSON string.
-        /// `userdata` is passed as the first argument of the given `writeFunc` write. When pretty is true the string is written
+        /// `userdata` is passed as the first argument of the given `writeFunc` write. When `pretty` is true the string is written
         /// with human-readable formatting.
         public static func initEncoder(
             encoder: inout Encoder,
