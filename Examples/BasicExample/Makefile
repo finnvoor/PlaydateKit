@@ -12,7 +12,7 @@ PDKIT_ROOT := $(shell git rev-parse --show-toplevel)
 PRODUCT_NAME := BasicExample
 PRODUCT := build/$(PRODUCT_NAME).pdx
 
-include $(REPO_ROOT)/Examples/swift.mk
+include $(PDKIT_ROOT)/Examples/swift.mk
 
 # MARK: - Build PlaydateKit Swift Module
 build/Modules/playdatekit_device.o: $(PDKIT_ROOT)/Sources/PlaydateKit/*.swift
