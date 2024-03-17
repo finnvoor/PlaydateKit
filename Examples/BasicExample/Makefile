@@ -1,4 +1,7 @@
-# Declares the root of the repository.
+# Declares the root of the repository the game source code lives in. Most
+# of the time, the Makefile should already be at the root, and this may
+# not be needed. However, this can be adjusted if the source code lives
+# elsewhere.
 REPO_ROOT := $(shell git rev-parse --show-toplevel)
 
 # Declares where PlaydateKit is stored. In this example, PDKIT_ROOT is the
