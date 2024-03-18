@@ -2,6 +2,6 @@
 set -e
 killall 'Playdate Simulator' || true
 cd ..
-PRODUCT=$(sed -n '/^PRODUCT :=/s///p' Makefile)
+PRODUCT=$(make product_path | tail -n1)
 make 
 ~/Developer/PlaydateSDK/bin/Playdate\ Simulator.app/Contents/MacOS/Playdate\ Simulator $PRODUCT

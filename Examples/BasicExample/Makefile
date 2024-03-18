@@ -17,6 +17,12 @@ PRODUCT := build/$(PRODUCT_NAME).pdx
 
 include $(PDKIT_ROOT)/Examples/swift.mk
 
+# This is used to echo out the product path based on PRODUCT_NAME.
+product_path:
+	echo $(PRODUCT)
+	
+.PHONY: product_path
+
 # MARK: - Build PlaydateKit Swift Module
 build/Modules/playdatekit_device.o: $(PDKIT_ROOT)/Sources/PlaydateKit/*.swift
 	$(SWIFT_EXEC) $(SWIFT_FLAGS) $(SWIFT_FLAGS_DEVICE) -c $^ -emit-module -o $@
