@@ -61,6 +61,11 @@ public extension Playdate {
             return (current, pushed, released)
         }
 
+        /// A custom update function.
+        ///
+        /// The update function should return true to tell the system to update the display, or false if an update isn’t needed.
+        public nonisolated(unsafe) static var updateCallback: (() -> Bool)? = nil
+
         // MARK: - Time and Date
 
         /// Returns the number of milliseconds since…​some arbitrary point in time.
@@ -434,11 +439,6 @@ public extension Playdate {
                 system.setButtonCallback(nil, buttonUserdata, queueSize)
             }
         }
-
-        /// A custom update function.
-        ///
-        /// The update function should return true to tell the system to update the display, or false if an update isn’t needed.
-        public nonisolated(unsafe) static var updateCallback: (() -> Bool)? = nil
 
         // MARK: Internal
 

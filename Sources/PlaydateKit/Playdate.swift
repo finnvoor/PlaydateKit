@@ -16,14 +16,16 @@ public enum Playdate {
         return _playdateAPI
     }
 
-    private nonisolated(unsafe) static var _playdateAPI: PlaydateAPI?
-
     public static func initialize(with pointer: UnsafeMutableRawPointer) {
         _playdateAPI = pointer.bindMemory(to: PlaydateAPI.self, capacity: 1).pointee
         System.setUpdateCallback(update: { _ in
             (System.updateCallback?() ?? false) ? 1 : 0
         }, userdata: nil)
     }
+
+    // MARK: Private
+
+    private nonisolated(unsafe) static var _playdateAPI: PlaydateAPI?
 }
 
 /// Implement `posix_memalign(3)`, which is required by the Swift runtime but is

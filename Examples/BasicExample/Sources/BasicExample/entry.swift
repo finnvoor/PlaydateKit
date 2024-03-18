@@ -1,6 +1,6 @@
 import PlaydateKit
 
-// Boilerplate entry code
+/// Boilerplate entry code
 nonisolated(unsafe) var game: BasicExample!
 @_cdecl("eventHandler") func eventHandler(
     pointer: UnsafeMutableRawPointer!,

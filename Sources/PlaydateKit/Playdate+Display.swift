@@ -85,8 +85,6 @@ public extension Playdate {
 
         private nonisolated(unsafe) static var _flipped: (x: Bool, y: Bool) = (false, false)
 
-        // MARK: Private
-
         private nonisolated(unsafe) static var _scale: UInt32 = 1
 
         private nonisolated(unsafe) static var _inverted = false

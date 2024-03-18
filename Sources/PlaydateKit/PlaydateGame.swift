@@ -1,3 +1,5 @@
+// MARK: - PlaydateGame
+
 public protocol PlaydateGame {
     /// Called after loading pdex.bin into memory.
     init()
@@ -12,7 +14,7 @@ public protocol PlaydateGame {
     func gameWillTerminate()
     /// Called before the device goes to low-power sleep mode because of a low battery.
     func deviceWillSleep()
-    /// If your game is running on the Playdate when the device is locked, this function will be called. Implementing 
+    /// If your game is running on the Playdate when the device is locked, this function will be called. Implementing
     /// this function allows your game to take special action when the Playdate is locked, e.g., saving state.
     func deviceWillLock()
     /// If your game is running on the Playdate when the device is unlocked, this function will be called.
