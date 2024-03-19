@@ -42,18 +42,18 @@ import PlaydateKit
 
 final class MyPlaydateGame: PlaydateGame {
     init() {
-        Playdate.System.addMenuItem(title: "PlaydateKit") { _ in
-            Playdate.System.logToConsole(format: "PlaydateKit selected!")
+        System.addMenuItem(title: "PlaydateKit") { _ in
+            System.log("PlaydateKit selected!")
         }
     }
 
     func update() -> Bool {
-        Playdate.System.drawFPS(x: 0, y: 0)
+        System.drawFPS()
         return true
     }
 
     func gameWillPause() {
-        Playdate.System.logToConsole(format: "Paused!")
+        System.log("Paused!")
     }
 }
 ```
@@ -61,20 +61,19 @@ final class MyPlaydateGame: PlaydateGame {
 The easiest way to set up a game with PlaydateKit is to add the boilerplate entry code somewhere in your source. This will ensure your `PlaydateGame` is created early in the game launch cycle and sets up the update and event callbacks for you.
 
 ```swift
-// Boilerplate entry code
+/// Boilerplate entry code
 nonisolated(unsafe) var game: MyPlaydateGame! // Replace with your PlaydateGame type
 @_cdecl("eventHandler") func eventHandler(
     pointer: UnsafeMutableRawPointer!,
-    event: Playdate.System.Event,
-    _: UInt32
-) -> Int32 {
+    event: System.Event,
+    _: CUnsignedInt
+) -> CInt {
     switch event {
     case .initialize:
         Playdate.initialize(with: pointer)
         game = MyPlaydateGame() // Replace with your PlaydateGame type
-        Playdate.System.updateCallback = game.update
-    default:
-        game.handle(event)
+        System.updateCallback = game.update
+    default: game.handle(event)
     }
     return 0
 }

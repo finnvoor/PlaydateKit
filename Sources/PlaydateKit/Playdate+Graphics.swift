@@ -28,13 +28,13 @@ public extension Playdate {
 
                 /// Retrieves information about the video.
                 public var info: (
-                    width: Int32, height: Int32,
+                    width: CInt, height: CInt,
                     frameRate: Float,
-                    frameCount: Int32, currentFrame: Int32
+                    frameCount: CInt, currentFrame: CInt
                 ) {
-                    var width: Int32 = 0, height: Int32 = 0
+                    var width: CInt = 0, height: CInt = 0
                     var frameRate: Float = 0
-                    var frameCount: Int32 = 0, currentFrame: Int32 = 0
+                    var frameCount: CInt = 0, currentFrame: CInt = 0
                     video.getInfo(pointer, &width, &height, &frameRate, &frameCount, &currentFrame)
                     return (width, height, frameRate, frameCount, currentFrame)
                 }
@@ -58,7 +58,7 @@ public extension Playdate {
                 }
 
                 /// Renders frame number `frameNumber` into the current context.
-                public func renderFrame(_ frameNumber: Int32) throws(Error) {
+                public func renderFrame(_ frameNumber: CInt) throws(Error) {
                     guard video.renderFrame(pointer, frameNumber) != 0 else {
                         throw error
                     }
@@ -106,7 +106,7 @@ public extension Playdate {
             }
 
             /// Allocates and returns a new `width` by `height` `Bitmap` filled with `bgcolor`.
-            public init(width: Int32, height: Int32, bgColor: Color) {
+            public init(width: CInt, height: CInt, bgColor: Color) {
                 pointer = graphics.newBitmap(width, height, bgColor).unsafelyUnwrapped
                 free = true
             }
@@ -163,16 +163,16 @@ public extension Playdate {
                 mask: inout UnsafeMutablePointer<UInt8>?,
                 data: inout UnsafeMutablePointer<UInt8>?
             ) -> (
-                width: Int32, height: Int32, rowBytes: Int32
+                width: CInt, height: CInt, rowBytes: CInt
             ) {
-                var width: Int32 = 0, height: Int32 = 0, rowBytes: Int32 = 0
+                var width: CInt = 0, height: CInt = 0, rowBytes: CInt = 0
                 graphics.getBitmapData(pointer, &width, &height, &rowBytes, &mask, &data)
                 return (width, height, rowBytes)
             }
 
             /// Returns a new, rotated and scaled `Bitmap` based on the given `bitmap`.
-            public func rotated(by rotation: Float, xScale: Float, yScale: Float) -> (bitmap: Bitmap, allocatedSize: Int32) {
-                var allocatedSize: Int32 = 0
+            public func rotated(by rotation: Float, xScale: Float, yScale: Float) -> (bitmap: Bitmap, allocatedSize: CInt) {
+                var allocatedSize: CInt = 0
                 let bitmap = graphics.rotatedBitmap(pointer, rotation, xScale, yScale, &allocatedSize).unsafelyUnwrapped
                 return (Bitmap(pointer: bitmap), allocatedSize)
             }
@@ -214,7 +214,7 @@ public extension Playdate {
             }
 
             /// Allocates and returns a new `BitmapTable` that can hold `count` `width` by `height` `Bitmaps`.
-            public init(count: Int32, width: Int32, height: Int32) {
+            public init(count: CInt, width: CInt, height: CInt) {
                 pointer = graphics.newBitmapTable(count, width, height).unsafelyUnwrapped
             }
 
@@ -223,7 +223,7 @@ public extension Playdate {
             // MARK: Public
 
             /// Returns the `index` bitmap in `table`, If `index` is out of bounds, the function returns nil.
-            public func bitmap(at index: Int32) -> Bitmap? {
+            public func bitmap(at index: CInt) -> Bitmap? {
                 graphics.getTableBitmap(pointer, index).map { Bitmap(pointer: $0) }
             }
 
@@ -296,8 +296,8 @@ public extension Playdate {
 
                 /// Returns a `Font.Glyph` object for character `character` in the page, and returns the glyph’s
                 /// `bitmap` and `advance` value.
-                public func glyph(for character: UInt32) -> (pageGlyph: Glyph?, bitmap: Bitmap?, advance: Int32) {
-                    var advance: Int32 = 0
+                public func glyph(for character: CUnsignedInt) -> (pageGlyph: Glyph?, bitmap: Bitmap?, advance: CInt) {
+                    var advance: CInt = 0
                     var bitmap: OpaquePointer?
                     let pageGlyph = graphics.getPageGlyph(pointer, character, &bitmap, &advance)
                     return (pageGlyph.map { Glyph(pointer: $0) }, bitmap.map { Bitmap(pointer: $0) }, advance)
@@ -322,7 +322,7 @@ public extension Playdate {
                 // MARK: Public
 
                 /// Returns the kerning adjustment between characters `character1` and `character2` as specified by the font.
-                public func kerning(between character1: UInt32, and character2: UInt32) -> Int32 {
+                public func kerning(between character1: CUnsignedInt, and character2: CUnsignedInt) -> CInt {
                     graphics.getGlyphKerning(pointer, character1, character2)
                 }
 
@@ -341,8 +341,8 @@ public extension Playdate {
                 for text: UnsafeRawPointer,
                 length: Int,
                 encoding: StringEncoding,
-                tracking: Int32
-            ) -> Int32 {
+                tracking: CInt
+            ) -> CInt {
                 graphics.getTextWidth(pointer, text, length, encoding, tracking)
             }
 
@@ -350,7 +350,7 @@ public extension Playdate {
             /// for 256 characters; specifically, if `(c1 & ~0xff) == (c2 & ~0xff)`, then `c1` and `c2` belong to the
             /// same page and the same font page can be used to fetch the character data for both instead of searching
             /// for the page twice.
-            public func getPage(for character: UInt32) -> Page? {
+            public func getPage(for character: CUnsignedInt) -> Page? {
                 graphics.getFontPage(pointer, character).map { Page(pointer: $0) }
             }
 
@@ -360,7 +360,7 @@ public extension Playdate {
         }
 
         /// The tracking to use when drawing text.
-        public static var textTracking: Int32 {
+        public static var textTracking: CInt {
             get { graphics.getTextTracking() }
             set { graphics.setTextTracking(newValue) }
         }
@@ -396,12 +396,12 @@ public extension Playdate {
 
         /// Sets the current clip rect, using world coordinates—​that is, the given rectangle will be translated by
         /// the current drawing offset. The clip rect is cleared at the beginning of each update.
-        public static func setClipRect(x: Int32, y: Int32, width: Int32, height: Int32) {
+        public static func setClipRect(x: CInt, y: CInt, width: CInt, height: CInt) {
             graphics.setClipRect(x, y, width, height)
         }
 
         /// Sets the current clip rect in screen coordinates.
-        public static func setScreenClipRect(x: Int32, y: Int32, width: Int32, height: Int32) {
+        public static func setScreenClipRect(x: CInt, y: CInt, width: CInt, height: CInt) {
             graphics.setScreenClipRect(x, y, width, height)
         }
 
@@ -421,7 +421,7 @@ public extension Playdate {
         }
 
         /// Sets the leading adjustment (added to the leading specified in the font) to use when drawing text.
-        public static func setTextLeading(_ leading: Int32) {
+        public static func setTextLeading(_ leading: CInt) {
             graphics.setTextLeading(leading)
         }
 
@@ -430,12 +430,12 @@ public extension Playdate {
         /// if no pixels overlap or if one or both fall completely outside of rect.
         public static func checkMaskCollision(
             bitmap1: Bitmap,
-            x1: Int32,
-            y1: Int32,
+            x1: CInt,
+            y1: CInt,
             flip1: Bitmap.Flip,
             bitmap2: Bitmap,
-            x2: Int32,
-            y2: Int32,
+            x2: CInt,
+            y2: CInt,
             flip2: Bitmap.Flip,
             rect: Rect
         ) -> Bool {
@@ -443,7 +443,7 @@ public extension Playdate {
         }
 
         /// Draws the `bitmap` with its upper-left corner at location `x`, `y`, using the given `flip` orientation.
-        public static func drawBitmap(_ bitmap: Bitmap, x: Int32, y: Int32, flip: Bitmap.Flip) {
+        public static func drawBitmap(_ bitmap: Bitmap, x: CInt, y: CInt, flip: Bitmap.Flip) {
             graphics.drawBitmap(bitmap.pointer, x, y, flip)
         }
 
@@ -451,8 +451,8 @@ public extension Playdate {
         /// Note that `flip` is not available when drawing scaled bitmaps but negative scale values will achieve the same effect.
         public static func drawBitmap(
             _ bitmap: Bitmap,
-            x: Int32,
-            y: Int32,
+            x: CInt,
+            y: CInt,
             xScale: Float = 1,
             yScale: Float = 1
         ) {
@@ -464,8 +464,8 @@ public extension Playdate {
         /// if `centerX` and `centerY` are both 0 the top left corner of the image (before rotation) is at (x,y), etc.
         public static func drawBitmap(
             _ bitmap: Bitmap,
-            x: Int32,
-            y: Int32,
+            x: CInt,
+            y: CInt,
             degrees: Float,
             centerX: Float,
             centerY: Float,
@@ -478,10 +478,10 @@ public extension Playdate {
         /// Draws the `bitmap` with its upper-left corner at location `x`, `y` tiled inside a `width` by `height` rectangle.
         public static func tileBitmap(
             _ bitmap: Bitmap,
-            x: Int32,
-            y: Int32,
-            width: Int32,
-            height: Int32,
+            x: CInt,
+            y: CInt,
+            width: CInt,
+            height: CInt,
             flip: Bitmap.Flip
         ) {
             graphics.tileBitmap(bitmap.pointer, x, y, width, height, flip)
@@ -493,9 +493,9 @@ public extension Playdate {
             _ text: UnsafeRawPointer?,
             length: Int,
             encoding: StringEncoding,
-            x: Int32,
-            y: Int32
-        ) -> Int32 {
+            x: CInt,
+            y: CInt
+        ) -> CInt {
             // TODO: - Figure out what this returns
             graphics.drawText(text, length, encoding, x, y)
         }
@@ -503,11 +503,11 @@ public extension Playdate {
         /// Draws an ellipse inside the rectangle {`x`, `y`, `width`, `height`} of width `lineWidth` (inset from the rectangle bounds).
         /// If `startAngle` != `endAngle`, this draws an arc between the given angles. Angles are given in degrees, clockwise from due north.
         public static func drawEllipse(
-            x: Int32,
-            y: Int32,
-            width: Int32,
-            height: Int32,
-            lineWidth: Int32 = 1,
+            x: CInt,
+            y: CInt,
+            width: CInt,
+            height: CInt,
+            lineWidth: CInt = 1,
             startAngle: Float = 0,
             endAngle: Float = 360,
             color: Color = LCDColor(LCDSolidColor.black.rawValue)
@@ -518,10 +518,10 @@ public extension Playdate {
         /// Fills an ellipse inside the rectangle {`x`, `y`, `width`, `height`}. If `startAngle` != `endAngle`, this draws a
         /// wedge/Pacman between the given angles. Angles are given in degrees, clockwise from due north.
         public static func fillEllipse(
-            x: Int32,
-            y: Int32,
-            width: Int32,
-            height: Int32,
+            x: CInt,
+            y: CInt,
+            width: CInt,
+            height: CInt,
             startAngle: Float = 0,
             endAngle: Float = 360,
             color: Color = LCDColor(LCDSolidColor.black.rawValue)
@@ -531,11 +531,11 @@ public extension Playdate {
 
         /// Draws a line from `x1`, `y1` to `x2`, `y2` with a stroke width of `lineWidth`.
         public static func drawLine(
-            x1: Int32,
-            y1: Int32,
-            x2: Int32,
-            y2: Int32,
-            lineWidth: Int32 = 1,
+            x1: CInt,
+            y1: CInt,
+            x2: CInt,
+            y2: CInt,
+            lineWidth: CInt = 1,
             color: Color = LCDColor(LCDSolidColor.black.rawValue)
         ) {
             graphics.drawLine(x1, y1, x2, y2, lineWidth, color)
@@ -543,10 +543,10 @@ public extension Playdate {
 
         /// Draws a `width` by `height` rect at `x`, `y`.
         public static func drawRect(
-            x: Int32,
-            y: Int32,
-            width: Int32,
-            height: Int32,
+            x: CInt,
+            y: CInt,
+            width: CInt,
+            height: CInt,
             color: Color = LCDColor(LCDSolidColor.black.rawValue)
         ) {
             graphics.drawRect(x, y, width, height, color)
@@ -554,10 +554,10 @@ public extension Playdate {
 
         /// Draws a filled `width` by `height` rect at `x`, `y`.
         public static func fillRect(
-            x: Int32,
-            y: Int32,
-            width: Int32,
-            height: Int32,
+            x: CInt,
+            y: CInt,
+            width: CInt,
+            height: CInt,
             color: Color = LCDColor(LCDSolidColor.black.rawValue)
         ) {
             graphics.fillRect(x, y, width, height, color)
@@ -565,12 +565,12 @@ public extension Playdate {
 
         /// Draws a filled triangle with points at `x1`, `y1`, `x2`, `y2`, and `x3`, `y3`.
         public static func fillTriangle(
-            x1: Int32,
-            y1: Int32,
-            x2: Int32,
-            y2: Int32,
-            x3: Int32,
-            y3: Int32,
+            x1: CInt,
+            y1: CInt,
+            x2: CInt,
+            y2: CInt,
+            x3: CInt,
+            y3: CInt,
             color: Color = LCDColor(LCDSolidColor.black.rawValue)
         ) {
             graphics.fillTriangle(x1, y1, x2, y2, x3, y3, color)
@@ -580,11 +580,11 @@ public extension Playdate {
         /// using the given `color` and fill, or winding, rule. See https://en.wikipedia.org/wiki/Nonzero-rule
         /// for an explanation of the winding rule. An edge between the last vertex and the first is assumed.
         public static func fillPolygon(
-            points: UnsafeMutableBufferPointer<UInt32>,
+            points: UnsafeMutableBufferPointer<CUnsignedInt>,
             color: Color = LCDColor(LCDSolidColor.black.rawValue),
             fillRule: PolygonFillRule
         ) {
-            graphics.fillPolygon(Int32(points.count), points.baseAddress, color, fillRule)
+            graphics.fillPolygon(CInt(points.count), points.baseAddress, color, fillRule)
         }
 
         /// Clears the entire display, filling it with `color`.
@@ -634,19 +634,19 @@ public extension Playdate {
         /// After updating pixels in the buffer returned by `getFrame()`, you must tell the graphics system which rows were updated.
         /// This function marks a contiguous range of rows as updated (e.g., `markUpdatedRows(0, LCD_ROWS - 1)` tells the system
         /// to update the entire display). Both `start` and `end` are included in the range.
-        public static func markUpdatedRows(start: Int32, end: Int32) {
+        public static func markUpdatedRows(start: CInt, end: CInt) {
             graphics.markUpdatedRows(start, end)
         }
 
         /// Offsets the origin point for all drawing calls to `dx`, `dy` (can be negative).
         ///
         /// This is useful, for example, for centering a "camera" on a sprite that is moving around a world larger than the screen.
-        public static func setDrawOffset(dx: Int32, dy: Int32) {
+        public static func setDrawOffset(dx: CInt, dy: CInt) {
             graphics.setDrawOffset(dx, dy)
         }
 
         /// Returns a color using an 8 x 8 pattern using the given `bitmap`. `x`, `y` indicates the top left corner of the 8 x 8 pattern.
-        public static func colorFromPattern(_ pattern: Bitmap, x: Int32, y: Int32) -> Color {
+        public static func colorFromPattern(_ pattern: Bitmap, x: CInt, y: CInt) -> Color {
             var color: Color = 0
             graphics.setColorToPattern(&color, pattern.pointer, x, y)
             return color
@@ -659,11 +659,11 @@ public extension Playdate {
 }
 
 public extension Playdate.Graphics.Rect {
-    init(x: Int32, y: Int32, width: Int32, height: Int32) {
+    init(x: CInt, y: CInt, width: CInt, height: CInt) {
         self = LCDMakeRect(x, y, width, height)
     }
 
-    func translated(dx: Int32, dy: Int32) -> Playdate.Graphics.Rect {
+    func translated(dx: CInt, dy: CInt) -> Playdate.Graphics.Rect {
         LCDRect_translate(self, dx, dy)
     }
 }

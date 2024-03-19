@@ -6,13 +6,13 @@ public extension Playdate {
 
         /// Returns the height of the display, taking the current scale into account;
         /// e.g., if the scale is 2, this function returns 120 instead of 240.
-        public static var height: Int32 {
+        public static var height: CInt {
             display.getHeight()
         }
 
         /// Returns the width of the display, taking the current scale into account;
         /// e.g., if the scale is 2, this function returns 200 instead of 400.
-        public static var width: Int32 {
+        public static var width: CInt {
             display.getWidth()
         }
 
@@ -27,7 +27,7 @@ public extension Playdate {
             set {
                 var refreshRate = newValue
                 if !((0...50) ~= refreshRate) {
-                    System.logError(format: "refreshRate must be between 0...50")
+                    System.error("refreshRate must be between 0...50")
                     refreshRate = min(max(refreshRate, 0), 50)
                 }
                 _refreshRate = refreshRate
@@ -48,12 +48,12 @@ public extension Playdate {
         ///
         /// The top-left corner of the frame buffer is scaled up to fill the display; e.g., if the scale is set to 4,
         /// the pixels in rectangle [0,100] x [0,60] are drawn on the screen as 4 x 4 squares.
-        public static var scale: UInt32 {
+        public static var scale: CUnsignedInt {
             get { _scale }
             set {
                 var scale = newValue
                 if !([1, 2, 4, 8].contains(scale)) {
-                    System.logError(format: "scale must be 1, 2, 4, or 8")
+                    System.error("scale must be 1, 2, 4, or 8")
                     scale = 1
                 }
                 _scale = scale
@@ -71,13 +71,13 @@ public extension Playdate {
         }
 
         /// Adds a mosaic effect to the display. Valid x and y values are between 0 and 3, inclusive.
-        public static func setMosaic(x: UInt32, y: UInt32) {
+        public static func setMosaic(x: CUnsignedInt, y: CUnsignedInt) {
             display.setMosaic(x, y)
         }
 
         /// Offsets the display by the given amount.
         /// Areas outside of the displayed area are filled with the current background color.
-        public static func setOffset(dx: Int32, dy: Int32) {
+        public static func setOffset(dx: CInt, dy: CInt) {
             display.setOffset(dx, dy)
         }
 
@@ -85,7 +85,7 @@ public extension Playdate {
 
         private nonisolated(unsafe) static var _flipped: (x: Bool, y: Bool) = (false, false)
 
-        private nonisolated(unsafe) static var _scale: UInt32 = 1
+        private nonisolated(unsafe) static var _scale: CUnsignedInt = 1
 
         private nonisolated(unsafe) static var _inverted = false
 

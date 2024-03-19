@@ -9,7 +9,7 @@ public extension Playdate {
         public struct FileHandle {
             // MARK: Public
 
-            public enum Seek: Int32 {
+            public enum Seek: CInt {
                 /// relative to the beginning of the file
                 case beginning = 0 // SEEK_SET
                 /// relative to the current position of the file pointer
@@ -24,7 +24,7 @@ public extension Playdate {
             }
 
             /// Flushes the output buffer of file immediately. Returns the number of bytes written.
-            public func flush() throws(Error) -> Int32 {
+            public func flush() throws(Error) -> CInt {
                 let writtenCount = file.flush(pointer)
                 guard writtenCount != -1 else { throw lastError }
                 return writtenCount
@@ -33,8 +33,8 @@ public extension Playdate {
             /// Reads up to `length` bytes from the file handle into the buffer `buffer`. Returns the number of bytes read (0 indicating end of file)
             public func read(
                 buffer: UnsafeMutableRawPointer,
-                length: UInt32
-            ) throws(Error) -> Int32 {
+                length: CUnsignedInt
+            ) throws(Error) -> CInt {
                 let readCount = file.read(pointer, buffer, length)
                 guard readCount != -1 else { throw lastError }
                 return readCount
@@ -42,14 +42,14 @@ public extension Playdate {
 
             /// Sets the read/write offset in the file handle to `position`, relative to the `seek`.
             public func seek(
-                to position: Int32,
+                to position: CInt,
                 seek: Seek = .current
             ) throws(Error) {
                 guard file.seek(pointer, position, seek.rawValue) == 0 else { throw lastError }
             }
 
             /// Returns the current read/write offset in the given file handle
-            public func currentSeekPosition() throws(Error) -> Int32 {
+            public func currentSeekPosition() throws(Error) -> CInt {
                 let offset = file.tell(pointer)
                 guard offset != 0 else { throw lastError }
                 return offset
@@ -58,8 +58,8 @@ public extension Playdate {
             /// Writes the buffer of bytes `buffer` to the file. Returns the number of bytes written
             public func write(
                 buffer: UnsafeRawBufferPointer
-            ) throws(Error) -> Int32 {
-                let writtenCount = file.write(pointer, buffer.baseAddress, UInt32(buffer.count))
+            ) throws(Error) -> CInt {
+                let writtenCount = file.write(pointer, buffer.baseAddress, CUnsignedInt(buffer.count))
                 guard writtenCount != 1 else { throw lastError }
                 return writtenCount
             }

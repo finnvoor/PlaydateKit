@@ -25,7 +25,7 @@ public extension Playdate {
             ///
             /// For checkmark menu items, 1 means checked, 0 unchecked.
             /// For option menu items, the value indicates the array index of the currently selected option.
-            public var value: Int32 {
+            public var value: CInt {
                 get { system.getMenuItemValue(pointer) }
                 set { system.setMenuItemValue(pointer, newValue) }
             }
@@ -72,7 +72,7 @@ public extension Playdate {
         ///
         /// This should present a consistent timebase while a game is running,
         /// but the counter will be disabled when the device is sleeping.
-        public static var currentTimeMilliseconds: UInt32 {
+        public static var currentTimeMilliseconds: CUnsignedInt {
             system.getCurrentTimeMilliseconds()
         }
 
@@ -83,7 +83,7 @@ public extension Playdate {
         }
 
         /// Returns the system timezone offset from GMT, in seconds.
-        public static var timezoneOffset: Int32 {
+        public static var timezoneOffset: CInt {
             system.getTimezoneOffset()
         }
 
@@ -161,59 +161,57 @@ public extension Playdate {
         // MARK: - Logging
 
         /// Calls the log function, outputting an error in red to the console, then pauses execution.
-        public static func logError(format: StaticString) {
+        public static func error(_ error: StaticString) {
             let logError = unsafeBitCast(
                 system.error,
                 to: (@convention(c) (UnsafePointer<CChar>?) -> Void).self
             )
-            format.utf8Start.withMemoryRebound(
+            error.utf8Start.withMemoryRebound(
                 to: CChar.self,
-                capacity: format.utf8CodeUnitCount
+                capacity: error.utf8CodeUnitCount + 1
             ) { pointer in
                 logError(pointer)
             }
         }
 
         /// Calls the log function, outputting an error in red to the console, then pauses execution.
-        public static func logError(format: UnsafePointer<CChar>) {
+        public static func error(_ error: UnsafePointer<CChar>?) {
             let logError = unsafeBitCast(
                 system.error,
                 to: (@convention(c) (UnsafePointer<CChar>?) -> Void).self
             )
-            logError(format)
+            logError(error)
         }
 
         /// Calls the log function, outputting an error in red to the console, then pauses execution.
-        public static func logError(_ error: Error) {
-            let logError = unsafeBitCast(
-                system.error,
-                to: (@convention(c) (UnsafePointer<CChar>?) -> Void).self
-            )
-            logError(error.humanReadableText)
+        public static func error(_ error: Error) {
+            System.error(error.humanReadableText)
         }
 
         /// Calls the log function.
-        public static func logToConsole(format: StaticString) {
+        public static func log(_ log: StaticString) {
             let logToConsole = unsafeBitCast(
                 system.logToConsole,
                 to: (@convention(c) (UnsafePointer<CChar>?) -> Void).self
             )
-            format.utf8Start.withMemoryRebound(
+            log.utf8Start.withMemoryRebound(
                 to: CChar.self,
-                capacity: format.utf8CodeUnitCount
+                capacity: log.utf8CodeUnitCount + 1
             ) { pointer in
                 logToConsole(pointer)
             }
         }
 
         /// Calls the log function.
-        public static func logToConsole(format: UnsafePointer<CChar>) {
+        public static func log(_ log: UnsafePointer<CChar>) {
             let logToConsole = unsafeBitCast(
                 system.logToConsole,
                 to: (@convention(c) (UnsafePointer<CChar>?) -> Void).self
             )
-            logToConsole(format)
+            logToConsole(log)
         }
+
+        // TODO: - Log/error format string + args
 
         /// Adds a new menu item to the System Menu.
         /// - Parameters:
@@ -294,18 +292,17 @@ public extension Playdate {
             userData: UnsafeMutableRawPointer? = nil
         ) -> MenuItem {
             var options = options.map {
+                // TODO: - Is this conversion fine...?
                 Optional(UnsafeRawPointer($0.utf8Start).assumingMemoryBound(to: CChar.self))
             }
-            return options.withUnsafeMutableBufferPointer { pointer in
-                let menuItem = system.addOptionsMenuItem(
-                    title.utf8Start,
-                    pointer.baseAddress!,
-                    Int32(pointer.count),
-                    callback,
-                    userData
-                ).unsafelyUnwrapped
-                return MenuItem(pointer: menuItem)
-            }
+            let menuItem = system.addOptionsMenuItem(
+                title.utf8Start,
+                &options,
+                CInt(options.count),
+                callback,
+                userData
+            ).unsafelyUnwrapped
+            return MenuItem(pointer: menuItem)
         }
 
         /// Adds a new menu item that allows the player to cycle through a set of options.
@@ -325,7 +322,7 @@ public extension Playdate {
             let pointer = system.addOptionsMenuItem(
                 title,
                 options.baseAddress,
-                Int32(options.count),
+                CInt(options.count),
                 callback,
                 userData
             ).unsafelyUnwrapped
@@ -343,7 +340,7 @@ public extension Playdate {
         }
 
         /// Returns the number of seconds (and sets milliseconds if not NULL) elapsed since midnight (hour 0), January 1, 2000.
-        public static func getSecondsSinceEpoch(_ epoch: UInt32) -> UInt32 {
+        public static func getSecondsSinceEpoch(_ epoch: CUnsignedInt) -> CUnsignedInt {
             var epoch = epoch
             return system.getSecondsSinceEpoch(&epoch)
         }
@@ -354,14 +351,14 @@ public extension Playdate {
         }
 
         /// Converts the given epoch time to a DateTime.
-        public static func convertEpochToDateTime(_ epoch: UInt32) -> DateTime {
+        public static func convertEpochToDateTime(_ epoch: CUnsignedInt) -> DateTime {
             var dateTime = DateTime()
             system.convertEpochToDateTime(epoch, &dateTime)
             return dateTime
         }
 
         /// Converts the given PDDateTime to an epoch time.
-        public static func convertDateTimeToEpoch(_ dateTime: DateTime) -> UInt32 {
+        public static func convertDateTimeToEpoch(_ dateTime: DateTime) -> CUnsignedInt {
             var dateTime = dateTime
             return system.convertDateTimeToEpoch(&dateTime)
         }
@@ -381,7 +378,7 @@ public extension Playdate {
         /// to animate to a position offset left by xoffset pixels as the menu is animated in.
         ///
         /// This function could be called in response to the kEventPause event in your implementation of eventHandler().
-        public static func setMenuImage(_ bitmap: Graphics.Bitmap, xOffset: Int32 = 0) {
+        public static func setMenuImage(_ bitmap: Graphics.Bitmap, xOffset: CInt = 0) {
             system.setMenuImage(bitmap.pointer, xOffset)
         }
 
@@ -395,7 +392,7 @@ public extension Playdate {
         }
 
         /// Calculates the current frames per second and draws that value at `x`, `y`.
-        public static func drawFPS(x: Int32 = 0, y: Int32 = 0) {
+        public static func drawFPS(x: CInt = 0, y: CInt = 0) {
             system.drawFPS(x, y)
         }
 
@@ -424,11 +421,11 @@ public extension Playdate {
             callback: ((
                 _ button: Buttons,
                 _ down: Bool,
-                _ when: UInt32,
+                _ when: CUnsignedInt,
                 _ userdata: UnsafeMutableRawPointer?
             ) -> Bool)?,
             buttonUserdata: UnsafeMutableRawPointer? = nil,
-            queueSize: Int32 = 5
+            queueSize: CInt = 5
         ) {
             buttonCallback = callback
             if callback != nil {
@@ -446,7 +443,7 @@ public extension Playdate {
         ///
         /// The update function should return a non-zero number to tell the system to update the display, or zero if update isn’t needed.
         static func setUpdateCallback(
-            update: (@convention(c) (_ userdata: UnsafeMutableRawPointer?) -> Int32)?,
+            update: (@convention(c) (_ userdata: UnsafeMutableRawPointer?) -> CInt)?,
             userdata: UnsafeMutableRawPointer? = nil
         ) {
             system.setUpdateCallback(update, userdata)
@@ -457,7 +454,7 @@ public extension Playdate {
         private nonisolated(unsafe) static var buttonCallback: ((
             _ button: Buttons,
             _ down: Bool,
-            _ when: UInt32,
+            _ when: CUnsignedInt,
             _ userdata: UnsafeMutableRawPointer?
         ) -> Bool)?
 

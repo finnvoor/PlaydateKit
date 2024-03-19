@@ -148,7 +148,7 @@ public extension Playdate {
             /// > Warning: The caller is responsible for freeing the returned array.
             public var overlappingSprites: UnsafeBufferPointer<OpaquePointer?> {
                 // TODO: - Return array of sprites? figure out memory management
-                var length: Int32 = 0
+                var length: CInt = 0
                 let sprites = sprite.overlappingSprites(pointer, &length)
                 return UnsafeBufferPointer(start: sprites, count: Int(length))
             }
@@ -195,7 +195,7 @@ public extension Playdate {
 
             /// Specifies a stencil image to be set on the frame buffer before the sprite is drawn. If `tile` is set, the stencil will be tiled.
             /// Tiled stencils must have width evenly divisible by 32.
-            public func setStencilImage(_ stencil: Graphics.Bitmap, tile: Int32) {
+            public func setStencilImage(_ stencil: Graphics.Bitmap, tile: CInt) {
                 sprite.setStencilImage(pointer, stencil.pointer, tile)
             }
 
@@ -275,7 +275,7 @@ public extension Playdate {
             /// Returns the same values as `moveWithCollisions()` but does not actually move the sprite.
             public func checkCollisions(goalX: Float, goalY: Float) -> CollisionInfo {
                 var actualX: Float = 0, actualY: Float = 0
-                var length: Int32 = 0
+                var length: CInt = 0
                 let collisionInfo = sprite.checkCollisions(pointer, goalX, goalY, &actualX, &actualY, &length)
                 return CollisionInfo(
                     collisions: UnsafeBufferPointer(start: collisionInfo, count: Int(length)),
@@ -289,7 +289,7 @@ public extension Playdate {
             /// `goalX`, `goalY`.
             public func moveWithCollisions(goalX: Float, goalY: Float) -> CollisionInfo {
                 var actualX: Float = 0, actualY: Float = 0
-                var length: Int32 = 0
+                var length: CInt = 0
                 let collisionInfo = sprite.moveWithCollisions(pointer, goalX, goalY, &actualX, &actualY, &length)
                 return CollisionInfo(
                     collisions: UnsafeBufferPointer(start: collisionInfo, count: Int(length)),
@@ -306,12 +306,12 @@ public extension Playdate {
         // MARK: - Properties
 
         /// Sets the clipping rectangle for all sprites with a Z index within `startZ` and `endZ` inclusive.
-        public static func setClipRectsInRange(clipRect: Graphics.Rect, startZ: Int32, endZ: Int32) {
+        public static func setClipRectsInRange(clipRect: Graphics.Rect, startZ: CInt, endZ: CInt) {
             sprite.setClipRectsInRange(clipRect, startZ, endZ)
         }
 
         /// Clears the clipping rectangle for all sprites with a Z index within `startZ` and `endZ` inclusive.
-        public static func clearClipRectsInRange(startZ: Int32, endZ: Int32) {
+        public static func clearClipRectsInRange(startZ: CInt, endZ: CInt) {
             sprite.clearClipRectsInRange(startZ, endZ)
         }
 
@@ -333,7 +333,7 @@ public extension Playdate {
         /// Removes the given array of sprites from the display list.
         public static func removeSpritesFromDisplayList(_ sprites: UnsafeMutableBufferPointer<Sprite>) {
             var pointers = sprites.map { Optional($0.pointer) }
-            sprite.removeSprites(&pointers, Int32(sprites.count))
+            sprite.removeSprites(&pointers, CInt(sprites.count))
         }
 
         /// Removes all sprites from the display list.
@@ -342,7 +342,7 @@ public extension Playdate {
         }
 
         /// Returns the total number of sprites in the display list.
-        public static func getDisplayListSpriteCount() -> Int32 {
+        public static func getDisplayListSpriteCount() -> CInt {
             sprite.getSpriteCount()
         }
 
@@ -366,7 +366,7 @@ public extension Playdate {
         /// Returns an array of all sprites with collision rects containing the point at `x`, `y`.
         /// > Warning: The caller is responsible for freeing the returned array.
         public static func querySpritesAtPoint(x: Float, y: Float) -> UnsafeBufferPointer<OpaquePointer?> {
-            var length: Int32 = 0
+            var length: CInt = 0
             let sprites = sprite.querySpritesAtPoint(x, y, &length)
             return UnsafeBufferPointer(start: sprites, count: Int(length))
         }
@@ -374,7 +374,7 @@ public extension Playdate {
         /// Returns an array of all sprites with collision rects that intersect the `width` by `height` rect at `x`, `y`.
         /// > Warning: The caller is responsible for freeing the returned array.
         public static func querySpritesInRect(x: Float, y: Float, width: Float, height: Float) -> UnsafeBufferPointer<OpaquePointer?> {
-            var length: Int32 = 0
+            var length: CInt = 0
             let sprites = sprite.querySpritesInRect(x, y, width, height, &length)
             return UnsafeBufferPointer(start: sprites, count: Int(length))
         }
@@ -382,7 +382,7 @@ public extension Playdate {
         /// Returns an array of all sprites with collision rects that intersect the line connecting `x1`, `y1` and `x2`, `y2`.
         /// > Warning: The caller is responsible for freeing the returned array.
         public static func querySpritesAlongLine(x1: Float, y1: Float, x2: Float, y2: Float) -> UnsafeBufferPointer<OpaquePointer?> {
-            var length: Int32 = 0
+            var length: CInt = 0
             let sprites = sprite.querySpritesAlongLine(x1, y1, x2, y2, &length)
             return UnsafeBufferPointer(start: sprites, count: Int(length))
         }
@@ -390,7 +390,7 @@ public extension Playdate {
         /// Returns an array of `SpriteQueryInfo` for all sprites with collision rects that intersect the line connecting `x1`, `y1` and `x2`, `y2`.
         /// If you don’t need this information, use `querySpritesAlongLine()` as it will be faster.
         public static func querySpriteInfoAlongLine(x1: Float, y1: Float, x2: Float, y2: Float) -> QueryInfo {
-            var length: Int32 = 0
+            var length: CInt = 0
             let spriteInfo = sprite.querySpriteInfoAlongLine(x1, y1, x2, y2, &length)
             return QueryInfo(info: UnsafeBufferPointer(start: spriteInfo, count: Int(length)))
         }
@@ -399,7 +399,7 @@ public extension Playdate {
         /// (eg. 0 & 1 overlap, 2 & 3 overlap, etc).
         /// > Warning: The caller is responsible for freeing the returned array.
         public static func allOverlappingSprites() -> UnsafeBufferPointer<OpaquePointer?> {
-            var length: Int32 = 0
+            var length: CInt = 0
             let sprites = sprite.allOverlappingSprites(&length)
             return UnsafeBufferPointer(start: sprites, count: Int(length))
         }

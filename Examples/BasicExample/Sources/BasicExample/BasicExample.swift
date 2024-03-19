@@ -4,19 +4,19 @@ final class BasicExample: PlaydateGame {
     // MARK: Lifecycle
 
     init() {
-        Playdate.System.addMenuItem(title: "PlaydateKit") { _ in
-            Playdate.System.logToConsole(format: "PlaydateKit selected!")
+        System.addMenuItem(title: "PlaydateKit") { _ in
+            System.log("PlaydateKit selected!")
         }
     }
 
     // MARK: Internal
 
     func update() -> Bool {
-        Playdate.System.drawFPS()
+        System.drawFPS()
         return true
     }
 
     func gameWillPause() {
-        Playdate.System.logToConsole(format: "Paused!")
+        System.log("Paused!")
     }
 }

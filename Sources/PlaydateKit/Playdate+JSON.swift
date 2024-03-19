@@ -16,7 +16,7 @@ public extension Playdate {
             using decoder: inout Decoder,
             reader: Reader,
             value: inout Value
-        ) -> Int32 {
+        ) -> CInt {
             json.decode(&decoder, reader, &value)
         }
 
@@ -27,7 +27,7 @@ public extension Playdate {
             using decoder: inout Decoder,
             jsonString: StaticString,
             value: inout Value
-        ) -> Int32 {
+        ) -> CInt {
             json.decodeString(&decoder, jsonString.utf8Start, &value)
         }
 
@@ -38,7 +38,7 @@ public extension Playdate {
             using decoder: inout Decoder,
             jsonString: UnsafeMutablePointer<CChar>,
             value: inout Value
-        ) -> Int32 {
+        ) -> CInt {
             json.decodeString(&decoder, jsonString, &value)
         }
 
@@ -50,7 +50,7 @@ public extension Playdate {
             writeFunc: (@convention(c) (
                 _ userdata: UnsafeMutableRawPointer?,
                 _ string: UnsafePointer<CChar>?,
-                _ length: Int32
+                _ length: CInt
             ) -> Void
             )?,
             userdata: UnsafeMutableRawPointer?,

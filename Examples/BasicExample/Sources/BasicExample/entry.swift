@@ -4,14 +4,14 @@ import PlaydateKit
 nonisolated(unsafe) var game: BasicExample!
 @_cdecl("eventHandler") func eventHandler(
     pointer: UnsafeMutableRawPointer!,
-    event: Playdate.System.Event,
-    _: UInt32
-) -> Int32 {
+    event: System.Event,
+    _: CUnsignedInt
+) -> CInt {
     switch event {
     case .initialize:
         Playdate.initialize(with: pointer)
         game = BasicExample()
-        Playdate.System.updateCallback = game.update
+        System.updateCallback = game.update
     default: game.handle(event)
     }
     return 0
