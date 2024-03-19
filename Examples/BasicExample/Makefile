@@ -1,9 +1,3 @@
-# Declares the root of the repository the game source code lives in. Most
-# of the time, the Makefile should already be at the root, and this may
-# not be needed. However, this can be adjusted if the source code lives
-# elsewhere.
-REPO_ROOT := $(shell git rev-parse --show-toplevel)
-
 # Declares where PlaydateKit is stored. In this example, PDKIT_ROOT is the
 # same as REPO_ROOT. In some setups and projects, this may differ.
 PDKIT_ROOT := $(shell git rev-parse --show-toplevel)
@@ -30,13 +24,13 @@ build/Modules/playdatekit_device.o: $(PDKIT_ROOT)/Sources/PlaydateKit/*.swift
 build/Modules/playdatekit_simulator.o: $(PDKIT_ROOT)/Sources/PlaydateKit/*.swift
 	$(SWIFT_EXEC) $(SWIFT_FLAGS) $(SWIFT_FLAGS_SIMULATOR) -c $^ -emit-module -o $@
 
-# MARK: - Build BasicExample Swift Object
-build/basicexample_device.o: Sources/$(PRODUCT_NAME)/*.swift | build/Modules/playdatekit_device.o
+# MARK: - Build Game Swift Object
+build/$(PRODUCT_NAME)_device.o: Sources/$(PRODUCT_NAME)/*.swift | build/Modules/playdatekit_device.o
 	$(SWIFT_EXEC) $(SWIFT_FLAGS) $(SWIFT_FLAGS_DEVICE) -c $^ -o $@
-$(OBJDIR)/pdex.elf: build/basicexample_device.o
-OBJS += build/basicexample_device.o
+$(OBJDIR)/pdex.elf: build/$(PRODUCT_NAME)_device.o
+OBJS += build/$(PRODUCT_NAME)_device.o
 
-build/basicexample_simulator.o: Sources/$(PRODUCT_NAME)/*.swift | build/Modules/playdatekit_simulator.o
+build/$(PRODUCT_NAME)_simulator.o: Sources/$(PRODUCT_NAME)/*.swift | build/Modules/playdatekit_simulator.o
 	$(SWIFT_EXEC) $(SWIFT_FLAGS) $(SWIFT_FLAGS_SIMULATOR) -c $^ -o $@
-$(OBJDIR)/pdex.${DYLIB_EXT}: build/basicexample_simulator.o
-SIMCOMPILER += build/basicexample_simulator.o
+$(OBJDIR)/pdex.${DYLIB_EXT}: build/$(PRODUCT_NAME)_simulator.o
+SIMCOMPILER += build/$(PRODUCT_NAME)_simulator.o
