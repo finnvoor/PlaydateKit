@@ -45,7 +45,7 @@ SWIFT_FLAGS := \
 	-module-cache-path build/module-cache \
 	-I $(SDK)/C_API \
 	-I build/Modules \
-	-I $(REPO_ROOT)/Sources/CPlaydate/include \
+	-I $(PDKIT_ROOT)/Sources/CPlaydate/include \
 
 C_FLAGS_DEVICE := \
 	-mthumb \
