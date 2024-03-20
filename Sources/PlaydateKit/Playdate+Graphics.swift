@@ -127,7 +127,7 @@ public extension Playdate {
             /// so drawing into the mask image affects the source bitmap directly.
             public var mask: Bitmap? {
                 get { graphics.getBitmapMask(pointer).map { Bitmap(pointer: $0) } }
-                set { graphics.setBitmapMask(pointer, newValue?.pointer) }
+                set { _ = graphics.setBitmapMask(pointer, newValue?.pointer) }
             }
 
             /// Loads the image at `path` into the bitmap.

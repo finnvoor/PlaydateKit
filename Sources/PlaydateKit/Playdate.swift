@@ -6,9 +6,11 @@ public typealias Display = Playdate.Display
 public typealias File = Playdate.File
 public typealias Graphics = Playdate.Graphics
 public typealias JSON = Playdate.JSON
-public typealias Lua = Playdate.Lua
+// public typealias Lua = Playdate.Lua
+
 public typealias Scoreboards = Playdate.Scoreboards
-public typealias Sound = Playdate.Sound
+// public typealias Sound = Playdate.Sound
+
 public typealias Sprite = Playdate.Sprite
 public typealias System = Playdate.System
 
