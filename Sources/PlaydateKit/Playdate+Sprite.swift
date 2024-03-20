@@ -169,7 +169,7 @@ public extension Playdate {
             }
 
             /// Sets the sprite's image to the given bitmap.
-            public func setImage(image: Graphics.Bitmap, flip: Graphics.Bitmap.Flip) {
+            public func setImage(image: Graphics.Bitmap, flip: Graphics.Bitmap.Flip = .bitmapUnflipped) {
                 sprite.setImage(pointer, image.pointer, flip)
             }
 

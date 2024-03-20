@@ -160,13 +160,13 @@ public extension Playdate {
             /// in data is the top left pixel of the image. If the bitmap has a mask, a pointer to its data is returned in `mask`,
             /// else nil is returned.
             public func getData(
-                mask: inout UnsafeMutablePointer<UInt8>?,
-                data: inout UnsafeMutablePointer<UInt8>?
+                mask: UnsafeMutablePointer<UnsafeMutablePointer<UInt8>?>?,
+                data: UnsafeMutablePointer<UnsafeMutablePointer<UInt8>?>?
             ) -> (
                 width: CInt, height: CInt, rowBytes: CInt
             ) {
                 var width: CInt = 0, height: CInt = 0, rowBytes: CInt = 0
-                graphics.getBitmapData(pointer, &width, &height, &rowBytes, &mask, &data)
+                graphics.getBitmapData(pointer, &width, &height, &rowBytes, mask, data)
                 return (width, height, rowBytes)
             }
 

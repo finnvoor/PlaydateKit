@@ -154,7 +154,10 @@ public extension Playdate {
         // MARK: - Memory allocation
 
         /// Allocates heap space if `pointer` is nil, else reallocates the given pointer. If `size` is zero, frees the given pointer.
-        public static func realloc(pointer: UnsafeMutableRawPointer?, size: Int) -> UnsafeMutableRawPointer {
+        @discardableResult public static func realloc(
+            pointer: UnsafeMutableRawPointer?,
+            size: Int
+        ) -> UnsafeMutableRawPointer {
             system.realloc(pointer, size).unsafelyUnwrapped
         }
 
