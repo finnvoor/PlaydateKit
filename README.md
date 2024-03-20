@@ -4,10 +4,10 @@
 
 <p align="center">
     <a href="https://www.swift.org/">
-        <img src="https://img.shields.io/badge/Swift-5.9-f05237.svg" />
+        <img src="https://img.shields.io/badge/Swift-5.10-f05237.svg" />
     </a>
     <a href="https://sdk.play.date">
-        <img src="https://img.shields.io/badge/Playdate_SDK-2.4.1-ffc500.svg" />
+        <img src="https://img.shields.io/badge/Playdate_SDK-2.4.2-ffc500.svg" />
     </a>
 </p>
 
@@ -32,15 +32,20 @@ Currently, the following sections of the API are implemented:
 - [x] System
 
 ## Usage
+For detailed instructions on how to get started creating a game using PlaydateKit, see [here](https://github.com/finnvoor/PlaydateKit).
 
-For example usage, see the BasicExample [here](https://github.com/finnvoor/PlaydateKit/tree/main/Examples). I strongly recommend reading through the Swift Playdate Examples documentation [here](https://apple.github.io/swift-playdate-examples/documentation/playdate/) for information on downloading required tools, setting up build scripts, and compiling for Playdate.
+1. Install a nightly [Swift](https://www.swift.org/download/#snapshots) toolchain that supports the Embedded experimental feature.
+2. Install the [Playdate SDK](https://play.date/dev/).
+3. Create a new repository using the [PlaydateKitTemplate template](https://github.com/finnvoor/PlaydateKitTemplate).
+4. (optional) Change the name of the package by renaming the product and target in `Package.swift` and renaming `Sources/PlaydateKitTemplate` to the new name.
+5. Build and run directly in the simulator using Xcode, or build using the command `swift package pdc`. When built using `swift package pdc`, the built `pdx` game file will be located at `.build/plugins/PDCPlugin/outputs/PlaydateKitTemplate.pdx` and can be opened in the Playdate simulator.
 
 Your `PlaydateGame` object manages the game lifecycle, receiving events such as `gameWillPause` and `deviceWillSleep`. 
 
 ```swift
 import PlaydateKit
 
-final class MyPlaydateGame: PlaydateGame {
+final class Game: PlaydateGame {
     init() {
         System.addMenuItem(title: "PlaydateKit") { _ in
             System.log("PlaydateKit selected!")
@@ -58,32 +63,7 @@ final class MyPlaydateGame: PlaydateGame {
 }
 ```
 
-The easiest way to set up a game with PlaydateKit is to add the boilerplate entry code somewhere in your source. This will ensure your `PlaydateGame` is created early in the game launch cycle and sets up the update and event callbacks for you.
-
-```swift
-/// Boilerplate entry code
-nonisolated(unsafe) var game: MyPlaydateGame! // Replace with your PlaydateGame type
-@_cdecl("eventHandler") func eventHandler(
-    pointer: UnsafeMutableRawPointer!,
-    event: System.Event,
-    _: CUnsignedInt
-) -> CInt {
-    switch event {
-    case .initialize:
-        Playdate.initialize(with: pointer)
-        game = MyPlaydateGame() // Replace with your PlaydateGame type
-        System.updateCallback = game.update
-    default: game.handle(event)
-    }
-    return 0
-}
-```
-
-The Makefile in the example project requires compiling the PlaydateKit source files, meaning you will need to have PlaydateKit checked out locally and update your Makefile to point to it (you can't just add PlaydateKit as a package dependency). I am investigating ways to improve this, for now you could probably add a git submodule or something 🤷‍♂️
-
 ## Acknowledgements
 
 PlaydateKit was inspired by and would not be possible without the excellent work done by [@rauhul](https://github.com/rauhul) on [swift-playdate-examples](https://github.com/apple/swift-playdate-examples). Specifically, PlaydateKit was created due to the note in the swift-playdate-examples repo: 
 > It is not intended to be a full-featured Playdate SDK so please do not raise PRs to extend the Playdate Swift overlay to new areas.
-
-The example project build scripts were mostly copied from swift-playdate-examples, and as such fall under the Apache License 2.0 found [here](https://github.com/apple/swift-playdate-examples/blob/main/LICENSE.txt).
