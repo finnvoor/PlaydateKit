@@ -9,3 +9,4 @@ DerivedData/
 **/Source/pdex.dylib
 **/Source/pdex.elf
 build/
+.docc-build

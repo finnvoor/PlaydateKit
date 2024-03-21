@@ -32,7 +32,7 @@ Currently, the following sections of the API are implemented:
 - [x] System
 
 ## Usage
-For detailed instructions on how to get started creating a game using PlaydateKit, see [here](https://github.com/finnvoor/PlaydateKit).
+For detailed instructions on how to get started creating a game using PlaydateKit, see [here](https://finnvoor.github.io/PlaydateKit/documentation/playdatekit).
 
 1. Install a nightly [Swift](https://www.swift.org/download/#snapshots) toolchain that supports the Embedded experimental feature.
 2. Install the [Playdate SDK](https://play.date/dev/).
