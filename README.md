@@ -32,12 +32,12 @@ Currently, the following sections of the API are implemented:
 - [x] System
 
 ## Usage
-For detailed instructions on how to get started creating a game using PlaydateKit, see [here](https://finnvoor.github.io/PlaydateKit/documentation/playdatekit).
+For detailed instructions on how to get started creating a game using PlaydateKit, see [here](https://finnvoor.github.io/PlaydateKit/tutorials/meet-playdatekit).
 
+### Summary
 1. Install a nightly [Swift](https://www.swift.org/download/#snapshots) toolchain that supports the Embedded experimental feature.
 2. Install the [Playdate SDK](https://play.date/dev/).
 3. Create a new repository using the [PlaydateKitTemplate template](https://github.com/finnvoor/PlaydateKitTemplate).
-4. (optional) Change the name of the package by renaming the product and target in `Package.swift` and renaming `Sources/PlaydateKitTemplate` to the new name.
 5. Build and run directly in the simulator using Xcode, or build using the command `swift package pdc`. When built using `swift package pdc`, the built `pdx` game file will be located at `.build/plugins/PDCPlugin/outputs/PlaydateKitTemplate.pdx` and can be opened in the Playdate simulator.
 
 Your `PlaydateGame` object manages the game lifecycle, receiving events such as `gameWillPause` and `deviceWillSleep`. 
