@@ -88,19 +88,19 @@ public extension Playdate {
             }
 
             /// Allocates and returns a new `Bitmap` from the file at path. If there is no file at `path`, the function throws.
-            public init(path: StaticString) throws(Error) {
+            /// > Warning: Currently unsafe due to https://github.com/finnvoor/PlaydateKit/issues/7
+            public init(path: StaticString) {
                 var error: UnsafePointer<CChar>?
                 let pointer = graphics.loadBitmap(path.utf8Start, &error)
-                if let error { throw Error(humanReadableText: error) }
                 self.pointer = pointer.unsafelyUnwrapped
                 free = true
             }
 
             /// Allocates and returns a new `Bitmap` from the file at path. If there is no file at `path`, the function throws.
-            public init(path: UnsafeMutablePointer<CChar>) throws(Error) {
+            /// > Warning: Currently unsafe due to https://github.com/finnvoor/PlaydateKit/issues/7
+            public init(path: UnsafeMutablePointer<CChar>) {
                 var error: UnsafePointer<CChar>?
                 let pointer = graphics.loadBitmap(path, &error)
-                if let error { throw Error(humanReadableText: error) }
                 self.pointer = pointer.unsafelyUnwrapped
                 free = true
             }
@@ -198,18 +198,18 @@ public extension Playdate {
             // MARK: Lifecycle
 
             /// Allocates and returns a new `BitmapTable` from the file at `path`. If there is no file at `path`, the function throws an error.
-            public init(path: StaticString) throws(Error) {
+            /// > Warning: Currently unsafe due to https://github.com/finnvoor/PlaydateKit/issues/7
+            public init(path: StaticString) {
                 var error: UnsafePointer<CChar>?
                 let pointer = graphics.loadBitmapTable(path.utf8Start, &error)
-                if let error { throw Error(humanReadableText: error) }
                 self.pointer = pointer.unsafelyUnwrapped
             }
 
             /// Allocates and returns a new `BitmapTable` from the file at `path`. If there is no file at `path`, the function throws an error.
-            public init(path: UnsafeMutablePointer<CChar>) throws(Error) {
+            /// > Warning: Currently unsafe due to https://github.com/finnvoor/PlaydateKit/issues/7
+            public init(path: UnsafeMutablePointer<CChar>) {
                 var error: UnsafePointer<CChar>?
                 let pointer = graphics.loadBitmapTable(path, &error)
-                if let error { throw Error(humanReadableText: error) }
                 self.pointer = pointer.unsafelyUnwrapped
             }
 
@@ -250,29 +250,28 @@ public extension Playdate {
             // MARK: Lifecycle
 
             /// Returns a `Font` object for the font file at `path`.
-            init(path: StaticString) throws(Error) {
+            /// > Warning: Currently unsafe due to https://github.com/finnvoor/PlaydateKit/issues/7
+            init(path: StaticString) {
                 var error: UnsafePointer<CChar>?
                 let pointer = graphics.loadFont(path.utf8Start, &error)
-                if let error { throw Error(humanReadableText: error) }
                 self.pointer = pointer.unsafelyUnwrapped
             }
 
             /// Returns a `Font` object for the font file at `path`.
-            init(path: UnsafeMutablePointer<CChar>) throws(Error) {
+            /// > Warning: Currently unsafe due to https://github.com/finnvoor/PlaydateKit/issues/7
+            init(path: UnsafeMutablePointer<CChar>) {
                 var error: UnsafePointer<CChar>?
                 let pointer = graphics.loadFont(path, &error)
-                if let error { throw Error(humanReadableText: error) }
                 self.pointer = pointer.unsafelyUnwrapped
             }
 
             /// Returns a `Font` object wrapping the `LCDFontData` `data` comprising the contents (minus 16-byte header)
             /// of an uncompressed pft file. `wide` corresponds to the flag in the header indicating whether the font contains
             /// glyphs at codepoints above U+1FFFF.
-            init?(data: OpaquePointer, wide: Bool) {
-                guard let pointer = graphics.makeFontFromData(data, wide ? 1 : 0) else {
-                    return nil
-                }
-                self.pointer = pointer
+            /// > Warning: Currently unsafe due to https://github.com/finnvoor/PlaydateKit/issues/7
+            init(data: OpaquePointer, wide: Bool) {
+                let pointer = graphics.makeFontFromData(data, wide ? 1 : 0)
+                self.pointer = pointer.unsafelyUnwrapped
             }
 
             deinit {
