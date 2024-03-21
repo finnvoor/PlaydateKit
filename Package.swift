@@ -1,17 +1,23 @@
-// swift-tools-version: 5.9
+// swift-tools-version: 5.10
 
-import Foundation
 import PackageDescription
 
 let gccIncludePrefix =
     "/usr/local/playdate/gcc-arm-none-eabi-9-2019-q4-major/lib/gcc/arm-none-eabi/9.2.1"
-guard let home = ProcessInfo.processInfo.environment["HOME"] else {
-    fatalError("could not determine home directory")
+
+let playdateSDKPath: String
+if let path = Context.environment["PLAYDATE_SDK_PATH"] {
+    playdateSDKPath = path
+} else {
+    playdateSDKPath = "\(Context.environment["HOME"]!)/Developer/PlaydateSDK/"
 }
 
 let package = Package(
     name: "PlaydateKit",
-    products: [.library(name: "PlaydateKit", targets: ["PlaydateKit"])],
+    products: [
+        .library(name: "PlaydateKit", targets: ["PlaydateKit"]),
+        .plugin(name: "PDCPlugin", targets: ["PDCPlugin"])
+    ],
     targets: [
         .target(name: "PlaydateKit", dependencies: ["CPlaydate"], swiftSettings: [
             .enableExperimentalFeature("Embedded"),
@@ -24,7 +30,7 @@ let package = Package(
                 "-Xcc", "-I", "-Xcc", "\(gccIncludePrefix)/include",
                 "-Xcc", "-I", "-Xcc", "\(gccIncludePrefix)/include-fixed",
                 "-Xcc", "-I", "-Xcc", "\(gccIncludePrefix)/../../../../arm-none-eabi/include",
-                "-I", "\(home)/Developer/PlaydateSDK/C_API"
+                "-I", "\(playdateSDKPath)/C_API"
             ]),
         ]),
         .target(name: "CPlaydate", cSettings: [
@@ -33,8 +39,12 @@ let package = Package(
                 "-I", "\(gccIncludePrefix)/include",
                 "-I", "\(gccIncludePrefix)/include-fixed",
                 "-I", "\(gccIncludePrefix)/../../../../arm-none-eabi/include",
-                "-I", "\(home)/Developer/PlaydateSDK/C_API",
+                "-I", "\(playdateSDKPath)/C_API"
             ])
         ]),
+        .plugin(
+            name: "PDCPlugin",
+            capability: .command(intent: .custom(verb: "pdc", description: "Runs the Playdate compiler"))
+        )
     ]
 )
