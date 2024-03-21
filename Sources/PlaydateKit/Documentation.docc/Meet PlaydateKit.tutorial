@@ -1,0 +1,10 @@
+@Tutorials(name: "PlaydateKit") {
+    @Intro(title: "Meet PlaydateKit") {
+        
+    }
+    
+    @Chapter(name: "Your First Game") {
+        @TutorialReference(tutorial: "doc:Downloading-Prerequisites")
+        @TutorialReference(tutorial: "doc:Building-the-Template")
+    }
+}
