@@ -1,6 +1,11 @@
 public import CPlaydate
 
 public extension Playdate {
+    /// Functions related to sprites.
+    ///
+    /// Sprites are graphic objects that can be used to represent moving entities in your games, like the player,
+    /// or the enemies that chase after your player. Sprites animate efficiently, and offer collision detection and
+    /// a host of other built-in functionality.
     enum Sprite {
         // MARK: Public
 

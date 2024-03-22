@@ -1,5 +1,6 @@
 // MARK: - PlaydateGame
 
+/// A set of methods to manage the lifecycle and events for your game.
 public protocol PlaydateGame {
     /// Called after loading pdex.bin into memory.
     init()

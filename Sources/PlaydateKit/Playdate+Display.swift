@@ -1,6 +1,7 @@
 public import CPlaydate
 
 public extension Playdate {
+    /// Functions pertaining to Playdate’s screen.
     enum Display {
         // MARK: Public
 

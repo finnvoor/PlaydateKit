@@ -1,8 +1,9 @@
 public import CPlaydate
 
 public extension Playdate {
-    /// > Warning:
-    /// Scoreboard support is only available to games that are distributed via Panic in a Season or in Catalog.
+    /// Functions related to fetching and updating scoreboards.
+    ///
+    /// > Warning: Scoreboard support is only available to games that are distributed via Panic in a Season or in Catalog.
     enum Scoreboards {
         // MARK: Public
 

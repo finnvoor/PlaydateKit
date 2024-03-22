@@ -1,6 +1,7 @@
 public import CPlaydate
 
 public extension Playdate {
+    /// Functions related to menu items, peripherals, and input.
     enum System {
         // MARK: Public
 

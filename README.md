@@ -17,7 +17,7 @@ PlaydateKit provides easy to use Swift bindings for the Playdate C API. Playdate
 
 ## Status
 
-PlaydateKit aims to provide full coverage of the Playdate C API. PlaydateKit adds wrapper types for some values (Sprite, Bitmap, FileHandle, etc) that automatically manage the allocation/deallocation of resources. While I have attempted to closely follow the C API specifications, much of it is untested, so if you run into an unexpected issue or can't do something with the Swift API, please open an issue!
+PlaydateKit provides (almost) full coverage of the Playdate C API. PlaydateKit adds wrapper types for some values (Sprite, Bitmap, FileHandle, etc) that automatically manage the allocation/deallocation of resources. While I have attempted to closely follow the C API specifications, much of it is untested, so if you run into an unexpected issue or can't do something with the Swift API, please open an issue!
 
 Currently, the following sections of the API are implemented:
 
@@ -32,10 +32,10 @@ Currently, the following sections of the API are implemented:
 - [x] System
 
 ## Usage
-For detailed instructions on how to get started creating a game using PlaydateKit, see [here](https://finnvoor.github.io/PlaydateKit/tutorials/meet-playdatekit).
+For detailed instructions and documentation on how to get started creating a game using PlaydateKit, see [here](https://finnvoor.github.io/PlaydateKit/documentation/playdatekit).
 
 ### Summary
-1. Install a nightly [Swift](https://www.swift.org/download/#snapshots) toolchain that supports the Embedded experimental feature.
+1. Install a recent nightly [Swift](https://www.swift.org/download/#snapshots) toolchain that supports the Embedded experimental feature.
 2. Install the [Playdate SDK](https://play.date/dev/).
 3. Create a new repository using the [PlaydateKitTemplate template](https://github.com/finnvoor/PlaydateKitTemplate).
 5. Build and run directly in the simulator using Xcode, or build using the command `swift package pdc`. When built using `swift package pdc`, the built `pdx` game file will be located at `.build/plugins/PDCPlugin/outputs/PlaydateKitTemplate.pdx` and can be opened in the Playdate simulator.

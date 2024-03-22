@@ -1,6 +1,7 @@
 public import CPlaydate
 
 public extension Playdate {
+    /// Encoding and decoding of JSON files and strings.
     enum JSON {
         // MARK: Public
 

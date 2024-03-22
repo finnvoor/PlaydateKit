@@ -2,16 +2,25 @@ public import CPlaydate
 
 // MARK: - Playdate
 
+@_documentation(visibility: internal)
 public typealias Display = Playdate.Display
+@_documentation(visibility: internal)
 public typealias File = Playdate.File
+@_documentation(visibility: internal)
 public typealias Graphics = Playdate.Graphics
+@_documentation(visibility: internal)
 public typealias JSON = Playdate.JSON
+// @_documentation(visibility: internal)
 // public typealias Lua = Playdate.Lua
 
+@_documentation(visibility: internal)
 public typealias Scoreboards = Playdate.Scoreboards
+// @_documentation(visibility: internal)
 // public typealias Sound = Playdate.Sound
 
+@_documentation(visibility: internal)
 public typealias Sprite = Playdate.Sprite
+@_documentation(visibility: internal)
 public typealias System = Playdate.System
 
 // MARK: - Playdate
@@ -44,6 +53,7 @@ public enum Playdate {
 
 /// Implement `posix_memalign(3)`, which is required by the Swift runtime but is
 /// not provided by the Playdate C library.
+@_documentation(visibility: internal)
 @_cdecl("posix_memalign") public func posix_memalign(
     _ memptr: UnsafeMutablePointer<UnsafeMutableRawPointer?>,
     _ alignment: Int,

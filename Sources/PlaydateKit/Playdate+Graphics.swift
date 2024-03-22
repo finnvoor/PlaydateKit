@@ -3,6 +3,7 @@ public import CPlaydate
 // MARK: - Playdate.Graphics
 
 public extension Playdate {
+    /// Functions related to displaying information on the device screen.
     enum Graphics {
         // MARK: Public
 

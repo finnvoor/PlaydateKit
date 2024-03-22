@@ -1,6 +1,7 @@
 public import CPlaydate
 
 public extension Playdate {
+    /// Functions which allow you to interact with files on Playdate’s filesystem.
     enum File {
         // MARK: Public
 
