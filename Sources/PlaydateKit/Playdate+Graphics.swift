@@ -108,7 +108,9 @@ public extension Playdate {
 
             /// Allocates and returns a new `width` by `height` `Bitmap` filled with `bgcolor`.
             public init(width: CInt, height: CInt, bgColor: Color) {
-                pointer = graphics.newBitmap(width, height, bgColor).unsafelyUnwrapped
+                pointer = bgColor.withLCDColor {
+                    graphics.newBitmap(width, height, $0).unsafelyUnwrapped
+                }
                 free = true
             }
 
@@ -147,7 +149,9 @@ public extension Playdate {
 
             /// Clears the bitmap, filling with the given `bgcolor`.
             public func clear(bgColor: Color) {
-                graphics.clearBitmap(pointer, bgColor)
+                bgColor.withLCDColor {
+                    graphics.clearBitmap(pointer, $0)
+                }
             }
 
             /// Returns a new LCDBitmap that is an exact copy of the bitmap.
@@ -187,9 +191,43 @@ public extension Playdate {
             private let free: Bool
         }
 
+        /// A solid color or pattern.
+        public enum Color {
+            case solid(SolidColor)
+            /// A pattern color, where `bitmap` is an 8x8 bitmap pattern and `mask` is an 8x8 alpha mask.
+            case pattern(
+                _ bitmap: (UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8),
+                mask: (UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8) = (
+                    UInt8.max, UInt8.max, UInt8.max, UInt8.max, UInt8.max, UInt8.max, UInt8.max, UInt8.max
+                )
+            )
+
+            // MARK: Public
+
+            public nonisolated(unsafe) static let black = Color.solid(.black)
+            public nonisolated(unsafe) static let white = Color.solid(.white)
+            public nonisolated(unsafe) static let clear = Color.solid(.clear)
+            public nonisolated(unsafe) static let xor = Color.solid(.xor)
+
+            // MARK: Internal
+
+            func withLCDColor<T>(_ body: (LCDColor) throws -> T) rethrows -> T {
+                switch self {
+                case let .solid(solidColor):
+                    return try body(LCDColor(solidColor.rawValue))
+                case let .pattern(bitmap, mask):
+                    let pattern = LCDPattern((
+                        bitmap.0, bitmap.1, bitmap.2, bitmap.3, bitmap.4, bitmap.5, bitmap.6, bitmap.7,
+                        mask.0, mask.1, mask.2, mask.3, mask.4, mask.5, mask.6, mask.7
+                    ))
+                    return try withUnsafeBytes(of: pattern) {
+                        try body(LCDColor(bitPattern: $0.baseAddress))
+                    }
+                }
+            }
+        }
+
         public typealias LineCapStyle = LCDLineCapStyle
-        public typealias Color = LCDColor
-        public typealias Pattern = LCDPattern
         public typealias Rect = LCDRect
         public typealias StringEncoding = PDStringEncoding
         public typealias PolygonFillRule = LCDPolygonFillRule
@@ -510,9 +548,11 @@ public extension Playdate {
             lineWidth: CInt = 1,
             startAngle: Float = 0,
             endAngle: Float = 360,
-            color: Color = LCDColor(LCDSolidColor.black.rawValue)
+            color: Color = .black
         ) {
-            graphics.drawEllipse(x, y, width, height, lineWidth, startAngle, endAngle, color)
+            color.withLCDColor {
+                graphics.drawEllipse(x, y, width, height, lineWidth, startAngle, endAngle, $0)
+            }
         }
 
         /// Fills an ellipse inside the rectangle {`x`, `y`, `width`, `height`}. If `startAngle` != `endAngle`, this draws a
@@ -524,9 +564,11 @@ public extension Playdate {
             height: CInt,
             startAngle: Float = 0,
             endAngle: Float = 360,
-            color: Color = LCDColor(LCDSolidColor.black.rawValue)
+            color: Color = .black
         ) {
-            graphics.fillEllipse(x, y, width, height, startAngle, endAngle, color)
+            color.withLCDColor {
+                graphics.fillEllipse(x, y, width, height, startAngle, endAngle, $0)
+            }
         }
 
         /// Draws a line from `x1`, `y1` to `x2`, `y2` with a stroke width of `lineWidth`.
@@ -536,9 +578,11 @@ public extension Playdate {
             x2: CInt,
             y2: CInt,
             lineWidth: CInt = 1,
-            color: Color = LCDColor(LCDSolidColor.black.rawValue)
+            color: Color = .black
         ) {
-            graphics.drawLine(x1, y1, x2, y2, lineWidth, color)
+            color.withLCDColor {
+                graphics.drawLine(x1, y1, x2, y2, lineWidth, $0)
+            }
         }
 
         /// Draws a `width` by `height` rect at `x`, `y`.
@@ -547,9 +591,11 @@ public extension Playdate {
             y: CInt,
             width: CInt,
             height: CInt,
-            color: Color = LCDColor(LCDSolidColor.black.rawValue)
+            color: Color = .black
         ) {
-            graphics.drawRect(x, y, width, height, color)
+            color.withLCDColor {
+                graphics.drawRect(x, y, width, height, $0)
+            }
         }
 
         /// Draws a filled `width` by `height` rect at `x`, `y`.
@@ -558,9 +604,11 @@ public extension Playdate {
             y: CInt,
             width: CInt,
             height: CInt,
-            color: Color = LCDColor(LCDSolidColor.black.rawValue)
+            color: Color = .black
         ) {
-            graphics.fillRect(x, y, width, height, color)
+            color.withLCDColor {
+                graphics.fillRect(x, y, width, height, $0)
+            }
         }
 
         /// Draws a filled triangle with points at `x1`, `y1`, `x2`, `y2`, and `x3`, `y3`.
@@ -571,9 +619,11 @@ public extension Playdate {
             y2: CInt,
             x3: CInt,
             y3: CInt,
-            color: Color = LCDColor(LCDSolidColor.black.rawValue)
+            color: Color = .black
         ) {
-            graphics.fillTriangle(x1, y1, x2, y2, x3, y3, color)
+            color.withLCDColor {
+                graphics.fillTriangle(x1, y1, x2, y2, x3, y3, $0)
+            }
         }
 
         /// Fills the polygon with vertices at the given coordinates (an array of 2*nPoints ints containing alternating x and y values)
@@ -581,15 +631,19 @@ public extension Playdate {
         /// for an explanation of the winding rule. An edge between the last vertex and the first is assumed.
         public static func fillPolygon(
             points: UnsafeMutableBufferPointer<CUnsignedInt>,
-            color: Color = LCDColor(LCDSolidColor.black.rawValue),
+            color: Color = .black,
             fillRule: PolygonFillRule
         ) {
-            graphics.fillPolygon(CInt(points.count), points.baseAddress, color, fillRule)
+            color.withLCDColor {
+                graphics.fillPolygon(CInt(points.count), points.baseAddress, $0, fillRule)
+            }
         }
 
         /// Clears the entire display, filling it with `color`.
-        public static func clear(color: Color = LCDColor(LCDSolidColor.clear.rawValue)) {
-            graphics.clear(color)
+        public static func clear(color: Color = .clear) {
+            color.withLCDColor {
+                graphics.clear($0)
+            }
         }
 
         /// Sets the background color shown when the display is offset or for clearing dirty areas in the sprite system.
@@ -646,8 +700,8 @@ public extension Playdate {
         }
 
         /// Returns a color using an 8 x 8 pattern using the given `bitmap`. `x`, `y` indicates the top left corner of the 8 x 8 pattern.
-        public static func colorFromPattern(_ pattern: Bitmap, x: CInt, y: CInt) -> Color {
-            var color: Color = 0
+        public static func colorFromPattern(_ pattern: Bitmap, x: CInt, y: CInt) -> LCDColor {
+            var color: LCDColor = 0
             graphics.setColorToPattern(&color, pattern.pointer, x, y)
             return color
         }
