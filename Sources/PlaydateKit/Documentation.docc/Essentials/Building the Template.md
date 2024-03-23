@@ -66,7 +66,7 @@ index c6f109c..2aa5985 100644
 
 ```diff
 diff --git a/.swiftpm/xcode/xcshareddata/xcschemes/PlaydateKitTemplate.xcscheme b/.swiftpm/xcode/xcshareddata/xcschemes/MyGame.xcscheme
-index f506a48..0b025fd 100644
+index b18125c..b3c2a4e 100644
 --- a/.swiftpm/xcode/xcshareddata/xcschemes/PlaydateKitTemplate.xcscheme
 +++ b/.swiftpm/xcode/xcshareddata/xcschemes/MyGame.xcscheme
 @@ -15,9 +15,9 @@
@@ -82,33 +82,7 @@ index f506a48..0b025fd 100644
                 ReferencedContainer = "container:">
              </BuildableReference>
           </BuildActionEntry>
-@@ -49,9 +49,9 @@
-                <EnvironmentBuildable>
-                   <BuildableReference
-                      BuildableIdentifier = "primary"
--                     BlueprintIdentifier = "PlaydateKitTemplate"
--                     BuildableName = "PlaydateKitTemplate"
--                     BlueprintName = "PlaydateKitTemplate"
-+                     BlueprintIdentifier = "MyGame"
-+                     BuildableName = "MyGame"
-+                     BlueprintName = "MyGame"
-                      ReferencedContainer = "container:">
-                   </BuildableReference>
-                </EnvironmentBuildable>
-@@ -66,9 +66,9 @@
-       <MacroExpansion>
-          <BuildableReference
-             BuildableIdentifier = "primary"
--            BlueprintIdentifier = "PlaydateKitTemplate"
--            BuildableName = "PlaydateKitTemplate"
--            BlueprintName = "PlaydateKitTemplate"
-+            BlueprintIdentifier = "MyGame"
-+            BuildableName = "MyGame"
-+            BlueprintName = "MyGame"
-             ReferencedContainer = "container:">
-          </BuildableReference>
-       </MacroExpansion>
-@@ -88,9 +88,9 @@
+@@ -48,9 +48,9 @@
        <MacroExpansion>
           <BuildableReference
              BuildableIdentifier = "primary"
