@@ -7,6 +7,9 @@ import PackagePlugin
     let home = FileManager.default.homeDirectoryForCurrentUser.path()
 
     func performCommand(context: PluginContext, arguments: [String]) async throws {
+        var arguments = ArgumentExtractor(arguments)
+        let verbose = arguments.extractFlag(named: "verbose") > 0
+
         // MARK: - Paths
 
         let swiftToolchain = try swiftToolchain()
@@ -98,6 +101,7 @@ import PackagePlugin
             let process = Process()
             process.executableURL = URL(filePath: gcc.path.string)
             process.arguments = ["-g3"] + arguments
+            if verbose { process.print() }
             try process.run()
             process.waitUntilExit()
             guard process.terminationStatus == 0 else { throw Error.ccFailed(exitCode: process.terminationStatus) }
@@ -110,6 +114,7 @@ import PackagePlugin
             process.arguments = ["-f", "swiftc", "--toolchain", swiftToolchain]
             let pipe = Pipe()
             process.standardOutput = pipe
+            if verbose { process.print() }
             try process.run()
             process.waitUntilExit()
             guard process.terminationStatus == 0 else { throw Error.xcrunFailed(exitCode: process.terminationStatus) }
@@ -118,6 +123,7 @@ import PackagePlugin
             let process2 = Process()
             process2.executableURL = URL(filePath: swiftc)
             process2.arguments = arguments
+            if verbose { process2.print() }
             try process2.run()
             process2.waitUntilExit()
             guard process2.terminationStatus == 0 else { throw Error.swiftcFailed(exitCode: process2.terminationStatus) }
@@ -138,6 +144,7 @@ import PackagePlugin
             process.environment = environment
             process.executableURL = URL(filePath: clang.path.string)
             process.arguments = /* ["-g"] + */ arguments
+            if verbose { process.print() }
             try process.run()
             process.waitUntilExit()
             guard process.terminationStatus == 0 else { throw Error.clangFailed(exitCode: process.terminationStatus) }
@@ -148,6 +155,7 @@ import PackagePlugin
             let process = Process()
             process.executableURL = URL(filePath: pdc.path.string)
             process.arguments = arguments
+            if verbose { process.print() }
             try process.run()
             process.waitUntilExit()
             guard process.terminationStatus == 0 else { throw Error.pdcFailed(exitCode: process.terminationStatus) }
@@ -158,7 +166,13 @@ import PackagePlugin
         // setup.o
         let setup = context.pluginWorkDirectory.appending(["setup.o"]).string
         try cc(mcFlags + [
-            "-c", "-O2", "-falign-functions=16", "-fomit-frame-pointer", "-gdwarf-2", "-Wall", "-Wno-unused", "-Wstrict-prototypes", "-Wno-unknown-pragmas", "-fverbose-asm", "-Wdouble-promotion", "-mword-relocations", "-fno-common", "-ffunction-sections", "-fdata-sections", "-Wa,-ahlms=\(context.pluginWorkDirectory.appending(["setup.lst"]).string)", "-DTARGET_PLAYDATE=1", "-DTARGET_EXTENSION=1", "-MD", "-MP", "-MF", context.pluginWorkDirectory.appending(["setup.o.d"]).string, "-I", ".", "-I", ".", "-I", "\(playdateSDK)/C_API", "\(playdateSDK)/C_API/buildsupport/setup.c", "-o", setup
+            "-c", "-O2", "-falign-functions=16", "-fomit-frame-pointer", "-gdwarf-2", "-Wall", "-Wno-unused", "-Wstrict-prototypes", "-Wno-unknown-pragmas", "-fverbose-asm", "-Wdouble-promotion", "-mword-relocations", "-fno-common", "-ffunction-sections", "-fdata-sections", "-Wa,-ahlms=\(context.pluginWorkDirectory.appending(["setup.lst"]).string)", "-DTARGET_PLAYDATE=1", "-DTARGET_EXTENSION=1", "-MD", "-MP", "-MF",
+            context.pluginWorkDirectory.appending(["setup.o.d"]).string,
+            "-I", ".",
+            "-I", ".",
+            "-I", "\(playdateSDK)/C_API",
+            "\(playdateSDK)/C_API/buildsupport/setup.c",
+            "-o", setup
         ])
 
         // playdatekit_device.o
@@ -204,12 +218,21 @@ import PackagePlugin
 
         print("building pdex.elf")
         try cc([setup, productDevicePath.string] + mcFlags + [
-            "-T\(playdateSDK)/C_API/buildsupport/link_map.ld", "-Wl,-Map=\(context.pluginWorkDirectory.appending(["pdex.map"]).string),--cref,--gc-sections,--no-warn-mismatch,--emit-relocs", "-o", sourcePath.appending(["pdex.elf"]).string
+            "-T\(playdateSDK)/C_API/buildsupport/link_map.ld",
+            "-Wl,-Map=\(context.pluginWorkDirectory.appending(["pdex.map"]).string),--cref,--gc-sections,--no-warn-mismatch,--emit-relocs",
+            "-o", sourcePath.appending(["pdex.elf"]).string
         ])
 
         print("building pdex.dylib")
         try clang([
-            "-nostdlib", "-dead_strip", "-Wl,-exported_symbol,_eventHandlerShim", "-Wl,-exported_symbol,_eventHandler", productSimulatorPath.string, "-dynamiclib", "-rdynamic", "-lm", "-DTARGET_SIMULATOR=1", "-DTARGET_EXTENSION=1", "-I", ".", "-I", "\(playdateSDK)/C_API", "-o", sourcePath.appending(["pdex.dylib"]).string, "\(playdateSDK)/C_API/buildsupport/setup.c"
+            "-nostdlib", "-dead_strip",
+            "-Wl,-exported_symbol,_eventHandlerShim", "-Wl,-exported_symbol,_eventHandler",
+            productSimulatorPath.string, "-dynamiclib", "-rdynamic", "-lm",
+            "-DTARGET_SIMULATOR=1", "-DTARGET_EXTENSION=1",
+            "-I", ".",
+            "-I", "\(playdateSDK)/C_API",
+            "-o", sourcePath.appending(["pdex.dylib"]).string,
+            "\(playdateSDK)/C_API/buildsupport/setup.c"
         ])
 
         print("running pdc")
@@ -258,5 +281,11 @@ extension PDCPlugin {
         case swiftcFailed(exitCode: Int32)
         case clangFailed(exitCode: Int32)
         case pdcFailed(exitCode: Int32)
+    }
+}
+
+extension Process {
+    func print() {
+        Swift.print(([executableURL?.path() ?? ""] + (arguments ?? [])).joined(separator: " "))
     }
 }
