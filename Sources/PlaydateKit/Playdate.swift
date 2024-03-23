@@ -1,3 +1,4 @@
+@_exported
 public import CPlaydate
 
 // MARK: - Playdate
