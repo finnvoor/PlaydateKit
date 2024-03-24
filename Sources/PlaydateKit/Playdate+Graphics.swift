@@ -227,7 +227,6 @@ public enum Graphics {
     }
 
     public typealias LineCapStyle = LCDLineCapStyle
-    public typealias Rect = LCDRect
     public typealias StringEncoding = PDStringEncoding
     public typealias PolygonFillRule = LCDPolygonFillRule
     public typealias SolidColor = LCDSolidColor
@@ -433,13 +432,13 @@ public enum Graphics {
 
     /// Sets the current clip rect, using world coordinates—​that is, the given rectangle will be translated by
     /// the current drawing offset. The clip rect is cleared at the beginning of each update.
-    public static func setClipRect(x: CInt, y: CInt, width: CInt, height: CInt) {
-        graphics.setClipRect(x, y, width, height)
+    public static func setClipRect(_ rect: Rect<CInt>) {
+        graphics.setClipRect(rect.x, rect.y, rect.width, rect.height)
     }
 
     /// Sets the current clip rect in screen coordinates.
-    public static func setScreenClipRect(x: CInt, y: CInt, width: CInt, height: CInt) {
-        graphics.setScreenClipRect(x, y, width, height)
+    public static func setScreenClipRect(_ rect: Rect<CInt>) {
+        graphics.setScreenClipRect(rect.x, rect.y, rect.width, rect.height)
     }
 
     /// Clears the current clip rect.
@@ -462,66 +461,68 @@ public enum Graphics {
         graphics.setTextLeading(leading)
     }
 
-    /// Returns true if any of the opaque pixels in `bitmap1` when positioned at `x1`, `y1` with `flip1` overlap any
-    /// of the opaque pixels in `bitmap2` at `x2`, `y2` with `flip2` within the non-empty rect, or false
+    /// Returns true if any of the opaque pixels in `bitmap1` when positioned at `point1` with `flip1` overlap any
+    /// of the opaque pixels in `bitmap2` at `point2` with `flip2` within the non-empty rect, or false
     /// if no pixels overlap or if one or both fall completely outside of rect.
     public static func checkMaskCollision(
         bitmap1: Bitmap,
-        x1: CInt,
-        y1: CInt,
+        point1: Point<CInt>,
         flip1: Bitmap.Flip,
         bitmap2: Bitmap,
-        x2: CInt,
-        y2: CInt,
+        point2: Point<CInt>,
         flip2: Bitmap.Flip,
-        rect: Rect
+        rect: Rect<CInt>
     ) -> Bool {
-        graphics.checkMaskCollision(bitmap1.pointer, x1, y1, flip1, bitmap2.pointer, x2, y2, flip2, rect) != 0
+        graphics.checkMaskCollision(
+            bitmap1.pointer,
+            point1.x,
+            point1.y,
+            flip1,
+            bitmap2.pointer,
+            point2.x,
+            point2.y,
+            flip2,
+            rect.lcdRect
+        ) != 0
     }
 
-    /// Draws the `bitmap` with its upper-left corner at location `x`, `y`, using the given `flip` orientation.
-    public static func drawBitmap(_ bitmap: Bitmap, x: CInt, y: CInt, flip: Bitmap.Flip) {
-        graphics.drawBitmap(bitmap.pointer, x, y, flip)
+    /// Draws the `bitmap` with its upper-left corner at location `point`, using the given `flip` orientation.
+    public static func drawBitmap(_ bitmap: Bitmap, at point: Point<CInt>, flip: Bitmap.Flip) {
+        graphics.drawBitmap(bitmap.pointer, point.x, point.y, flip)
     }
 
-    /// Draws the `bitmap` scaled to `xScale` and `yScale` with its upper-left corner at location `x`, `y`.
+    /// Draws the `bitmap` scaled to `xScale` and `yScale` with its upper-left corner at location `point`.
     /// Note that `flip` is not available when drawing scaled bitmaps but negative scale values will achieve the same effect.
     public static func drawBitmap(
         _ bitmap: Bitmap,
-        x: CInt,
-        y: CInt,
+        at point: Point<CInt>,
         xScale: Float = 1,
         yScale: Float = 1
     ) {
-        graphics.drawScaledBitmap(bitmap.pointer, x, y, xScale, yScale)
+        graphics.drawScaledBitmap(bitmap.pointer, point.x, point.y, xScale, yScale)
     }
 
     /// Draws the `bitmap` scaled to `xScale` and `yScale` then rotated by `degrees` with its center as given by proportions
-    /// `centerX` and `centerY` at `x`, `y`; that is: if `centerX` and `centerY` are both 0.5 the center of the image is at (x,y),
-    /// if `centerX` and `centerY` are both 0 the top left corner of the image (before rotation) is at (x,y), etc.
+    /// `center` at `point`; that is: if `center` is (0.5, 0.5) the center of the image is at (point.x, point.y),
+    /// if `center` is (0, 0) the top left corner of the image (before rotation) is at (point.x, point.y), etc.
     public static func drawBitmap(
         _ bitmap: Bitmap,
-        x: CInt,
-        y: CInt,
+        at point: Point<CInt>,
         degrees: Float,
-        centerX: Float,
-        centerY: Float,
+        center: Point<Float>,
         xScale: Float = 1,
         yScale: Float = 1
     ) {
-        graphics.drawRotatedBitmap(bitmap.pointer, x, y, degrees, centerX, centerY, xScale, yScale)
+        graphics.drawRotatedBitmap(bitmap.pointer, point.x, point.y, degrees, center.x, center.y, xScale, yScale)
     }
 
-    /// Draws the `bitmap` with its upper-left corner at location `x`, `y` tiled inside a `width` by `height` rectangle.
+    /// Draws the `bitmap` tiled inside `rect`.
     public static func tileBitmap(
         _ bitmap: Bitmap,
-        x: CInt,
-        y: CInt,
-        width: CInt,
-        height: CInt,
+        inside rect: Rect<CInt>,
         flip: Bitmap.Flip
     ) {
-        graphics.tileBitmap(bitmap.pointer, x, y, width, height, flip)
+        graphics.tileBitmap(bitmap.pointer, rect.x, rect.y, rect.width, rect.height, flip)
     }
 
     /// Draws the given `text` using the provided options. If no font has been set with `setFont`, the default
@@ -530,111 +531,131 @@ public enum Graphics {
         _ text: UnsafeRawPointer?,
         length: Int,
         encoding: StringEncoding,
-        x: CInt,
-        y: CInt
+        at point: Point<CInt>
     ) -> CInt {
         // TODO: - Figure out what this returns
-        graphics.drawText(text, length, encoding, x, y)
+        graphics.drawText(text, length, encoding, point.x, point.y)
     }
 
-    /// Draws an ellipse inside the rectangle {`x`, `y`, `width`, `height`} of width `lineWidth` (inset from the rectangle bounds).
+    /// Draws an ellipse inside the rectangle `rect` of width `lineWidth` (inset from the rectangle bounds).
     /// If `startAngle` != `endAngle`, this draws an arc between the given angles. Angles are given in degrees, clockwise from due north.
     public static func drawEllipse(
-        x: CInt,
-        y: CInt,
-        width: CInt,
-        height: CInt,
+        in rect: Rect<CInt>,
         lineWidth: CInt = 1,
         startAngle: Float = 0,
         endAngle: Float = 360,
         color: Color = .black
     ) {
         color.withLCDColor {
-            graphics.drawEllipse(x, y, width, height, lineWidth, startAngle, endAngle, $0)
+            graphics.drawEllipse(
+                rect.x,
+                rect.y,
+                rect.width,
+                rect.height,
+                lineWidth,
+                startAngle,
+                endAngle,
+                $0
+            )
         }
     }
 
-    /// Fills an ellipse inside the rectangle {`x`, `y`, `width`, `height`}. If `startAngle` != `endAngle`, this draws a
+    /// Fills an ellipse inside the rectangle `rect`. If `startAngle` != `endAngle`, this draws a
     /// wedge/Pacman between the given angles. Angles are given in degrees, clockwise from due north.
     public static func fillEllipse(
-        x: CInt,
-        y: CInt,
-        width: CInt,
-        height: CInt,
+        in rect: Rect<CInt>,
         startAngle: Float = 0,
         endAngle: Float = 360,
         color: Color = .black
     ) {
         color.withLCDColor {
-            graphics.fillEllipse(x, y, width, height, startAngle, endAngle, $0)
+            graphics.fillEllipse(
+                rect.x,
+                rect.y,
+                rect.width,
+                rect.height,
+                startAngle,
+                endAngle,
+                $0
+            )
         }
     }
 
-    /// Draws a line from `x1`, `y1` to `x2`, `y2` with a stroke width of `lineWidth`.
+    /// Draws `line` with a stroke width of `lineWidth` and color `color`.
     public static func drawLine(
-        x1: CInt,
-        y1: CInt,
-        x2: CInt,
-        y2: CInt,
+        _ line: Line<CInt>,
         lineWidth: CInt = 1,
         color: Color = .black
     ) {
         color.withLCDColor {
-            graphics.drawLine(x1, y1, x2, y2, lineWidth, $0)
+            graphics.drawLine(
+                line.start.x,
+                line.start.y,
+                line.end.x,
+                line.end.y,
+                lineWidth,
+                $0
+            )
         }
     }
 
-    /// Draws a `width` by `height` rect at `x`, `y`.
+    /// Draws a `rect` with the specified `color`.
     public static func drawRect(
-        x: CInt,
-        y: CInt,
-        width: CInt,
-        height: CInt,
+        _ rect: Rect<CInt>,
         color: Color = .black
     ) {
         color.withLCDColor {
-            graphics.drawRect(x, y, width, height, $0)
+            graphics.drawRect(rect.x, rect.y, rect.width, rect.height, $0)
         }
     }
 
-    /// Draws a filled `width` by `height` rect at `x`, `y`.
+    /// Draws a `rect` filled with the specified `color`
     public static func fillRect(
-        x: CInt,
-        y: CInt,
-        width: CInt,
-        height: CInt,
+        _ rect: Rect<CInt>,
         color: Color = .black
     ) {
         color.withLCDColor {
-            graphics.fillRect(x, y, width, height, $0)
+            graphics.fillRect(
+                rect.x,
+                rect.y,
+                rect.width,
+                rect.height,
+                $0
+            )
         }
     }
 
-    /// Draws a filled triangle with points at `x1`, `y1`, `x2`, `y2`, and `x3`, `y3`.
+    /// Draws a filled triangle with points at `p1`, `p2`, and `p3`.
     public static func fillTriangle(
-        x1: CInt,
-        y1: CInt,
-        x2: CInt,
-        y2: CInt,
-        x3: CInt,
-        y3: CInt,
+        p1: Point<CInt>,
+        p2: Point<CInt>,
+        p3: Point<CInt>,
         color: Color = .black
     ) {
         color.withLCDColor {
-            graphics.fillTriangle(x1, y1, x2, y2, x3, y3, $0)
+            graphics.fillTriangle(
+                p1.x,
+                p1.y,
+                p2.x,
+                p2.y,
+                p3.x,
+                p3.y,
+                $0
+            )
         }
     }
 
-    /// Fills the polygon with vertices at the given coordinates (an array of 2*nPoints ints containing alternating x and y values)
+    /// Fills the polygon with vertices at the given coordinates (an array of `points`)
     /// using the given `color` and fill, or winding, rule. See https://en.wikipedia.org/wiki/Nonzero-rule
     /// for an explanation of the winding rule. An edge between the last vertex and the first is assumed.
     public static func fillPolygon(
-        points: UnsafeMutableBufferPointer<CUnsignedInt>,
+        points: [Point<CInt>],
         color: Color = .black,
         fillRule: PolygonFillRule
     ) {
         color.withLCDColor {
-            graphics.fillPolygon(CInt(points.count), points.baseAddress, $0, fillRule)
+            var points = points.flatMap { [$0.x, $0.y] }
+            graphics.fillPolygon(CInt(points.count), &points, $0, fillRule)
         }
     }
 
@@ -698,24 +719,14 @@ public enum Graphics {
         graphics.setDrawOffset(dx, dy)
     }
 
-    /// Returns a color using an 8 x 8 pattern using the given `bitmap`. `x`, `y` indicates the top left corner of the 8 x 8 pattern.
-    public static func colorFromPattern(_ pattern: Bitmap, x: CInt, y: CInt) -> LCDColor {
+    /// Returns a color using an 8 x 8 pattern using the given `bitmap`. `topLeft` indicates the top left corner of the 8 x 8 pattern.
+    public static func colorFromPattern(_ pattern: Bitmap, topLeft: Point<CInt> = .zero) -> LCDColor {
         var color: LCDColor = 0
-        graphics.setColorToPattern(&color, pattern.pointer, x, y)
+        graphics.setColorToPattern(&color, pattern.pointer, topLeft.x, topLeft.y)
         return color
     }
 
     // MARK: Private
 
     private static var graphics: playdate_graphics { Playdate.playdateAPI.graphics.pointee }
-}
-
-public extension Graphics.Rect {
-    init(x: CInt, y: CInt, width: CInt, height: CInt) {
-        self = LCDMakeRect(x, y, width, height)
-    }
-
-    func translated(dx: CInt, dy: CInt) -> Graphics.Rect {
-        LCDRect_translate(self, dx, dy)
-    }
 }
