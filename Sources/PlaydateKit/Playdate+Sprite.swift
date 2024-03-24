@@ -8,16 +8,14 @@ public import CPlaydate
 public enum Sprite {
     // MARK: Public
 
-    public typealias Rect = PDRect
     public typealias CollisionResponseType = SpriteCollisionResponseType
 
     public class CollisionInfo {
         // MARK: Lifecycle
 
-        init(collisions: UnsafeBufferPointer<SpriteCollisionInfo>, actualX: Float, actualY: Float) {
+        init(collisions: UnsafeBufferPointer<SpriteCollisionInfo>, actual: Point<Float>) {
             self.collisions = collisions
-            self.actualX = actualX
-            self.actualY = actualY
+            self.actual = actual
         }
 
         deinit { collisions.deallocate() }
@@ -25,8 +23,7 @@ public enum Sprite {
         // MARK: Public
 
         public let collisions: UnsafeBufferPointer<SpriteCollisionInfo>
-        public let actualX: Float
-        public let actualY: Float
+        public let actual: Point<Float>
     }
 
     public class QueryInfo {
@@ -62,27 +59,27 @@ public enum Sprite {
         // MARK: Public
 
         /// Gets the current position of sprite.
-        public var position: (x: Float, y: Float) {
+        public var position: Point<Float> {
             var x: Float = 0, y: Float = 0
             sprite.getPosition(pointer, &x, &y)
-            return (x, y)
+            return Point(x: x, y: y)
         }
 
         /// Gets/sets the bounds of the sprite.
-        public var bounds: Rect {
-            get { sprite.getBounds(pointer) }
-            set { sprite.setBounds(pointer, newValue) }
+        public var bounds: Rect<Float> {
+            get { Rect(sprite.getBounds(pointer)) }
+            set { sprite.setBounds(pointer, newValue.pdRect) }
         }
 
         /// Gets/sets the sprite’s drawing center as a fraction (ranging from 0.0 to 1.0) of the height and width.
         /// Default is 0.5, 0.5 (the center of the sprite).
         /// This means that when you call `moveTo(x, y)`, the center of your sprite will be positioned at x, y.
         /// If you want x and y to represent the upper left corner of your sprite, specify the center as 0, 0.
-        public var center: (x: Float, y: Float) {
+        public var center: Point<Float> {
             get {
                 var x: Float = 0, y: Float = 0
                 sprite.getCenter(pointer, &x, &y)
-                return (x, y)
+                return Point(x: x, y: y)
             } set {
                 sprite.setCenter(pointer, newValue.x, newValue.y)
             }
@@ -137,11 +134,11 @@ public enum Sprite {
         }
 
         /// Marks the area of the given sprite, relative to its bounds, to be checked for collisions with other sprites' collide rects.
-        public var collideRect: Rect? {
-            get { sprite.getCollideRect(pointer) }
+        public var collideRect: Rect<Float>? {
+            get { Rect(sprite.getCollideRect(pointer)) }
             set {
                 if let newValue {
-                    sprite.setCollideRect(pointer, newValue)
+                    sprite.setCollideRect(pointer, newValue.pdRect)
                 } else {
                     sprite.clearCollideRect(pointer)
                 }
@@ -162,9 +159,9 @@ public enum Sprite {
             Sprite(pointer: sprite.copy(pointer).unsafelyUnwrapped)
         }
 
-        /// Moves the sprite to `x`, `y` and resets its bounds based on the bitmap dimensions and center.
-        public func moveTo(x: Float, y: Float) {
-            sprite.moveTo(pointer, x, y)
+        /// Moves the sprite to `point` and resets its bounds based on the bitmap dimensions and center.
+        public func moveTo(_ point: Point<Float>) {
+            sprite.moveTo(pointer, point.x, point.y)
         }
 
         /// Moves the sprite to by offsetting its current position by `dx`, `dy`.
@@ -210,9 +207,9 @@ public enum Sprite {
 
         /// Sets the clipping rectangle for sprite drawing.
         /// Pass `nil` to clear the sprite’s clipping rectangle.
-        public func setClipRect(_ clipRect: Graphics.Rect?) {
+        public func setClipRect(_ clipRect: Rect<CInt>?) {
             if let clipRect {
-                sprite.setClipRect(pointer, clipRect)
+                sprite.setClipRect(pointer, clipRect.lcdRect)
             } else {
                 sprite.clearClipRect(pointer)
             }
@@ -245,12 +242,12 @@ public enum Sprite {
         }
 
         /// Sets the draw function for the sprite. Note that the callback is only called when the
-        /// sprite is on screen and has a size specified via `setSize()` or `setBounds()`.
+        /// sprite is on screen and has a size specified via ``setSize(width:height:)`` or ``bounds``.
         public func setDrawFunction(
             drawFunction: (@convention(c) (
                 _ sprite: OpaquePointer?,
-                _ bounds: Rect,
-                _ drawRect: Rect
+                _ bounds: PDRect,
+                _ drawRect: PDRect
             ) -> Void)?
         ) {
             sprite.setDrawFunction(pointer, drawFunction)
@@ -283,22 +280,20 @@ public enum Sprite {
             let collisionInfo = sprite.checkCollisions(pointer, goalX, goalY, &actualX, &actualY, &length)
             return CollisionInfo(
                 collisions: UnsafeBufferPointer(start: collisionInfo, count: Int(length)),
-                actualX: actualX,
-                actualY: actualY
+                actual: Point(x: actualX, y: actualY)
             )
         }
 
-        /// Moves the given sprite towards `goalX`, `goalY` taking collisions into account and returns an array of `SpriteCollisionInfo`.
+        /// Moves the given sprite towards `goal` taking collisions into account and returns an array of `SpriteCollisionInfo`.
         /// `actualX`, `actualY` are set to the sprite’s position after collisions. If no collisions occurred, this will be the same as
         /// `goalX`, `goalY`.
-        public func moveWithCollisions(goalX: Float, goalY: Float) -> CollisionInfo {
+        public func moveWithCollisions(goal: Point<Float>) -> CollisionInfo {
             var actualX: Float = 0, actualY: Float = 0
             var length: CInt = 0
-            let collisionInfo = sprite.moveWithCollisions(pointer, goalX, goalY, &actualX, &actualY, &length)
+            let collisionInfo = sprite.moveWithCollisions(pointer, goal.x, goal.y, &actualX, &actualY, &length)
             return CollisionInfo(
                 collisions: UnsafeBufferPointer(start: collisionInfo, count: Int(length)),
-                actualX: actualX,
-                actualY: actualY
+                actual: Point(x: actualX, y: actualY)
             )
         }
 
@@ -310,8 +305,8 @@ public enum Sprite {
     // MARK: - Properties
 
     /// Sets the clipping rectangle for all sprites with a Z index within `startZ` and `endZ` inclusive.
-    public static func setClipRectsInRange(clipRect: Graphics.Rect, startZ: CInt, endZ: CInt) {
-        sprite.setClipRectsInRange(clipRect, startZ, endZ)
+    public static func setClipRectsInRange(clipRect: Rect<CInt>, startZ: CInt, endZ: CInt) {
+        sprite.setClipRectsInRange(clipRect.lcdRect, startZ, endZ)
     }
 
     /// Clears the clipping rectangle for all sprites with a Z index within `startZ` and `endZ` inclusive.
@@ -328,8 +323,8 @@ public enum Sprite {
 
     /// Marks the given dirtyRect (in screen coordinates) as needing a redraw. Graphics drawing functions now call this
     /// automatically, adding their drawn areas to the sprite’s dirty list, so there’s usually no need to call this manually.
-    public static func addDirtyRect(_ dirtyRect: Graphics.Rect) {
-        sprite.addDirtyRect(dirtyRect)
+    public static func addDirtyRect(_ dirtyRect: Rect<CInt>) {
+        sprite.addDirtyRect(dirtyRect.lcdRect)
     }
 
     // MARK: - Display List
@@ -367,35 +362,47 @@ public enum Sprite {
         sprite.resetCollisionWorld()
     }
 
-    /// Returns an array of all sprites with collision rects containing the point at `x`, `y`.
+    /// Returns an array of all sprites with collision rects containing `point`.
     /// > Warning: The caller is responsible for freeing the returned array.
-    public static func querySpritesAtPoint(x: Float, y: Float) -> UnsafeBufferPointer<OpaquePointer?> {
+    public static func querySpritesAtPoint(_ point: Point<Float>) -> UnsafeBufferPointer<OpaquePointer?> {
         var length: CInt = 0
-        let sprites = sprite.querySpritesAtPoint(x, y, &length)
+        let sprites = sprite.querySpritesAtPoint(point.x, point.y, &length)
         return UnsafeBufferPointer(start: sprites, count: Int(length))
     }
 
-    /// Returns an array of all sprites with collision rects that intersect the `width` by `height` rect at `x`, `y`.
+    /// Returns an array of all sprites with collision rects that intersect `rect`.
     /// > Warning: The caller is responsible for freeing the returned array.
-    public static func querySpritesInRect(x: Float, y: Float, width: Float, height: Float) -> UnsafeBufferPointer<OpaquePointer?> {
+    public static func querySpritesInRect(_ rect: Rect<Float>) -> UnsafeBufferPointer<OpaquePointer?> {
         var length: CInt = 0
-        let sprites = sprite.querySpritesInRect(x, y, width, height, &length)
+        let sprites = sprite.querySpritesInRect(rect.x, rect.y, rect.width, rect.height, &length)
         return UnsafeBufferPointer(start: sprites, count: Int(length))
     }
 
-    /// Returns an array of all sprites with collision rects that intersect the line connecting `x1`, `y1` and `x2`, `y2`.
+    /// Returns an array of all sprites with collision rects that intersect `line`.
     /// > Warning: The caller is responsible for freeing the returned array.
-    public static func querySpritesAlongLine(x1: Float, y1: Float, x2: Float, y2: Float) -> UnsafeBufferPointer<OpaquePointer?> {
+    public static func querySpritesAlongLine(_ line: Line<Float>) -> UnsafeBufferPointer<OpaquePointer?> {
         var length: CInt = 0
-        let sprites = sprite.querySpritesAlongLine(x1, y1, x2, y2, &length)
+        let sprites = sprite.querySpritesAlongLine(
+            line.start.x,
+            line.start.y,
+            line.end.x,
+            line.end.y,
+            &length
+        )
         return UnsafeBufferPointer(start: sprites, count: Int(length))
     }
 
-    /// Returns an array of `SpriteQueryInfo` for all sprites with collision rects that intersect the line connecting `x1`, `y1` and `x2`, `y2`.
+    /// Returns an array of `SpriteQueryInfo` for all sprites with collision rects that intersect `line`.
     /// If you don’t need this information, use `querySpritesAlongLine()` as it will be faster.
-    public static func querySpriteInfoAlongLine(x1: Float, y1: Float, x2: Float, y2: Float) -> QueryInfo {
+    public static func querySpriteInfoAlongLine(_ line: Line<Float>) -> QueryInfo {
         var length: CInt = 0
-        let spriteInfo = sprite.querySpriteInfoAlongLine(x1, y1, x2, y2, &length)
+        let spriteInfo = sprite.querySpriteInfoAlongLine(
+            line.start.x,
+            line.start.y,
+            line.end.x,
+            line.end.y,
+            &length
+        )
         return QueryInfo(info: UnsafeBufferPointer(start: spriteInfo, count: Int(length)))
     }
 

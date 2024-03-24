@@ -394,9 +394,9 @@ public enum System {
         system.setSerialMessageCallback(callback)
     }
 
-    /// Calculates the current frames per second and draws that value at `x`, `y`.
-    public static func drawFPS(x: CInt = 0, y: CInt = 0) {
-        system.drawFPS(x, y)
+    /// Calculates the current frames per second and draws that value at `point`.
+    public static func drawFPS(at point: Point<CInt> = .zero) {
+        system.drawFPS(point.x, point.y)
     }
 
     /// Flush the CPU instruction cache, on the very unlikely chance you’re modifying instruction code on the fly.
