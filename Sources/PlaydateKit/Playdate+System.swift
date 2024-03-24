@@ -343,9 +343,8 @@ public enum System {
     }
 
     /// Returns the number of seconds (and sets milliseconds if not NULL) elapsed since midnight (hour 0), January 1, 2000.
-    public static func getSecondsSinceEpoch(_ epoch: CUnsignedInt) -> CUnsignedInt {
-        var epoch = epoch
-        return system.getSecondsSinceEpoch(&epoch)
+    public static func getSecondsSinceEpoch(milliseconds: UnsafeMutablePointer<CUnsignedInt>? = nil) -> CUnsignedInt {
+        return system.getSecondsSinceEpoch(milliseconds)
     }
 
     /// Resets the high-resolution timer.
