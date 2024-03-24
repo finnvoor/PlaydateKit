@@ -3,29 +3,6 @@ public import CPlaydate
 
 // MARK: - Playdate
 
-@_documentation(visibility: internal)
-public typealias Display = Playdate.Display
-@_documentation(visibility: internal)
-public typealias File = Playdate.File
-@_documentation(visibility: internal)
-public typealias Graphics = Playdate.Graphics
-@_documentation(visibility: internal)
-public typealias JSON = Playdate.JSON
-// @_documentation(visibility: internal)
-// public typealias Lua = Playdate.Lua
-
-@_documentation(visibility: internal)
-public typealias Scoreboards = Playdate.Scoreboards
-// @_documentation(visibility: internal)
-// public typealias Sound = Playdate.Sound
-
-@_documentation(visibility: internal)
-public typealias Sprite = Playdate.Sprite
-@_documentation(visibility: internal)
-public typealias System = Playdate.System
-
-// MARK: - Playdate
-
 public enum Playdate {
     // MARK: Public
 
@@ -33,6 +10,7 @@ public enum Playdate {
         let humanReadableText: UnsafePointer<CChar>?
     }
 
+    /// Access to the Playdate C API.
     public nonisolated(unsafe) static var playdateAPI: PlaydateAPI! {
         guard let _playdateAPI else {
             fatalError("playdateAPI is not set! Did you forget to call Playdate.initialize(with:)?")
