@@ -5,6 +5,7 @@ import PackagePlugin
 
 @main struct PDCPlugin: CommandPlugin {
     let home = FileManager.default.homeDirectoryForCurrentUser.path()
+    let arm_none_eabi_gcc = "/usr/local/playdate/gcc-arm-none-eabi-9-2019-q4-major/bin/arm-none-eabi-gcc"
 
     func performCommand(context: PluginContext, arguments: [String]) async throws {
         var arguments = ArgumentExtractor(arguments)
@@ -97,9 +98,8 @@ import PackagePlugin
         // MARK: - CLI
 
         func cc(_ arguments: [String]) throws {
-            let gcc = try context.tool(named: "arm-none-eabi-gcc")
             let process = Process()
-            process.executableURL = URL(filePath: gcc.path.string)
+            process.executableURL = URL(filePath: arm_none_eabi_gcc)
             process.arguments = ["-g3"] + arguments
             if verbose { process.print() }
             try process.run()
