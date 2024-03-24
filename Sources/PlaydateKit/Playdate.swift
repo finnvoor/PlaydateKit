@@ -1,3 +1,4 @@
+@_documentation(visibility: internal)
 @_exported
 public import CPlaydate
 
