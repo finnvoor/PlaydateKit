@@ -7,13 +7,13 @@ public enum Display {
     /// Returns the height of the display, taking the current scale into account;
     /// e.g., if the scale is 2, this function returns 120 instead of 240.
     public static var height: CInt {
-        display.getHeight()
+        display.getHeight.unsafelyUnwrapped()
     }
 
     /// Returns the width of the display, taking the current scale into account;
     /// e.g., if the scale is 2, this function returns 200 instead of 400.
     public static var width: CInt {
-        display.getWidth()
+        display.getWidth.unsafelyUnwrapped()
     }
 
     /// The nominal refresh rate in frames per second. The default is 30 fps, which is a recommended
@@ -31,7 +31,7 @@ public enum Display {
                 refreshRate = min(max(refreshRate, 0), 50)
             }
             _refreshRate = refreshRate
-            display.setRefreshRate(refreshRate)
+            display.setRefreshRate.unsafelyUnwrapped(refreshRate)
         }
     }
 
@@ -40,7 +40,7 @@ public enum Display {
         get { _inverted }
         set {
             _inverted = newValue
-            display.setInverted(newValue ? 1 : 0)
+            display.setInverted.unsafelyUnwrapped(newValue ? 1 : 0)
         }
     }
 
@@ -57,7 +57,7 @@ public enum Display {
                 scale = 1
             }
             _scale = scale
-            display.setScale(scale)
+            display.setScale.unsafelyUnwrapped(scale)
         }
     }
 
@@ -66,19 +66,19 @@ public enum Display {
         get { _flipped }
         set {
             _flipped = newValue
-            display.setFlipped(newValue.x ? 1 : 0, newValue.y ? 1 : 0)
+            display.setFlipped.unsafelyUnwrapped(newValue.x ? 1 : 0, newValue.y ? 1 : 0)
         }
     }
 
     /// Adds a mosaic effect to the display. Valid x and y values are between 0 and 3, inclusive.
     public static func setMosaic(x: CUnsignedInt, y: CUnsignedInt) {
-        display.setMosaic(x, y)
+        display.setMosaic.unsafelyUnwrapped(x, y)
     }
 
     /// Offsets the display by the given amount.
     /// Areas outside of the displayed area are filled with the current background color.
     public static func setOffset(dx: CInt, dy: CInt) {
-        display.setOffset(dx, dy)
+        display.setOffset.unsafelyUnwrapped(dx, dy)
     }
 
     // MARK: Private

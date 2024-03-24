@@ -37,7 +37,7 @@ public enum Scoreboards {
             _ errorMessage: UnsafePointer<CChar>?
         ) -> Void)? = nil
     ) -> CInt {
-        scoreboards.addScore(boardID, value, callback)
+        scoreboards.addScore.unsafelyUnwrapped(boardID, value, callback)
     }
 
     /// Gets the player’s personal best score. Invokes the given callback with the score.
@@ -65,12 +65,12 @@ public enum Scoreboards {
             _ errorMessage: UnsafePointer<CChar>?
         ) -> Void)? = nil
     ) -> CInt {
-        scoreboards.getPersonalBest(boardID, callback)
+        scoreboards.getPersonalBest.unsafelyUnwrapped(boardID, callback)
     }
 
     /// Free a score struct that was provided to a callback.
     public static func freeScore(_ score: UnsafeMutablePointer<Score>) {
-        scoreboards.freeScore(score)
+        scoreboards.freeScore.unsafelyUnwrapped(score)
     }
 
     /// Invokes the given callback with a list of the registered scoreboards. (Note that if you already know the string
@@ -81,12 +81,12 @@ public enum Scoreboards {
             _ errorMessage: UnsafePointer<CChar>?
         ) -> Void
     ) -> CInt {
-        scoreboards.getScoreboards(callback)
+        scoreboards.getScoreboards.unsafelyUnwrapped(callback)
     }
 
     /// Free a list of scoreboards.
     public static func freeBoardsList(_ boardsList: UnsafeMutablePointer<BoardsList>) {
-        scoreboards.freeBoardsList(boardsList)
+        scoreboards.freeBoardsList.unsafelyUnwrapped(boardsList)
     }
 
     /// Invokes the given callback with a list of the top scores on the given board. (Typically ten scores or fewer.)
@@ -108,12 +108,12 @@ public enum Scoreboards {
             _ errorMessage: UnsafePointer<CChar>?
         ) -> Void
     ) -> CInt {
-        scoreboards.getScores(boardID, callback)
+        scoreboards.getScores.unsafelyUnwrapped(boardID, callback)
     }
 
     /// Free a list of scores.
     public static func freeScoresList(_ scoresList: UnsafeMutablePointer<ScoresList>) {
-        scoreboards.freeScoresList(scoresList)
+        scoreboards.freeScoresList.unsafelyUnwrapped(scoresList)
     }
 
     // MARK: Private

@@ -20,22 +20,23 @@ public enum File {
 
         /// Closes the file handle.
         public func close() throws(Playdate.Error) {
-            guard file.close(pointer) == 0 else { throw lastError }
+            guard file.close.unsafelyUnwrapped(pointer) == 0 else { throw lastError }
         }
 
         /// Flushes the output buffer of file immediately. Returns the number of bytes written.
         public func flush() throws(Playdate.Error) -> CInt {
-            let writtenCount = file.flush(pointer)
+            let writtenCount = file.flush.unsafelyUnwrapped(pointer)
             guard writtenCount != -1 else { throw lastError }
             return writtenCount
         }
 
-        /// Reads up to `length` bytes from the file handle into the buffer `buffer`. Returns the number of bytes read (0 indicating end of file)
+        /// Reads up to `length` bytes from the file handle into the buffer `buffer`.
+        ///  Returns the number of bytes read (0 indicating end of file)
         public func read(
             buffer: UnsafeMutableRawPointer,
             length: CUnsignedInt
         ) throws(Playdate.Error) -> CInt {
-            let readCount = file.read(pointer, buffer, length)
+            let readCount = file.read.unsafelyUnwrapped(pointer, buffer, length)
             guard readCount != -1 else { throw lastError }
             return readCount
         }
@@ -45,12 +46,14 @@ public enum File {
             to position: CInt,
             seek: Seek = .current
         ) throws(Playdate.Error) {
-            guard file.seek(pointer, position, seek.rawValue) == 0 else { throw lastError }
+            guard file.seek.unsafelyUnwrapped(pointer, position, seek.rawValue) == 0 else {
+                throw lastError
+            }
         }
 
         /// Returns the current read/write offset in the given file handle
         public func currentSeekPosition() throws(Playdate.Error) -> CInt {
-            let offset = file.tell(pointer)
+            let offset = file.tell.unsafelyUnwrapped(pointer)
             guard offset != 0 else { throw lastError }
             return offset
         }
@@ -59,7 +62,7 @@ public enum File {
         public func write(
             buffer: UnsafeRawBufferPointer
         ) throws(Playdate.Error) -> CInt {
-            let writtenCount = file.write(pointer, buffer.baseAddress, CUnsignedInt(buffer.count))
+            let writtenCount = file.write.unsafelyUnwrapped(pointer, buffer.baseAddress, CUnsignedInt(buffer.count))
             guard writtenCount != 1 else { throw lastError }
             return writtenCount
         }
@@ -98,7 +101,7 @@ public enum File {
         userdata: UnsafeMutableRawPointer? = nil,
         showHidden: Bool = false
     ) throws(Playdate.Error) {
-        guard file.listfiles(path, callback, userdata, showHidden ? 1 : 0) == 0 else {
+        guard file.listfiles.unsafelyUnwrapped(path, callback, userdata, showHidden ? 1 : 0) == 0 else {
             throw lastError
         }
     }
@@ -111,8 +114,13 @@ public enum File {
 
     /// Deletes the file at path. If `recursive` is true and the target path is a folder,
     /// this deletes everything inside the folder (including folders, folders inside those, and so on) as well as the folder itself.
-    public static func unlink(path: UnsafePointer<CChar>, recursive: Bool = false) throws(Playdate.Error) {
-        guard file.unlink(path, recursive ? 1 : 0) == 0 else { throw lastError }
+    public static func unlink(
+        path: UnsafePointer<CChar>,
+        recursive: Bool = false
+    ) throws(Playdate.Error) {
+        guard file.unlink.unsafelyUnwrapped(path, recursive ? 1 : 0) == 0 else {
+            throw lastError
+        }
     }
 
     /// Creates the given path in the `Data/<gameid>` folder. It does not create intermediate folders.
@@ -122,7 +130,7 @@ public enum File {
 
     /// Creates the given path in the `Data/<gameid>` folder. It does not create intermediate folders.
     public static func mkdir(path: UnsafePointer<CChar>) throws(Playdate.Error) {
-        guard file.mkdir(path) == 0 else { throw lastError }
+        guard file.mkdir.unsafelyUnwrapped(path) == 0 else { throw lastError }
     }
 
     /// Renames the file at `from` to `to`. It will overwrite the file at to without confirmation.
@@ -133,8 +141,11 @@ public enum File {
 
     /// Renames the file at `from` to `to`. It will overwrite the file at to without confirmation.
     /// It does not create intermediate folders.
-    public static func rename(from: UnsafePointer<CChar>, to: UnsafePointer<CChar>) throws(Playdate.Error) {
-        guard file.rename(from, to) == 0 else { throw lastError }
+    public static func rename(
+        from: UnsafePointer<CChar>,
+        to: UnsafePointer<CChar>
+    ) throws(Playdate.Error) {
+        guard file.rename.unsafelyUnwrapped(from, to) == 0 else { throw lastError }
     }
 
     /// Returns the FileStat stat with information about the file at `path`.
@@ -147,7 +158,7 @@ public enum File {
     /// Returns the FileStat stat with information about the file at `path`.
     public static func stat(path: UnsafePointer<CChar>) throws(Playdate.Error) -> FileStat {
         var fileStat = FileStat()
-        guard file.stat(path, &fileStat) == 0 else { throw lastError }
+        guard file.stat.unsafelyUnwrapped(path, &fileStat) == 0 else { throw lastError }
         return fileStat
     }
 
@@ -157,7 +168,10 @@ public enum File {
     /// The function throws an error if a file at path cannot be opened.
     /// > Warning: The filesystem has a limit of 64 simultaneous open files. The returned file handle should be closed,
     /// when it is no longer in use (before deinit).
-    public static func open(path: StaticString, mode: Options) throws(Playdate.Error) -> FileHandle {
+    public static func open(
+        path: StaticString,
+        mode: Options
+    ) throws(Playdate.Error) -> FileHandle {
         guard let fileHandle = file.open(path.utf8Start, mode) else {
             throw lastError
         }
@@ -170,8 +184,11 @@ public enum File {
     /// The function throws an error if a file at path cannot be opened.
     /// > Warning: The filesystem has a limit of 64 simultaneous open files. The returned file handle should be closed,
     /// when it is no longer in use (before deinit).
-    public static func open(path: UnsafePointer<CChar>, mode: Options) throws(Playdate.Error) -> FileHandle {
-        guard let fileHandle = file.open(path, mode) else {
+    public static func open(
+        path: UnsafePointer<CChar>,
+        mode: Options
+    ) throws(Playdate.Error) -> FileHandle {
+        guard let fileHandle = file.open.unsafelyUnwrapped(path, mode) else {
             throw lastError
         }
         return FileHandle(pointer: fileHandle)
@@ -182,7 +199,7 @@ public enum File {
     /// Returns human-readable text describing the most recent error
     /// (usually indicated by a thrown error from a filesystem function).
     private static var lastError: Playdate.Error {
-        Playdate.Error(humanReadableText: file.geterr())
+        Playdate.Error(humanReadableText: file.geterr.unsafelyUnwrapped())
     }
 
     private static var file: playdate_file { Playdate.playdateAPI.file.pointee }

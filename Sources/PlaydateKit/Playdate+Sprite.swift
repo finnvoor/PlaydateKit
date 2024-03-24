@@ -47,28 +47,28 @@ public enum Sprite {
 
         /// Allocates and returns a new Sprite.
         public init() {
-            pointer = sprite.newSprite().unsafelyUnwrapped
+            pointer = sprite.newSprite.unsafelyUnwrapped().unsafelyUnwrapped
         }
 
         init(pointer: OpaquePointer) {
             self.pointer = pointer
         }
 
-        deinit { sprite.freeSprite(pointer) }
+        deinit { sprite.freeSprite.unsafelyUnwrapped(pointer) }
 
         // MARK: Public
 
         /// Gets the current position of sprite.
         public var position: Point<Float> {
             var x: Float = 0, y: Float = 0
-            sprite.getPosition(pointer, &x, &y)
+            sprite.getPosition.unsafelyUnwrapped(pointer, &x, &y)
             return Point(x: x, y: y)
         }
 
         /// Gets/sets the bounds of the sprite.
         public var bounds: Rect<Float> {
-            get { Rect(sprite.getBounds(pointer)) }
-            set { sprite.setBounds(pointer, newValue.pdRect) }
+            get { Rect(sprite.getBounds.unsafelyUnwrapped(pointer)) }
+            set { sprite.setBounds.unsafelyUnwrapped(pointer, newValue.pdRect) }
         }
 
         /// Gets/sets the sprite’s drawing center as a fraction (ranging from 0.0 to 1.0) of the height and width.
@@ -78,69 +78,69 @@ public enum Sprite {
         public var center: Point<Float> {
             get {
                 var x: Float = 0, y: Float = 0
-                sprite.getCenter(pointer, &x, &y)
+                sprite.getCenter.unsafelyUnwrapped(pointer, &x, &y)
                 return Point(x: x, y: y)
             } set {
-                sprite.setCenter(pointer, newValue.x, newValue.y)
+                sprite.setCenter.unsafelyUnwrapped(pointer, newValue.x, newValue.y)
             }
         }
 
         /// Returns the `Bitmap` currently assigned to the given sprite.
         public var image: Graphics.Bitmap? {
-            sprite.getImage(pointer).map { Graphics.Bitmap(pointer: $0) }
+            sprite.getImage.unsafelyUnwrapped(pointer).map { Graphics.Bitmap(pointer: $0) }
         }
 
         /// Gets/sets the Z order of the given sprite. Higher Z sprites are drawn on top of those with lower Z order.
         public var zIndex: Int16 {
-            get { sprite.getZIndex(pointer) }
-            set { sprite.setZIndex(pointer, newValue) }
+            get { sprite.getZIndex.unsafelyUnwrapped(pointer) }
+            set { sprite.setZIndex.unsafelyUnwrapped(pointer, newValue) }
         }
 
         /// Gets/sets the tag of the given sprite. This can be useful for identifying sprites or types of sprites when using the collision API.
         public var tag: UInt8 {
-            get { sprite.getTag(pointer) }
-            set { sprite.setTag(pointer, newValue) }
+            get { sprite.getTag.unsafelyUnwrapped(pointer) }
+            set { sprite.setTag.unsafelyUnwrapped(pointer, newValue) }
         }
 
         /// Flips the bitmap.
         public var imageFlip: Graphics.Bitmap.Flip {
-            get { sprite.getImageFlip(pointer) }
-            set { sprite.setImageFlip(pointer, newValue) }
+            get { sprite.getImageFlip.unsafelyUnwrapped(pointer) }
+            set { sprite.setImageFlip.unsafelyUnwrapped(pointer, newValue) }
         }
 
         /// Get/set the `updatesEnabled` flag of the sprite (determines whether the sprite has its update function called).
         public var updatesEnabled: Bool {
-            get { sprite.updatesEnabled(pointer) != 0 }
-            set { sprite.setUpdatesEnabled(pointer, newValue ? 1 : 0) }
+            get { sprite.updatesEnabled.unsafelyUnwrapped(pointer) != 0 }
+            set { sprite.setUpdatesEnabled.unsafelyUnwrapped(pointer, newValue ? 1 : 0) }
         }
 
         /// Set the `visible` flag of the sprite (determines whether the sprite has its draw function called).
         public var isVisible: Bool {
-            get { sprite.isVisible(pointer) != 0 }
-            set { sprite.setVisible(pointer, newValue ? 1 : 0) }
+            get { sprite.isVisible.unsafelyUnwrapped(pointer) != 0 }
+            set { sprite.setVisible.unsafelyUnwrapped(pointer, newValue ? 1 : 0) }
         }
 
         /// Gets/sets the sprite’s userdata, an arbitrary pointer used for associating the sprite with other data.
         public var userdata: UnsafeMutableRawPointer? {
-            get { sprite.getUserdata(pointer) }
-            set { sprite.setUserdata(pointer, newValue) }
+            get { sprite.getUserdata.unsafelyUnwrapped(pointer) }
+            set { sprite.setUserdata.unsafelyUnwrapped(pointer, newValue) }
         }
 
         /// Get/set the `collisionsEnabled` flag of the sprite (along with the `collideRect`, this
         /// determines whether the sprite participates in collisions). Set to true by default.
         public var collisionsEnabled: Bool {
-            get { sprite.collisionsEnabled(pointer) != 0 }
-            set { sprite.setCollisionsEnabled(pointer, newValue ? 1 : 0) }
+            get { sprite.collisionsEnabled.unsafelyUnwrapped(pointer) != 0 }
+            set { sprite.setCollisionsEnabled.unsafelyUnwrapped(pointer, newValue ? 1 : 0) }
         }
 
         /// Marks the area of the given sprite, relative to its bounds, to be checked for collisions with other sprites' collide rects.
         public var collideRect: Rect<Float>? {
-            get { Rect(sprite.getCollideRect(pointer)) }
+            get { Rect(sprite.getCollideRect.unsafelyUnwrapped(pointer)) }
             set {
                 if let newValue {
-                    sprite.setCollideRect(pointer, newValue.pdRect)
+                    sprite.setCollideRect.unsafelyUnwrapped(pointer, newValue.pdRect)
                 } else {
-                    sprite.clearCollideRect(pointer)
+                    sprite.clearCollideRect.unsafelyUnwrapped(pointer)
                 }
             }
         }
@@ -150,68 +150,68 @@ public enum Sprite {
         public var overlappingSprites: UnsafeBufferPointer<OpaquePointer?> {
             // TODO: - Return array of sprites? figure out memory management
             var length: CInt = 0
-            let sprites = sprite.overlappingSprites(pointer, &length)
+            let sprites = sprite.overlappingSprites.unsafelyUnwrapped(pointer, &length)
             return UnsafeBufferPointer(start: sprites, count: Int(length))
         }
 
         /// Allocates and returns a copy of the sprite.
         public func copy() -> Sprite {
-            Sprite(pointer: sprite.copy(pointer).unsafelyUnwrapped)
+            Sprite(pointer: sprite.copy.unsafelyUnwrapped(pointer).unsafelyUnwrapped)
         }
 
         /// Moves the sprite to `point` and resets its bounds based on the bitmap dimensions and center.
         public func moveTo(_ point: Point<Float>) {
-            sprite.moveTo(pointer, point.x, point.y)
+            sprite.moveTo.unsafelyUnwrapped(pointer, point.x, point.y)
         }
 
         /// Moves the sprite to by offsetting its current position by `dx`, `dy`.
         public func moveBy(dx: Float, dy: Float) {
-            sprite.moveBy(pointer, dx, dy)
+            sprite.moveBy.unsafelyUnwrapped(pointer, dx, dy)
         }
 
         /// Sets the sprite's image to the given bitmap.
         public func setImage(image: Graphics.Bitmap, flip: Graphics.Bitmap.Flip = .bitmapUnflipped) {
-            sprite.setImage(pointer, image.pointer, flip)
+            sprite.setImage.unsafelyUnwrapped(pointer, image.pointer, flip)
         }
 
         /// Sets the size. The size is used to set the sprite’s bounds when calling `moveTo()`.
         public func setSize(width: Float, height: Float) {
-            sprite.setSize(pointer, width, height)
+            sprite.setSize.unsafelyUnwrapped(pointer, width, height)
         }
 
         /// Sets the mode for drawing the sprite’s bitmap.
         public func setDrawMode(_ drawMode: Graphics.Bitmap.DrawMode) {
-            sprite.setDrawMode(pointer, drawMode)
+            sprite.setDrawMode.unsafelyUnwrapped(pointer, drawMode)
         }
 
         /// Specifies a stencil image to be set on the frame buffer before the sprite is drawn.
         /// Pass `nil` to clear the sprite’s stencil.
         public func setStencil(_ stencil: Graphics.Bitmap?) {
             if let stencil {
-                sprite.setStencil(pointer, stencil.pointer)
+                sprite.setStencil.unsafelyUnwrapped(pointer, stencil.pointer)
             } else {
-                sprite.clearStencil(pointer)
+                sprite.clearStencil.unsafelyUnwrapped(pointer)
             }
         }
 
         /// Specifies a stencil image to be set on the frame buffer before the sprite is drawn. If `tile` is set, the stencil will be tiled.
         /// Tiled stencils must have width evenly divisible by 32.
         public func setStencilImage(_ stencil: Graphics.Bitmap, tile: CInt) {
-            sprite.setStencilImage(pointer, stencil.pointer, tile)
+            sprite.setStencilImage.unsafelyUnwrapped(pointer, stencil.pointer, tile)
         }
 
         /// Sets the sprite’s stencil to the given pattern.
         public func setStencilPattern(_ pattern: UnsafeMutablePointer<UInt8>) {
-            sprite.setStencilPattern(pointer, pattern)
+            sprite.setStencilPattern.unsafelyUnwrapped(pointer, pattern)
         }
 
         /// Sets the clipping rectangle for sprite drawing.
         /// Pass `nil` to clear the sprite’s clipping rectangle.
         public func setClipRect(_ clipRect: Rect<CInt>?) {
             if let clipRect {
-                sprite.setClipRect(pointer, clipRect.lcdRect)
+                sprite.setClipRect.unsafelyUnwrapped(pointer, clipRect.lcdRect)
             } else {
-                sprite.clearClipRect(pointer)
+                sprite.clearClipRect.unsafelyUnwrapped(pointer)
             }
         }
 
@@ -219,26 +219,26 @@ public enum Sprite {
         /// since it will be overdrawn anyway. If you set an image without a mask/alpha channel on the sprite, it automatically
         /// sets the `opaque` flag.
         public func setOpaque(_ opaque: Bool) {
-            sprite.setOpaque(pointer, opaque ? 1 : 0)
+            sprite.setOpaque.unsafelyUnwrapped(pointer, opaque ? 1 : 0)
         }
 
         /// Forces the sprite to redraw.
         public func markDirty() {
-            sprite.markDirty(pointer)
+            sprite.markDirty.unsafelyUnwrapped(pointer)
         }
 
         /// When `ignoresDrawOffset` is set to true, the sprite will draw in screen coordinates, ignoring the currently-set drawOffset.
         ///
         /// This only affects drawing, and should not be used on sprites being used for collisions, which will still happen in world-space.
         public func setIgnoresDrawOffset(_ ignoresDrawOffset: Bool) {
-            sprite.setIgnoresDrawOffset(pointer, ignoresDrawOffset ? 1 : 0)
+            sprite.setIgnoresDrawOffset.unsafelyUnwrapped(pointer, ignoresDrawOffset ? 1 : 0)
         }
 
         /// Sets the update function for the sprite.
         public func setUpdateFunction(
             _ updateFunction: (@convention(c) (_ sprite: OpaquePointer?) -> Void)?
         ) {
-            sprite.setUpdateFunction(pointer, updateFunction)
+            sprite.setUpdateFunction.unsafelyUnwrapped(pointer, updateFunction)
         }
 
         /// Sets the draw function for the sprite. Note that the callback is only called when the
@@ -250,17 +250,17 @@ public enum Sprite {
                 _ drawRect: PDRect
             ) -> Void)?
         ) {
-            sprite.setDrawFunction(pointer, drawFunction)
+            sprite.setDrawFunction.unsafelyUnwrapped(pointer, drawFunction)
         }
 
         /// Adds the sprite to the display list, so that it is drawn in the current scene.
         public func addToDisplayList() {
-            sprite.addSprite(pointer)
+            sprite.addSprite.unsafelyUnwrapped(pointer)
         }
 
         /// Removes the given sprite from the display list.
         public func removeFromDisplayList() {
-            sprite.removeSprite(pointer)
+            sprite.removeSprite.unsafelyUnwrapped(pointer)
         }
 
         /// Set a callback that returns a `SpriteCollisionResponseType` for a collision between `sprite` and other.
@@ -270,14 +270,21 @@ public enum Sprite {
                 _ other: OpaquePointer?
             ) -> CollisionResponseType)?
         ) {
-            sprite.setCollisionResponseFunction(pointer, function)
+            sprite.setCollisionResponseFunction.unsafelyUnwrapped(pointer, function)
         }
 
         /// Returns the same values as `moveWithCollisions()` but does not actually move the sprite.
         public func checkCollisions(goalX: Float, goalY: Float) -> CollisionInfo {
             var actualX: Float = 0, actualY: Float = 0
             var length: CInt = 0
-            let collisionInfo = sprite.checkCollisions(pointer, goalX, goalY, &actualX, &actualY, &length)
+            let collisionInfo = sprite.checkCollisions.unsafelyUnwrapped(
+                pointer,
+                goalX,
+                goalY,
+                &actualX,
+                &actualY,
+                &length
+            )
             return CollisionInfo(
                 collisions: UnsafeBufferPointer(start: collisionInfo, count: Int(length)),
                 actual: Point(x: actualX, y: actualY)
@@ -290,7 +297,14 @@ public enum Sprite {
         public func moveWithCollisions(goal: Point<Float>) -> CollisionInfo {
             var actualX: Float = 0, actualY: Float = 0
             var length: CInt = 0
-            let collisionInfo = sprite.moveWithCollisions(pointer, goal.x, goal.y, &actualX, &actualY, &length)
+            let collisionInfo = sprite.moveWithCollisions.unsafelyUnwrapped(
+                pointer,
+                goal.x,
+                goal.y,
+                &actualX,
+                &actualY,
+                &length
+            )
             return CollisionInfo(
                 collisions: UnsafeBufferPointer(start: collisionInfo, count: Int(length)),
                 actual: Point(x: actualX, y: actualY)
@@ -306,25 +320,25 @@ public enum Sprite {
 
     /// Sets the clipping rectangle for all sprites with a Z index within `startZ` and `endZ` inclusive.
     public static func setClipRectsInRange(clipRect: Rect<CInt>, startZ: CInt, endZ: CInt) {
-        sprite.setClipRectsInRange(clipRect.lcdRect, startZ, endZ)
+        sprite.setClipRectsInRange.unsafelyUnwrapped(clipRect.lcdRect, startZ, endZ)
     }
 
     /// Clears the clipping rectangle for all sprites with a Z index within `startZ` and `endZ` inclusive.
     public static func clearClipRectsInRange(startZ: CInt, endZ: CInt) {
-        sprite.clearClipRectsInRange(startZ, endZ)
+        sprite.clearClipRectsInRange.unsafelyUnwrapped(startZ, endZ)
     }
 
     /// When `alwaysRedraw` is set to true, this causes all sprites to draw each frame, whether or not they have been marked dirty.
     /// This may speed up the performance of your game if the system’s dirty rect tracking is taking up too much time - for example
     /// if there are many sprites moving around on screen at once.
     public static func setAlwaysRedraw(_ alwaysRedraw: Bool) {
-        sprite.setAlwaysRedraw(alwaysRedraw ? 1 : 0)
+        sprite.setAlwaysRedraw.unsafelyUnwrapped(alwaysRedraw ? 1 : 0)
     }
 
     /// Marks the given dirtyRect (in screen coordinates) as needing a redraw. Graphics drawing functions now call this
     /// automatically, adding their drawn areas to the sprite’s dirty list, so there’s usually no need to call this manually.
     public static func addDirtyRect(_ dirtyRect: Rect<CInt>) {
-        sprite.addDirtyRect(dirtyRect.lcdRect)
+        sprite.addDirtyRect.unsafelyUnwrapped(dirtyRect.lcdRect)
     }
 
     // MARK: - Display List
@@ -332,41 +346,41 @@ public enum Sprite {
     /// Removes the given array of sprites from the display list.
     public static func removeSpritesFromDisplayList(_ sprites: UnsafeMutableBufferPointer<Sprite>) {
         var pointers = sprites.map { Optional($0.pointer) }
-        sprite.removeSprites(&pointers, CInt(sprites.count))
+        sprite.removeSprites.unsafelyUnwrapped(&pointers, CInt(sprites.count))
     }
 
     /// Removes all sprites from the display list.
     public static func removeAllSpritesFromDisplayList() {
-        sprite.removeAllSprites()
+        sprite.removeAllSprites.unsafelyUnwrapped()
     }
 
     /// Returns the total number of sprites in the display list.
     public static func getDisplayListSpriteCount() -> CInt {
-        sprite.getSpriteCount()
+        sprite.getSpriteCount.unsafelyUnwrapped()
     }
 
     /// Draws every sprite in the display list.
     public static func drawDisplayListSprites() {
-        sprite.drawSprites()
+        sprite.drawSprites.unsafelyUnwrapped()
     }
 
     /// Updates and draws every sprite in the display list.
     public static func updateAndDrawDisplayListSprites() {
-        sprite.updateAndDrawSprites()
+        sprite.updateAndDrawSprites.unsafelyUnwrapped()
     }
 
     // MARK: - Collisions
 
     /// Frees and reallocates internal collision data, resetting everything to its default state.
     public static func resetCollisionWorld() {
-        sprite.resetCollisionWorld()
+        sprite.resetCollisionWorld.unsafelyUnwrapped()
     }
 
     /// Returns an array of all sprites with collision rects containing `point`.
     /// > Warning: The caller is responsible for freeing the returned array.
     public static func querySpritesAtPoint(_ point: Point<Float>) -> UnsafeBufferPointer<OpaquePointer?> {
         var length: CInt = 0
-        let sprites = sprite.querySpritesAtPoint(point.x, point.y, &length)
+        let sprites = sprite.querySpritesAtPoint.unsafelyUnwrapped(point.x, point.y, &length)
         return UnsafeBufferPointer(start: sprites, count: Int(length))
     }
 
@@ -374,7 +388,13 @@ public enum Sprite {
     /// > Warning: The caller is responsible for freeing the returned array.
     public static func querySpritesInRect(_ rect: Rect<Float>) -> UnsafeBufferPointer<OpaquePointer?> {
         var length: CInt = 0
-        let sprites = sprite.querySpritesInRect(rect.x, rect.y, rect.width, rect.height, &length)
+        let sprites = sprite.querySpritesInRect.unsafelyUnwrapped(
+            rect.x,
+            rect.y,
+            rect.width,
+            rect.height,
+            &length
+        )
         return UnsafeBufferPointer(start: sprites, count: Int(length))
     }
 
@@ -382,7 +402,7 @@ public enum Sprite {
     /// > Warning: The caller is responsible for freeing the returned array.
     public static func querySpritesAlongLine(_ line: Line<Float>) -> UnsafeBufferPointer<OpaquePointer?> {
         var length: CInt = 0
-        let sprites = sprite.querySpritesAlongLine(
+        let sprites = sprite.querySpritesAlongLine.unsafelyUnwrapped(
             line.start.x,
             line.start.y,
             line.end.x,
@@ -396,7 +416,7 @@ public enum Sprite {
     /// If you don’t need this information, use `querySpritesAlongLine()` as it will be faster.
     public static func querySpriteInfoAlongLine(_ line: Line<Float>) -> QueryInfo {
         var length: CInt = 0
-        let spriteInfo = sprite.querySpriteInfoAlongLine(
+        let spriteInfo = sprite.querySpriteInfoAlongLine.unsafelyUnwrapped(
             line.start.x,
             line.start.y,
             line.end.x,
@@ -411,7 +431,7 @@ public enum Sprite {
     /// > Warning: The caller is responsible for freeing the returned array.
     public static func allOverlappingSprites() -> UnsafeBufferPointer<OpaquePointer?> {
         var length: CInt = 0
-        let sprites = sprite.allOverlappingSprites(&length)
+        let sprites = sprite.allOverlappingSprites.unsafelyUnwrapped(&length)
         return UnsafeBufferPointer(start: sprites, count: Int(length))
     }
 

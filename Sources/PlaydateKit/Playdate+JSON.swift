@@ -17,7 +17,7 @@ public enum JSON {
         reader: Reader,
         value: inout Value
     ) -> CInt {
-        json.decode(&decoder, reader, &value)
+        json.decode.unsafelyUnwrapped(&decoder, reader, &value)
     }
 
     /// Decodes a JSON string with the given `decoder`. An instance of `Decoder` must implement `decodeError`.
@@ -39,7 +39,7 @@ public enum JSON {
         jsonString: UnsafeMutablePointer<CChar>,
         value: inout Value
     ) -> CInt {
-        json.decodeString(&decoder, jsonString, &value)
+        json.decodeString.unsafelyUnwrapped(&decoder, jsonString, &value)
     }
 
     /// Populates the given `Encoder` `encoder` with the functions necessary to encode arbitrary data into a JSON string.
@@ -56,7 +56,7 @@ public enum JSON {
         userdata: UnsafeMutableRawPointer?,
         pretty: Bool
     ) {
-        json.initEncoder(&encoder, writeFunc, userdata, pretty ? 1 : 0)
+        json.initEncoder.unsafelyUnwrapped(&encoder, writeFunc, userdata, pretty ? 1 : 0)
     }
 
     // MARK: Private
