@@ -16,10 +16,10 @@ Create games for Playdate using Swift.
 
 ### Essentials
 
-- ``Playdate/Display``
-- ``Playdate/File``
-- ``Playdate/Graphics``
-- ``Playdate/JSON``
-- ``Playdate/Scoreboards``
-- ``Playdate/Sprite``
-- ``Playdate/System``
+- ``Display``
+- ``File``
+- ``Graphics``
+- ``JSON``
+- ``Scoreboards``
+- ``Sprite``
+- ``System``
