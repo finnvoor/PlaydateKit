@@ -38,7 +38,7 @@ public extension PlaydateGame {
     func gameWillPause() {}
     func gameWillResume() {}
 
-    func handle(_ event: Playdate.System.Event) {
+    func handle(_ event: System.Event) {
         switch event {
         case .lock: deviceWillLock()
         case .unlock: deviceDidUnlock()
