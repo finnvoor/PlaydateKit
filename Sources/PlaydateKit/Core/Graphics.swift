@@ -135,8 +135,9 @@ public enum Graphics {
         /// The set mask must be the same size as the target bitmap. The returned mask points to bitmap's data,
         /// so drawing into the mask image affects the source bitmap directly.
         public var mask: Bitmap? {
-            get { graphics.getBitmapMask.unsafelyUnwrapped(pointer).map { Bitmap(pointer: $0) } }
-            set { _ = graphics.setBitmapMask.unsafelyUnwrapped(pointer, newValue?.pointer) }
+            didSet {
+                _ = graphics.setBitmapMask.unsafelyUnwrapped(pointer, mask?.pointer)
+            }
         }
 
         /// Loads the image at `path` into the bitmap.
