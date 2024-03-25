@@ -438,6 +438,13 @@ public enum Graphics {
         set { graphics.setTextTracking.unsafelyUnwrapped(newValue) }
     }
 
+    /// The mode used for drawing bitmaps. Note that text drawing uses bitmaps, so this affects how fonts are displayed as well.
+    public nonisolated(unsafe) static var drawMode: Bitmap.DrawMode = .copy {
+        didSet {
+            graphics.setDrawMode.unsafelyUnwrapped(drawMode)
+        }
+    }
+
     /// Push a new drawing context for drawing into the given bitmap.
     /// If context is nil, the drawing functions will use the display framebuffer.
     public static func pushContext(_ context: Bitmap?) {
@@ -460,11 +467,6 @@ public enum Graphics {
     /// To clear the stencil, call `setStencil(nil)`.
     public static func setStencilImage(_ stencil: Bitmap, tile: Bool) {
         graphics.setStencilImage.unsafelyUnwrapped(stencil.pointer, tile ? 1 : 0)
-    }
-
-    /// Sets the mode used for drawing bitmaps. Note that text drawing uses bitmaps, so this affects how fonts are displayed as well.
-    public static func setDrawMode(_ mode: Bitmap.DrawMode) {
-        graphics.setDrawMode.unsafelyUnwrapped(mode)
     }
 
     /// Sets the current clip rect, using world coordinates—​that is, the given rectangle will be translated by

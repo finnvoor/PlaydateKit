@@ -201,3 +201,19 @@ Enumerators:
   SwiftName: square
 - Name: kWaveformTriangle
   SwiftName: triangle
+- Name: kDrawModeCopy
+  SwiftName: copy
+- Name: kDrawModeWhiteTransparent
+  SwiftName: whiteTransparent
+- Name: kDrawModeBlackTransparent
+  SwiftName: blackTransparent
+- Name: kDrawModeFillWhite
+  SwiftName: fillWhite
+- Name: kDrawModeFillBlack
+  SwiftName: fillBlack
+- Name: kDrawModeXOR
+  SwiftName: xor
+- Name: kDrawModeNXOR
+  SwiftName: nxor
+- Name: kDrawModeInverted
+  SwiftName: inverted
