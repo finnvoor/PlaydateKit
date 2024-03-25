@@ -397,6 +397,20 @@ public enum Graphics {
 
         /// Returns the width of the given `text` in the font.
         public func getTextWidth(
+            for text: StaticString,
+            tracking: CInt
+        ) -> CInt {
+            graphics.getTextWidth.unsafelyUnwrapped(
+                pointer,
+                text.utf8Start,
+                text.utf8CodeUnitCount,
+                .kUTF8Encoding,
+                tracking
+            )
+        }
+
+        /// Returns the width of the given `text` in the font.
+        public func getTextWidth(
             for text: UnsafeRawPointer,
             length: Int,
             encoding: StringEncoding,
@@ -570,25 +584,33 @@ public enum Graphics {
         )
     }
 
-    /// Draws the given `text` using the provided options. If no font has been set with `setFont`, the default
+    /// Draws the given `text`. If no font has been set with `setFont`, the default
     /// system font Asheville Sans 14 Light is used.
-    public static func drawText(
+    ///
+    /// Returns the drawn width of the given `text`.
+    @discardableResult public static func drawText(
         _ text: StaticString,
         at point: Point<CInt>
     ) -> CInt {
-        // TODO: - Figure out what this returns
-        graphics.drawText.unsafelyUnwrapped(text.utf8Start, text.utf8CodeUnitCount, .kUTF8Encoding, point.x, point.y)
+        graphics.drawText.unsafelyUnwrapped(
+            text.utf8Start,
+            text.utf8CodeUnitCount,
+            .kUTF8Encoding,
+            point.x,
+            point.y
+        )
     }
 
     /// Draws the given `text` using the provided options. If no font has been set with `setFont`, the default
     /// system font Asheville Sans 14 Light is used.
-    public static func drawText(
+    ///
+    /// Returns the drawn width of the given `text`.
+    @discardableResult public static func drawText(
         _ text: UnsafeRawPointer?,
         length: Int,
         encoding: StringEncoding,
         at point: Point<CInt>
     ) -> CInt {
-        // TODO: - Figure out what this returns
         graphics.drawText.unsafelyUnwrapped(text, length, encoding, point.x, point.y)
     }
 

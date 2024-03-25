@@ -170,7 +170,7 @@ public enum Sprite {
         }
 
         /// Sets the sprite's image to the given bitmap.
-        public func setImage(image: Graphics.Bitmap, flip: Graphics.Bitmap.Flip = .bitmapUnflipped) {
+        public func setImage(_ image: Graphics.Bitmap, flip: Graphics.Bitmap.Flip = .bitmapUnflipped) {
             sprite.setImage.unsafelyUnwrapped(pointer, image.pointer, flip)
         }
 
