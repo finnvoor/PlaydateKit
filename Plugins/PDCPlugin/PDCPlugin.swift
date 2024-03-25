@@ -151,9 +151,8 @@ import PackagePlugin
         }
 
         func pdc(_ arguments: [String]) throws {
-            let pdc = try context.tool(named: "pdc")
             let process = Process()
-            process.executableURL = URL(filePath: pdc.path.string)
+            process.executableURL = URL(filePath: "\(home)/Developer/PlaydateSDK/bin/pdc")
             process.arguments = arguments
             if verbose { process.print() }
             try process.run()
