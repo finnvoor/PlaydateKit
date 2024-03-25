@@ -573,6 +573,16 @@ public enum Graphics {
     /// Draws the given `text` using the provided options. If no font has been set with `setFont`, the default
     /// system font Asheville Sans 14 Light is used.
     public static func drawText(
+        _ text: StaticString,
+        at point: Point<CInt>
+    ) -> CInt {
+        // TODO: - Figure out what this returns
+        graphics.drawText.unsafelyUnwrapped(text.utf8Start, text.utf8CodeUnitCount, .kUTF8Encoding, point.x, point.y)
+    }
+
+    /// Draws the given `text` using the provided options. If no font has been set with `setFont`, the default
+    /// system font Asheville Sans 14 Light is used.
+    public static func drawText(
         _ text: UnsafeRawPointer?,
         length: Int,
         encoding: StringEncoding,
