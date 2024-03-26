@@ -298,7 +298,7 @@ public enum Graphics {
 
         /// Returns a `Font` object for the font file at `path`.
         /// > Warning: Currently unsafe due to https://github.com/finnvoor/PlaydateKit/issues/7
-        init(path: StaticString) {
+        public init(path: StaticString) {
             var error: UnsafePointer<CChar>?
             let pointer = graphics.loadFont(path.utf8Start, &error)
             self.pointer = pointer.unsafelyUnwrapped
