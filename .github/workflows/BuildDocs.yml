@@ -1,0 +1,47 @@
+name: Deploy Documentation
+on:
+  push:
+    branches: ["main"]
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+jobs:
+  DeployDocs:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Swift
+        uses: SwiftyLab/setup-swift@latest
+        with:
+          development: true
+          swift-version: latest
+          check-latest: true
+      - name: Select Xcode
+        run: sudo xcode-select -s '/Applications/Xcode_15.2.app'
+      - name: Install Playdate SDK
+        uses: pd-rs/get-playdate-sdk@0.1.6
+      - name: Build
+        run: |
+          xcodebuild docbuild -scheme PlaydateKit \
+            -configuration Release \
+            -derivedDataPath /tmp/docc \
+            -destination 'platform=macOS' \
+            -toolchain "swift latest";
+          $(xcrun -f docc -toolchain "swift latest") process-archive \
+            transform-for-static-hosting $(find /tmp/docc -type d -name '*.doccarchive') \
+            --hosting-base-path PlaydateKit \
+            --output-path docs;
+      - name: Upload
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: 'docs'
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v1
