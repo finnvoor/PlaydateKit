@@ -298,7 +298,7 @@ public enum Graphics {
 
         /// Returns a `Font` object for the font file at `path`.
         /// > Warning: Currently unsafe due to https://github.com/finnvoor/PlaydateKit/issues/7
-        init(path: StaticString) {
+        public init(path: StaticString) {
             var error: UnsafePointer<CChar>?
             let pointer = graphics.loadFont(path.utf8Start, &error)
             self.pointer = pointer.unsafelyUnwrapped
@@ -306,7 +306,7 @@ public enum Graphics {
 
         /// Returns a `Font` object for the font file at `path`.
         /// > Warning: Currently unsafe due to https://github.com/finnvoor/PlaydateKit/issues/7
-        init(path: UnsafeMutablePointer<CChar>) {
+        public init(path: UnsafeMutablePointer<CChar>) {
             var error: UnsafePointer<CChar>?
             let pointer = graphics.loadFont.unsafelyUnwrapped(path, &error)
             self.pointer = pointer.unsafelyUnwrapped
@@ -316,7 +316,7 @@ public enum Graphics {
         /// of an uncompressed pft file. `wide` corresponds to the flag in the header indicating whether the font contains
         /// glyphs at codepoints above U+1FFFF.
         /// > Warning: Currently unsafe due to https://github.com/finnvoor/PlaydateKit/issues/7
-        init(data: OpaquePointer, wide: Bool) {
+        public init(data: OpaquePointer, wide: Bool) {
             let pointer = graphics.makeFontFromData.unsafelyUnwrapped(data, wide ? 1 : 0)
             self.pointer = pointer.unsafelyUnwrapped
         }
