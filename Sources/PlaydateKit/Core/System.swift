@@ -68,6 +68,8 @@ public enum System {
     /// The update function should return true to tell the system to update the display, or false if an update isn’t needed.
     public nonisolated(unsafe) static var updateCallback: (() -> Bool)? = nil
 
+    public private(set) nonisolated(unsafe) static var menuItems: [MenuItem] = []
+
     // MARK: - Time and Date
 
     /// Returns the number of milliseconds since…​some arbitrary point in time.
@@ -230,7 +232,9 @@ public enum System {
         userdata: UnsafeMutableRawPointer? = nil
     ) -> MenuItem {
         let pointer = system.addMenuItem(title.utf8Start, callback, userdata).unsafelyUnwrapped
-        return MenuItem(pointer: pointer)
+        let menuItem = MenuItem(pointer: pointer)
+        menuItems.append(menuItem)
+        return menuItem
     }
 
     /// Adds a new menu item to the System Menu.
@@ -249,7 +253,9 @@ public enum System {
             callback,
             userdata
         ).unsafelyUnwrapped
-        return MenuItem(pointer: pointer)
+        let menuItem = MenuItem(pointer: pointer)
+        menuItems.append(menuItem)
+        return menuItem
     }
 
     /// Adds a new menu item that can be checked or unchecked by the player.
@@ -271,7 +277,9 @@ public enum System {
             callback,
             userdata
         ).unsafelyUnwrapped
-        return MenuItem(pointer: pointer)
+        let menuItem = MenuItem(pointer: pointer)
+        menuItems.append(menuItem)
+        return menuItem
     }
 
     /// Adds a new menu item that can be checked or unchecked by the player.
@@ -293,7 +301,9 @@ public enum System {
             callback,
             userdata
         ).unsafelyUnwrapped
-        return MenuItem(pointer: pointer)
+        let menuItem = MenuItem(pointer: pointer)
+        menuItems.append(menuItem)
+        return menuItem
     }
 
     /// Adds a new menu item that allows the player to cycle through a set of options.
@@ -314,14 +324,16 @@ public enum System {
             // TODO: - Is this conversion fine...?
             Optional(UnsafeRawPointer($0.utf8Start).assumingMemoryBound(to: CChar.self))
         }
-        let menuItem = system.addOptionsMenuItem(
+        let pointer = system.addOptionsMenuItem(
             title.utf8Start,
             &options,
             CInt(options.count),
             callback,
             userData
         ).unsafelyUnwrapped
-        return MenuItem(pointer: menuItem)
+        let menuItem = MenuItem(pointer: pointer)
+        menuItems.append(menuItem)
+        return menuItem
     }
 
     /// Adds a new menu item that allows the player to cycle through a set of options.
@@ -345,17 +357,21 @@ public enum System {
             callback,
             userData
         ).unsafelyUnwrapped
-        return MenuItem(pointer: pointer)
+        let menuItem = MenuItem(pointer: pointer)
+        menuItems.append(menuItem)
+        return menuItem
     }
 
     /// Removes the menu item from the system menu.
     public static func removeMenuItem(_ menuItem: MenuItem) {
         system.removeMenuItem.unsafelyUnwrapped(menuItem.pointer)
+        menuItems.removeAll(where: { $0.pointer == menuItem.pointer })
     }
 
     /// Removes all custom menu items from the system menu.
     public static func removeAllMenuItems() {
         system.removeAllMenuItems.unsafelyUnwrapped()
+        menuItems = []
     }
 
     /// Returns the number of seconds (and sets milliseconds if not NULL) elapsed since midnight (hour 0), January 1, 2000.
