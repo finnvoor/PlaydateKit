@@ -122,7 +122,7 @@ import PackagePlugin
                 .trimmingCharacters(in: .newlines)
             let process2 = Process()
             process2.executableURL = URL(filePath: swiftc)
-            process2.arguments = arguments
+            process2.arguments = ["-g"] + arguments
             if verbose { process2.print() }
             try process2.run()
             process2.waitUntilExit()
@@ -143,7 +143,7 @@ import PackagePlugin
 
             process.environment = environment
             process.executableURL = URL(filePath: clang.path.string)
-            process.arguments = /* ["-g"] + */ arguments
+            process.arguments = ["-g"] + arguments
             if verbose { process.print() }
             try process.run()
             process.waitUntilExit()
@@ -153,7 +153,7 @@ import PackagePlugin
         func pdc(_ arguments: [String]) throws {
             let process = Process()
             process.executableURL = URL(filePath: "\(playdateSDK)/bin/pdc")
-            process.arguments = arguments
+            process.arguments = ["--skip-unknown"] + arguments
             if verbose { process.print() }
             try process.run()
             process.waitUntilExit()
