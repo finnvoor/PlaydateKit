@@ -58,6 +58,16 @@ public enum Sprite {
 
         // MARK: Public
 
+        /// The sprite's stencil bitmap, if set.
+        public private(set) var stencil: Graphics.Bitmap?
+
+        /// The bitmap currently assigned to the sprite.
+        public var image: Graphics.Bitmap? {
+            didSet {
+                sprite.setImage.unsafelyUnwrapped(pointer, image?.pointer, imageFlip)
+            }
+        }
+
         /// Gets the current position of sprite.
         public var position: Point<Float> {
             var x: Float = 0, y: Float = 0
@@ -83,11 +93,6 @@ public enum Sprite {
             } set {
                 sprite.setCenter.unsafelyUnwrapped(pointer, newValue.x, newValue.y)
             }
-        }
-
-        /// Returns the `Bitmap` currently assigned to the given sprite.
-        public var image: Graphics.Bitmap? {
-            sprite.getImage.unsafelyUnwrapped(pointer).map { Graphics.Bitmap(pointer: $0) }
         }
 
         /// Gets/sets the Z order of the given sprite. Higher Z sprites are drawn on top of those with lower Z order.
@@ -169,11 +174,6 @@ public enum Sprite {
             sprite.moveBy.unsafelyUnwrapped(pointer, dx, dy)
         }
 
-        /// Sets the sprite's image to the given bitmap.
-        public func setImage(_ image: Graphics.Bitmap, flip: Graphics.Bitmap.Flip = .bitmapUnflipped) {
-            sprite.setImage.unsafelyUnwrapped(pointer, image.pointer, flip)
-        }
-
         /// Sets the size. The size is used to set the sprite’s bounds when calling `moveTo()`.
         public func setSize(width: Float, height: Float) {
             sprite.setSize.unsafelyUnwrapped(pointer, width, height)
@@ -187,6 +187,7 @@ public enum Sprite {
         /// Specifies a stencil image to be set on the frame buffer before the sprite is drawn.
         /// Pass `nil` to clear the sprite’s stencil.
         public func setStencil(_ stencil: Graphics.Bitmap?) {
+            self.stencil = stencil
             if let stencil {
                 sprite.setStencil.unsafelyUnwrapped(pointer, stencil.pointer)
             } else {
@@ -197,12 +198,14 @@ public enum Sprite {
         /// Specifies a stencil image to be set on the frame buffer before the sprite is drawn. If `tile` is set, the stencil will be tiled.
         /// Tiled stencils must have width evenly divisible by 32.
         public func setStencilImage(_ stencil: Graphics.Bitmap, tile: CInt) {
+            self.stencil = stencil
             sprite.setStencilImage.unsafelyUnwrapped(pointer, stencil.pointer, tile)
         }
 
         /// Sets the sprite’s stencil to the given pattern.
         public func setStencilPattern(_ pattern: UnsafeMutablePointer<UInt8>) {
             sprite.setStencilPattern.unsafelyUnwrapped(pointer, pattern)
+            stencil = nil
         }
 
         /// Sets the clipping rectangle for sprite drawing.
