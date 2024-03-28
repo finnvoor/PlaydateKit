@@ -95,19 +95,19 @@ public enum Graphics {
         }
 
         /// Allocates and returns a new `Bitmap` from the file at path. If there is no file at `path`, the function throws.
-        /// > Warning: Currently unsafe due to https://github.com/finnvoor/PlaydateKit/issues/7
-        public init(path: StaticString) {
+        public init(path: StaticString) throws(Playdate.Error) {
             var error: UnsafePointer<CChar>?
             let pointer = graphics.loadBitmap(path.utf8Start, &error)
+            if let error { throw Playdate.Error(humanReadableText: error) }
             self.pointer = pointer.unsafelyUnwrapped
             free = true
         }
 
         /// Allocates and returns a new `Bitmap` from the file at path. If there is no file at `path`, the function throws.
-        /// > Warning: Currently unsafe due to https://github.com/finnvoor/PlaydateKit/issues/7
-        public init(path: UnsafeMutablePointer<CChar>) {
+        public init(path: UnsafeMutablePointer<CChar>) throws(Playdate.Error) {
             var error: UnsafePointer<CChar>?
             let pointer = graphics.loadBitmap.unsafelyUnwrapped(path, &error)
+            if let error { throw Playdate.Error(humanReadableText: error) }
             self.pointer = pointer.unsafelyUnwrapped
             free = true
         }
@@ -246,18 +246,18 @@ public enum Graphics {
         // MARK: Lifecycle
 
         /// Allocates and returns a new `BitmapTable` from the file at `path`. If there is no file at `path`, the function throws an error.
-        /// > Warning: Currently unsafe due to https://github.com/finnvoor/PlaydateKit/issues/7
-        public init(path: StaticString) {
+        public init(path: StaticString) throws(Playdate.Error) {
             var error: UnsafePointer<CChar>?
             let pointer = graphics.loadBitmapTable(path.utf8Start, &error)
+            if let error { throw Playdate.Error(humanReadableText: error) }
             self.pointer = pointer.unsafelyUnwrapped
         }
 
         /// Allocates and returns a new `BitmapTable` from the file at `path`. If there is no file at `path`, the function throws an error.
-        /// > Warning: Currently unsafe due to https://github.com/finnvoor/PlaydateKit/issues/7
-        public init(path: UnsafeMutablePointer<CChar>) {
+        public init(path: UnsafeMutablePointer<CChar>) throws(Playdate.Error) {
             var error: UnsafePointer<CChar>?
             let pointer = graphics.loadBitmapTable.unsafelyUnwrapped(path, &error)
+            if let error { throw Playdate.Error(humanReadableText: error) }
             self.pointer = pointer.unsafelyUnwrapped
         }
 
@@ -298,28 +298,29 @@ public enum Graphics {
         // MARK: Lifecycle
 
         /// Returns a `Font` object for the font file at `path`.
-        /// > Warning: Currently unsafe due to https://github.com/finnvoor/PlaydateKit/issues/7
-        public init(path: StaticString) {
+        public init(path: StaticString) throws(Playdate.Error) {
             var error: UnsafePointer<CChar>?
             let pointer = graphics.loadFont(path.utf8Start, &error)
+            if let error { throw Playdate.Error(humanReadableText: error) }
             self.pointer = pointer.unsafelyUnwrapped
         }
 
         /// Returns a `Font` object for the font file at `path`.
-        /// > Warning: Currently unsafe due to https://github.com/finnvoor/PlaydateKit/issues/7
-        public init(path: UnsafeMutablePointer<CChar>) {
+        public init(path: UnsafeMutablePointer<CChar>) throws(Playdate.Error) {
             var error: UnsafePointer<CChar>?
             let pointer = graphics.loadFont.unsafelyUnwrapped(path, &error)
+            if let error { throw Playdate.Error(humanReadableText: error) }
             self.pointer = pointer.unsafelyUnwrapped
         }
 
         /// Returns a `Font` object wrapping the `LCDFontData` `data` comprising the contents (minus 16-byte header)
         /// of an uncompressed pft file. `wide` corresponds to the flag in the header indicating whether the font contains
         /// glyphs at codepoints above U+1FFFF.
-        /// > Warning: Currently unsafe due to https://github.com/finnvoor/PlaydateKit/issues/7
-        public init(data: OpaquePointer, wide: Bool) {
-            let pointer = graphics.makeFontFromData.unsafelyUnwrapped(data, wide ? 1 : 0)
-            self.pointer = pointer.unsafelyUnwrapped
+        public init?(data: OpaquePointer, wide: Bool) {
+            guard let pointer = graphics.makeFontFromData.unsafelyUnwrapped(data, wide ? 1 : 0) else {
+                return nil
+            }
+            self.pointer = pointer
         }
 
         deinit {
