@@ -12,28 +12,45 @@ public enum System {
 
     // MARK: - Interacting with the System Menu
 
-    public struct MenuItem {
+    public class OptionsMenuItem: MenuItem {
+        // MARK: Public
+
+        public var selectedOption: CInt {
+            get { value }
+            set { value = newValue }
+        }
+
+        // MARK: Internal
+
+        var optionsCallback: ((CInt) -> Void)?
+    }
+
+    public class CheckmarkMenuItem: MenuItem {
+        // MARK: Public
+
+        public var isChecked: Bool {
+            get { value != 0 }
+            set { value = newValue ? 1 : 0 }
+        }
+
+        // MARK: Internal
+
+        var checkmarkCallback: ((Bool) -> Void)?
+    }
+
+    public class MenuItem {
+        // MARK: Lifecycle
+
+        init(pointer: OpaquePointer) {
+            self.pointer = pointer
+        }
+
         // MARK: Public
 
         /// Gets/sets the title of the menu item.
         public var title: UnsafePointer<CChar> {
             get { system.getMenuItemTitle.unsafelyUnwrapped(pointer).unsafelyUnwrapped }
             set { system.setMenuItemTitle.unsafelyUnwrapped(pointer, newValue) }
-        }
-
-        /// Gets/sets the value of the menu item.
-        ///
-        /// For checkmark menu items, 1 means checked, 0 unchecked.
-        /// For option menu items, the value indicates the array index of the currently selected option.
-        public var value: CInt {
-            get { system.getMenuItemValue.unsafelyUnwrapped(pointer) }
-            set { system.setMenuItemValue.unsafelyUnwrapped(pointer, newValue) }
-        }
-
-        /// Gets/sets the userdata value associated with this menu item.
-        public var userdata: UnsafeMutableRawPointer? {
-            get { system.getMenuItemUserdata.unsafelyUnwrapped(pointer) }
-            set { system.setMenuItemUserdata.unsafelyUnwrapped(pointer, newValue) }
         }
 
         public func setTitle(_ title: StaticString) {
@@ -43,6 +60,23 @@ public enum System {
         // MARK: Internal
 
         let pointer: OpaquePointer
+
+        var callback: (() -> Void)?
+
+        /// Gets/sets the value of the menu item.
+        ///
+        /// For checkmark menu items, 1 means checked, 0 unchecked.
+        /// For option menu items, the value indicates the array index of the currently selected option.
+        var value: CInt {
+            get { system.getMenuItemValue.unsafelyUnwrapped(pointer) }
+            set { system.setMenuItemValue.unsafelyUnwrapped(pointer, newValue) }
+        }
+
+        /// Gets/sets the userdata value associated with this menu item.
+        var userdata: UnsafeMutableRawPointer? {
+            get { system.getMenuItemUserdata.unsafelyUnwrapped(pointer) }
+            set { system.setMenuItemUserdata.unsafelyUnwrapped(pointer, newValue) }
+        }
     }
 
     /// Returns the last-read accelerometer data.
@@ -224,15 +258,18 @@ public enum System {
     /// - Parameters:
     ///   - title: The title displayed by the menu item.
     ///   - callback: The callback invoked when the menu item is selected by the user.
-    ///   - userdata: The userdata to associate with the menu item.
     /// - Returns: The menu item
     @discardableResult public static func addMenuItem(
         title: StaticString,
-        callback: (@convention(c) (_ userdata: UnsafeMutableRawPointer?) -> Void)?,
-        userdata: UnsafeMutableRawPointer? = nil
+        callback: (() -> Void)? = nil
     ) -> MenuItem {
-        let pointer = system.addMenuItem(title.utf8Start, callback, userdata).unsafelyUnwrapped
+        let pointer = system.addMenuItem(title.utf8Start, { userdata in
+            let menuItem = unsafeBitCast(userdata, to: MenuItem.self)
+            menuItem.callback?()
+        }, nil).unsafelyUnwrapped
         let menuItem = MenuItem(pointer: pointer)
+        menuItem.callback = callback
+        menuItem.userdata = unsafeBitCast(menuItem, to: UnsafeMutableRawPointer.self)
         menuItems.append(menuItem)
         return menuItem
     }
@@ -241,19 +278,22 @@ public enum System {
     /// - Parameters:
     ///   - title: The title displayed by the menu item.
     ///   - callback: The callback invoked when the menu item is selected by the user.
-    ///   - userdata: The userdata to associate with the menu item.
     /// - Returns: The menu item
     @discardableResult public static func addMenuItem(
         title: UnsafePointer<CChar>,
-        callback: (@convention(c) (_ userdata: UnsafeMutableRawPointer?) -> Void)?,
-        userdata: UnsafeMutableRawPointer? = nil
+        callback: (() -> Void)? = nil
     ) -> MenuItem {
         let pointer = system.addMenuItem.unsafelyUnwrapped(
             title,
-            callback,
-            userdata
+            { userdata in
+                let menuItem = unsafeBitCast(userdata, to: MenuItem.self)
+                menuItem.callback?()
+            },
+            nil
         ).unsafelyUnwrapped
         let menuItem = MenuItem(pointer: pointer)
+        menuItem.callback = callback
+        menuItem.userdata = unsafeBitCast(menuItem, to: UnsafeMutableRawPointer.self)
         menuItems.append(menuItem)
         return menuItem
     }
@@ -261,23 +301,26 @@ public enum System {
     /// Adds a new menu item that can be checked or unchecked by the player.
     /// - Parameters:
     ///   - title: The title displayed by the menu item.
-    ///   - checked: Wether or not the menu item is checked.
+    ///   - isChecked: Whether or not the menu item is checked.
     ///   - callback: The callback invoked when the menu item is selected by the user.
-    ///   - userdata: The userdata to associate with the menu item.
     /// - Returns: The menu item
     @discardableResult public static func addCheckmarkMenuItem(
         title: StaticString,
-        checked: Bool = false,
-        callback: (@convention(c) (_ userdata: UnsafeMutableRawPointer?) -> Void)?,
-        userdata: UnsafeMutableRawPointer? = nil
-    ) -> MenuItem {
+        isChecked: Bool = false,
+        callback: ((_ isChecked: Bool) -> Void)? = nil
+    ) -> CheckmarkMenuItem {
         let pointer = system.addCheckmarkMenuItem(
             title.utf8Start,
-            checked ? 1 : 0,
-            callback,
-            userdata
+            isChecked ? 1 : 0,
+            { userdata in
+                let menuItem = unsafeBitCast(userdata, to: CheckmarkMenuItem.self)
+                menuItem.checkmarkCallback?(menuItem.isChecked)
+            },
+            nil
         ).unsafelyUnwrapped
-        let menuItem = MenuItem(pointer: pointer)
+        let menuItem = CheckmarkMenuItem(pointer: pointer)
+        menuItem.checkmarkCallback = callback
+        menuItem.userdata = unsafeBitCast(menuItem, to: UnsafeMutableRawPointer.self)
         menuItems.append(menuItem)
         return menuItem
     }
@@ -285,23 +328,26 @@ public enum System {
     /// Adds a new menu item that can be checked or unchecked by the player.
     /// - Parameters:
     ///   - title: The title displayed by the menu item.
-    ///   - checked: Wether or not the menu item is checked.
+    ///   - isChecked: Whether or not the menu item is checked.
     ///   - callback: The callback invoked when the menu item is selected by the user.
-    ///   - userdata: The userdata to associate with the menu item.
     /// - Returns: The menu item
     @discardableResult public static func addCheckmarkMenuItem(
         title: UnsafePointer<CChar>,
-        checked: Bool = false,
-        callback: (@convention(c) (_ userdata: UnsafeMutableRawPointer?) -> Void)?,
-        userdata: UnsafeMutableRawPointer? = nil
-    ) -> MenuItem {
+        isChecked: Bool = false,
+        callback: ((_ isChecked: Bool) -> Void)? = nil
+    ) -> CheckmarkMenuItem {
         let pointer = system.addCheckmarkMenuItem.unsafelyUnwrapped(
             title,
-            checked ? 1 : 0,
-            callback,
-            userdata
+            isChecked ? 1 : 0,
+            { userdata in
+                let menuItem = unsafeBitCast(userdata, to: CheckmarkMenuItem.self)
+                menuItem.checkmarkCallback?(menuItem.isChecked)
+            },
+            nil
         ).unsafelyUnwrapped
-        let menuItem = MenuItem(pointer: pointer)
+        let menuItem = CheckmarkMenuItem(pointer: pointer)
+        menuItem.checkmarkCallback = callback
+        menuItem.userdata = unsafeBitCast(menuItem, to: UnsafeMutableRawPointer.self)
         menuItems.append(menuItem)
         return menuItem
     }
@@ -312,26 +358,28 @@ public enum System {
     ///   - options: An array of strings representing the states this menu item can cycle through. Due to limited horizontal space,
     ///              the option strings and title should be kept short for this type of menu item.
     ///   - callback: The callback invoked when the menu item is selected by the user.
-    ///   - userdata: The userdata to associate with the menu item.
     /// - Returns: The menu item
     @discardableResult public static func addOptionsMenuItem(
         title: StaticString,
         options: [StaticString],
-        callback: (@convention(c) (_ userdata: UnsafeMutableRawPointer?) -> Void)?,
-        userData: UnsafeMutableRawPointer? = nil
-    ) -> MenuItem {
+        callback: ((CInt) -> Void)? = nil
+    ) -> OptionsMenuItem {
         var options = options.map {
-            // TODO: - Is this conversion fine...?
             Optional(UnsafeRawPointer($0.utf8Start).assumingMemoryBound(to: CChar.self))
         }
         let pointer = system.addOptionsMenuItem(
             title.utf8Start,
             &options,
             CInt(options.count),
-            callback,
-            userData
+            { userdata in
+                let menuItem = unsafeBitCast(userdata, to: OptionsMenuItem.self)
+                menuItem.optionsCallback?(menuItem.selectedOption)
+            },
+            nil
         ).unsafelyUnwrapped
-        let menuItem = MenuItem(pointer: pointer)
+        let menuItem = OptionsMenuItem(pointer: pointer)
+        menuItem.optionsCallback = callback
+        menuItem.userdata = unsafeBitCast(menuItem, to: UnsafeMutableRawPointer.self)
         menuItems.append(menuItem)
         return menuItem
     }
@@ -342,22 +390,25 @@ public enum System {
     ///   - options: An array of strings representing the states this menu item can cycle through. Due to limited horizontal space,
     ///              the option strings and title should be kept short for this type of menu item.
     ///   - callback: The callback invoked when the menu item is selected by the user.
-    ///   - userdata: The userdata to associate with the menu item.
     /// - Returns: The menu item
     @discardableResult public static func addOptionsMenuItem(
         title: UnsafePointer<CChar>,
         options: UnsafeMutableBufferPointer<UnsafePointer<CChar>?>,
-        callback: (@convention(c) (_ userdata: UnsafeMutableRawPointer?) -> Void)?,
-        userData: UnsafeMutableRawPointer? = nil
-    ) -> MenuItem {
+        callback: ((CInt) -> Void)? = nil
+    ) -> OptionsMenuItem {
         let pointer = system.addOptionsMenuItem.unsafelyUnwrapped(
             title,
             options.baseAddress,
             CInt(options.count),
-            callback,
-            userData
+            { userdata in
+                let menuItem = unsafeBitCast(userdata, to: OptionsMenuItem.self)
+                menuItem.optionsCallback?(menuItem.selectedOption)
+            },
+            nil
         ).unsafelyUnwrapped
-        let menuItem = MenuItem(pointer: pointer)
+        let menuItem = OptionsMenuItem(pointer: pointer)
+        menuItem.optionsCallback = callback
+        menuItem.userdata = unsafeBitCast(menuItem, to: UnsafeMutableRawPointer.self)
         menuItems.append(menuItem)
         return menuItem
     }
