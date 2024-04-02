@@ -17,9 +17,10 @@ Create games for Playdate using Swift.
 ### Essentials
 
 - ``Display``
-- ``File``
-- ``Graphics``
-- ``JSON``
-- ``Scoreboards``
 - ``Sprite``
 - ``System``
+- ``Graphics``
+- ``Sound``
+- ``File``
+- ``JSON``
+- ``Scoreboards``

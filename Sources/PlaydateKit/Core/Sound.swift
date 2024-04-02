@@ -1,26 +1,40 @@
 public import CPlaydate
 
+/// The Playdate audio engine provides sample playback from memory for short on-demand samples, file streaming for playing
+/// longer files (uncompressed, MP3, and ADPCM formats), and a synthesis library for generating "computer-y" sounds.
+/// Sound sources are grouped into channels, which can be panned separately, and various effects may be applied to the channels.
+/// Additionally, signals can automate various parameters of the sound objects..
 public enum Sound {
-    public class FilePlayer {
-        private let pointer: OpaquePointer
+    // MARK: Public
 
+    /// The fileplayer class is used for streaming audio from a file on disk. This requires less memory than keeping all of the
+    /// file’s data in memory (as with the sampleplayer), but can increase overhead at run time.
+    public class FilePlayer {
+        // MARK: Lifecycle
+
+        /// Creates a new FilePlayer.
         public init() {
             pointer = fileplayer.newPlayer().unsafelyUnwrapped
         }
 
         deinit { fileplayer.freePlayer(pointer) }
 
+        // MARK: Public
+
+        /// Returns true if player is playing
+        public var isPlaying: Bool {
+            fileplayer.isPlaying(pointer) == 1
+        }
+
         /// Prepares player to stream the file at path. Returns `true` if the file exists, otherwise `false`.
-        @discardableResult
-        public func load(path: StaticString) -> Bool {
+        @discardableResult public func load(path: StaticString) -> Bool {
             fileplayer.loadIntoPlayer(pointer, path.utf8Start) == 0
         }
 
         /// Starts playing the file player. If repeat is greater than one, it loops the given number of times.
-        /// If zero, it loops endlessly until it is stopped with `FilePlayer.stop()`
+        /// If zero, it loops endlessly until it is stopped with ``stop()``
         /// Returns 1 on success, 0 if buffer allocation failed.
-        @discardableResult
-        public func play(repeat: Int32 = 1) -> Int32 {
+        @discardableResult public func play(repeat: Int32 = 1) -> Int32 {
             fileplayer.play(pointer, `repeat`)
         }
 
@@ -98,11 +112,12 @@ public enum Sound {
             return (left, right)
         }
 
-        /// Returns one if player is playing
-        public var isPlaying: Bool {
-            fileplayer.isPlaying(pointer) == 1
-        }
+        // MARK: Private
+
+        private let pointer: OpaquePointer
     }
+
+    // MARK: Private
 
     private static var sound: playdate_sound { Playdate.playdateAPI.sound.pointee }
 
