@@ -45,6 +45,17 @@ public enum Sound {
             fileplayer.play.unsafelyUnwrapped(pointer, `repeat`)
         }
 
+        /// Sets a function to be called when playback has completed.
+        public func setFinishCallback(
+            callback: @convention(c) (
+                _ soundSource: OpaquePointer?,
+                _ userdata: UnsafeMutableRawPointer?
+            ) -> Void,
+            soundUserdata: UnsafeMutableRawPointer? = nil
+        ) {
+            fileplayer.setFinishCallback.unsafelyUnwrapped(pointer, callback, soundUserdata)
+        }
+
         /// Pauses the file player.
         public func pause() {
             fileplayer.pause.unsafelyUnwrapped(pointer)
@@ -109,6 +120,20 @@ public enum Sound {
         /// Sets the playback volume of player.
         public func setVolume(_ volume: Float) {
             fileplayer.setVolume.unsafelyUnwrapped(pointer, volume, volume)
+        }
+
+        /// Changes the volume of the fileplayer to left and right over a length of len sample frames, then calls the provided callback (if set).
+        public func fadeVolume(
+            left: Float,
+            right: Float,
+            length: Int32,
+            finishCallback: @convention(c) (
+                _ soundSource: OpaquePointer?,
+                _ userdata: UnsafeMutableRawPointer?
+            ) -> Void,
+            soundUserdata: UnsafeMutableRawPointer? = nil
+        ) {
+            fileplayer.fadeVolume.unsafelyUnwrapped(pointer, left, right, length, finishCallback, soundUserdata)
         }
 
         /// Gets the left and right channel playback volume for player.
