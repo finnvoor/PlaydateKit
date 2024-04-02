@@ -68,7 +68,7 @@ import PackagePlugin
         let cFlags = gccIncludePaths.flatMap { ["-I", $0] }
 
         let swiftFlags = cFlags.flatMap { ["-Xcc", $0] } + [
-            "-Osize",
+            "-O",
             "-wmo",
             "-enable-experimental-feature", "Embedded",
             "-Xfrontend", "-disable-stack-protector",
