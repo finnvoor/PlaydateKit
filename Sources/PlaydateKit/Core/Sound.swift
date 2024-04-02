@@ -16,16 +16,16 @@ public enum Sound {
 
         /// Creates a new FilePlayer.
         public init() {
-            pointer = fileplayer.newPlayer().unsafelyUnwrapped
+            pointer = fileplayer.newPlayer.unsafelyUnwrapped().unsafelyUnwrapped
         }
 
-        deinit { fileplayer.freePlayer(pointer) }
+        deinit { fileplayer.freePlayer.unsafelyUnwrapped(pointer) }
 
         // MARK: Public
 
         /// Returns true if player is playing
         public var isPlaying: Bool {
-            fileplayer.isPlaying(pointer) == 1
+            fileplayer.isPlaying.unsafelyUnwrapped(pointer) == 1
         }
 
         /// Prepares player to stream the file at path. Returns `true` if the file exists, otherwise `false`.
@@ -33,84 +33,89 @@ public enum Sound {
             fileplayer.loadIntoPlayer(pointer, path.utf8Start) == 0
         }
 
+        /// Prepares player to stream the file at path. Returns `true` if the file exists, otherwise `false`.
+        @discardableResult public func load(path: UnsafePointer<CChar>) -> Bool {
+            fileplayer.loadIntoPlayer(pointer, path) == 0
+        }
+
         /// Starts playing the file player. If repeat is greater than one, it loops the given number of times.
         /// If zero, it loops endlessly until it is stopped with ``stop()``
         /// Returns 1 on success, 0 if buffer allocation failed.
         @discardableResult public func play(repeat: Int32 = 1) -> Int32 {
-            fileplayer.play(pointer, `repeat`)
+            fileplayer.play.unsafelyUnwrapped(pointer, `repeat`)
         }
 
         /// Pauses the file player.
         public func pause() {
-            fileplayer.pause(pointer)
+            fileplayer.pause.unsafelyUnwrapped(pointer)
         }
 
         /// Stops playing the file.
         public func stop() {
-            fileplayer.stop(pointer)
+            fileplayer.stop.unsafelyUnwrapped(pointer)
         }
 
         /// Sets the buffer length of player to bufferLen seconds;
         public func setBufferLength(bufferLength: Float) {
-            fileplayer.setBufferLength(pointer, bufferLength)
+            fileplayer.setBufferLength.unsafelyUnwrapped(pointer, bufferLength)
         }
 
         /// Returns the length, in seconds, of the file loaded into player.
         public func getLength() -> Float {
-            fileplayer.getLength(pointer)
+            fileplayer.getLength.unsafelyUnwrapped(pointer)
         }
 
         /// Returns `true` if player has underrun, `false` if not.
         public func didUnderrun() -> Bool {
-            fileplayer.didUnderrun(pointer) == 1
+            fileplayer.didUnderrun.unsafelyUnwrapped(pointer) == 1
         }
 
         /// Sets the start and end of the loop region for playback, in seconds.
         public func setLoopRange(start: Float, end: Float) {
-            fileplayer.setLoopRange(pointer, start, end)
+            fileplayer.setLoopRange.unsafelyUnwrapped(pointer, start, end)
         }
 
         /// Sets the current offset in seconds.
         public func setOffset(_ offset: Float) {
-            fileplayer.setOffset(pointer, offset)
+            fileplayer.setOffset.unsafelyUnwrapped(pointer, offset)
         }
 
         /// Returns the current offset in seconds for player.
         public func getOffset() -> Float {
-            fileplayer.getOffset(pointer)
+            fileplayer.getOffset.unsafelyUnwrapped(pointer)
         }
 
         /// Sets the playback rate for the player. 1.0 is normal speed, 0.5 is down an octave, 2.0 is up an octave, etc.
         /// Unlike sampleplayers, fileplayers can’t play in reverse (i.e., rate < 0).
         public func setRate(_ rate: Float) {
-            fileplayer.setRate(pointer, rate)
+            fileplayer.setRate.unsafelyUnwrapped(pointer, rate)
         }
 
         /// Returns the playback rate for player.
         public func getRate() -> Float {
-            fileplayer.getRate(pointer)
+            fileplayer.getRate.unsafelyUnwrapped(pointer)
         }
 
         /// If `flag` evaluates to true, the player will restart playback (after an audible stutter) as soon as data is available.
         public func setStopOnUnderrun(flag: Bool) {
-            fileplayer.setStopOnUnderrun(pointer, flag ? 1 : 0)
+            fileplayer.setStopOnUnderrun.unsafelyUnwrapped(pointer, flag ? 1 : 0)
         }
 
         /// Sets the playback volume for left and right channels of player.
         public func setVolume(left: Float, right: Float) {
-            fileplayer.setVolume(pointer, left, right)
+            fileplayer.setVolume.unsafelyUnwrapped(pointer, left, right)
         }
 
         /// Sets the playback volume of player.
         public func setVolume(_ volume: Float) {
-            fileplayer.setVolume(pointer, volume, volume)
+            fileplayer.setVolume.unsafelyUnwrapped(pointer, volume, volume)
         }
 
         /// Gets the left and right channel playback volume for player.
         public func getVolume() -> (Float, Float) {
             var left: Float = 0
             var right: Float = 0
-            fileplayer.getVolume(pointer, &left, &right)
+            fileplayer.getVolume.unsafelyUnwrapped(pointer, &left, &right)
             return (left, right)
         }
 
