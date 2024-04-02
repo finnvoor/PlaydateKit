@@ -17,16 +17,19 @@ jobs:
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v3
-      - name: Setup Swift
-        uses: SwiftyLab/setup-swift@latest
-        with:
-          development: true
-          swift-version: latest
-          check-latest: true
+      - name: Install nightly Swift
+        run: |
+          DOWNLOAD=$(curl "https://raw.githubusercontent.com/apple/swift-org-website/main/_data/builds/development/xcode.yml" | yq '.[0].download')
+          DIR=$(curl "https://raw.githubusercontent.com/apple/swift-org-website/main/_data/builds/development/xcode.yml" | yq '.[0].dir')
+          curl -L -sS --show-error --fail "https://download.swift.org/development/xcode/$DIR/$DOWNLOAD" -o $DOWNLOAD
+          sudo installer -store -pkg $DOWNLOAD -target /
       - name: Select Xcode
-        run: sudo xcode-select -s '/Applications/Xcode_15.2.app'
+        run: sudo xcode-select -s '/Applications/Xcode_15.3.app'
       - name: Install Playdate SDK
-        uses: pd-rs/get-playdate-sdk@0.1.6
+        run: |
+          curl -L -sS --show-error --fail "https://download.panic.com/playdate_sdk/PlaydateSDK-latest.zip" -o PlaydateSDK-latest.zip
+          unzip PlaydateSDK-latest.zip
+          sudo installer -store -pkg "PlaydateSDK.pkg" -target /
       - name: Build
         run: |
           xcodebuild docbuild -scheme PlaydateKit \
