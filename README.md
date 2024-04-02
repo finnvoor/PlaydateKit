@@ -4,7 +4,7 @@
 
 <p align="center">
     <a href="https://www.swift.org/">
-        <img src="https://img.shields.io/badge/Swift-5.10-f05237.svg" />
+        <img src="https://img.shields.io/badge/Swift-6.0-f05237.svg" />
     </a>
     <a href="https://sdk.play.date">
         <img src="https://img.shields.io/badge/Playdate_SDK-2.4.2-ffc500.svg" />
