@@ -1,5 +1,7 @@
 public import CPlaydate
 
+/// Functions related to audio playback.
+///
 /// The Playdate audio engine provides sample playback from memory for short on-demand samples, file streaming for playing
 /// longer files (uncompressed, MP3, and ADPCM formats), and a synthesis library for generating "computer-y" sounds.
 /// Sound sources are grouped into channels, which can be panned separately, and various effects may be applied to the channels.
