@@ -8,6 +8,8 @@ public enum Sound {
             pointer = fileplayer.newPlayer().unsafelyUnwrapped
         }
 
+        deinit { fileplayer.freePlayer(pointer) }
+
         /// Prepares player to stream the file at path. Returns `true` if the file exists, otherwise `false`.
         @discardableResult
         public func load(path: StaticString) -> Bool {
@@ -94,11 +96,6 @@ public enum Sound {
             var right: Float = 0
             fileplayer.getVolume(pointer, &left, &right)
             return (left, right)
-        }
-
-        /// Frees the given player.
-        public func free() {
-            _ =  fileplayer.freePlayer(pointer)
         }
 
         /// Returns one if player is playing
