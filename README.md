@@ -28,6 +28,7 @@ Currently, the following sections of the API are implemented:
 - [ ] Lua
 - [x] Scoreboards
 - [ ] Sound
+  - [x] FilePlayer
 - [x] Sprite
 - [x] System
 
