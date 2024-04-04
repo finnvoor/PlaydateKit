@@ -5,11 +5,10 @@ import PackageDescription
 let gccIncludePrefix =
     "/usr/local/playdate/gcc-arm-none-eabi-9-2019-q4-major/lib/gcc/arm-none-eabi/9.2.1"
 
-let playdateSDKPath: String
-if let path = Context.environment["PLAYDATE_SDK_PATH"] {
-    playdateSDKPath = path
+let playdateSDKPath: String = if let path = Context.environment["PLAYDATE_SDK_PATH"] {
+    path
 } else {
-    playdateSDKPath = "\(Context.environment["HOME"]!)/Developer/PlaydateSDK/"
+    "\(Context.environment["HOME"]!)/Developer/PlaydateSDK/"
 }
 
 let package = Package(
