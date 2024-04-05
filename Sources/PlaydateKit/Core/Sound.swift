@@ -166,6 +166,11 @@ public enum Sound {
 
         // MARK: Public
 
+        /// Returns `true` if player is playing a sample, `false` if not.
+        public var isPlaying: Bool {
+            sampleplayer.isPlaying.unsafelyUnwrapped(playerPointer) == 1
+        }
+
         /// Assigns sample to player.
         @discardableResult public func setSample(path: StaticString) -> Bool {
             if let samplePointer {
@@ -183,18 +188,12 @@ public enum Sound {
             if let samplePointer {
                 sample.freeSample(samplePointer)
             }
-            
+
             samplePointer = sample.load(path)
             guard samplePointer != nil else { return false }
 
             sampleplayer.setSample(playerPointer, samplePointer)
             return true
-        }
-
-
-        /// Returns `true` if player is playing a sample, `false` if not.
-        public var isPlaying: Bool {
-            sampleplayer.isPlaying.unsafelyUnwrapped(playerPointer) == 1
         }
 
         /// Stops playing the sample.
