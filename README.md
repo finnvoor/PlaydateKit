@@ -52,8 +52,8 @@ import PlaydateKit
 
 final class Game: PlaydateGame {
     init() {
-        System.addMenuItem(title: "PlaydateKit") { _ in
-            System.log("PlaydateKit selected!")
+        System.addCheckmarkMenuItem(title: "check me") { isChecked in
+            System.log(isChecked ? "checked!" : "not checked")
         }
     }
 
