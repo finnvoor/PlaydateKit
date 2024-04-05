@@ -32,6 +32,7 @@ Currently, the following sections of the API are implemented:
 - [x] Scoreboards
 - [ ] Sound
   - [x] FilePlayer
+  - [x] SamplePlayer
 - [x] Sprite
 - [x] System
 
