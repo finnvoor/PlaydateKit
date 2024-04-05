@@ -12,9 +12,13 @@ public enum System {
 
     // MARK: - Interacting with the System Menu
 
+    /// A menu item that allows the player to cycle through a set of options.
+    ///
+    /// To create an OptionsMenuItem, use ``System/addOptionsMenuItem(title:options:callback:)-41irl``.
     public class OptionsMenuItem: MenuItem {
         // MARK: Public
 
+        /// The currently selected option.
         public var selectedOption: CInt {
             get { value }
             set { value = newValue }
@@ -25,9 +29,13 @@ public enum System {
         var optionsCallback: ((CInt) -> Void)?
     }
 
+    /// A menu item that can be checked or unchecked by the player.
+    ///
+    /// To create a CheckmarkMenuItem, use ``System/addCheckmarkMenuItem(title:isChecked:callback:)-51m33``.
     public class CheckmarkMenuItem: MenuItem {
         // MARK: Public
 
+        /// Whether or not the menu item is checked.
         public var isChecked: Bool {
             get { value != 0 }
             set { value = newValue ? 1 : 0 }
@@ -38,6 +46,9 @@ public enum System {
         var checkmarkCallback: ((Bool) -> Void)?
     }
 
+    /// A menu item that displays a title.
+    ///
+    /// To create a MenuItem, use ``System/addMenuItem(title:callback:)-dig``.
     public class MenuItem {
         // MARK: Lifecycle
 
