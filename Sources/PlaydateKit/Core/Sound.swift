@@ -158,7 +158,7 @@ public enum Sound {
         }
 
         deinit {
-            if samplePointer != nil {
+            if let samplePointer {
                 sample.freeSample(samplePointer)
             }
             sampleplayer.freePlayer.unsafelyUnwrapped(playerPointer)
@@ -168,6 +168,9 @@ public enum Sound {
 
         /// Assigns sample to player.
         @discardableResult public func setSample(path: StaticString) -> Bool {
+            if let samplePointer {
+                sample.freeSample(samplePointer)
+            }
             samplePointer = sample.load(path.utf8Start)
             guard samplePointer != nil else { return false }
 
@@ -177,6 +180,10 @@ public enum Sound {
 
         /// Assigns sample to player.
         @discardableResult public func setSample(path: UnsafePointer<CChar>) -> Bool {
+            if let samplePointer {
+                sample.freeSample(samplePointer)
+            }
+            
             samplePointer = sample.load(path)
             guard samplePointer != nil else { return false }
 
