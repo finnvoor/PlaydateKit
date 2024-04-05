@@ -1,3 +1,5 @@
+--swiftversion 6.0
+
 --enable blankLineAfterImports
 --enable blankLinesBetweenImports
 --enable blockComments

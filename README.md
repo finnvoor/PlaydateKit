@@ -65,7 +65,7 @@ final class Game: PlaydateGame {
 ```
 
 ## Contributing
-I'm happy to accept contributions on this project, whether it's bug fixes, implementing missing features, or opening an issue. Please try to follow the existing conventions/style in the project. Code should be formatted before merge using `swiftformat . --swiftversion 6.0`, but I can run this before merging if you don't want to install `swiftformat`.
+I'm happy to accept contributions on this project, whether it's bug fixes, implementing missing features, or opening an issue. Please try to follow the existing conventions/style in the project. Code should be formatted before merge using `swiftformat .`, but I can run this before merging if you don't want to install `swiftformat`.
 
 ## Acknowledgements
 

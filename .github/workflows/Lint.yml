@@ -1,15 +1,11 @@
 name: Lint
 on:
   pull_request:
-  push:
-    branches-ignore:
-      - main
 
 jobs:
   Lint:
-    runs-on: macos-14
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v3
       - name: SwiftFormat
-        run: |
-          swiftformat --lint . --swiftversion 6.0 --reporter github-actions-log
+        run: swiftformat --lint . --reporter github-actions-log
