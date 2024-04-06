@@ -22,7 +22,6 @@ public enum Playdate {
 
     public static func initialize(with pointer: UnsafeMutableRawPointer) {
         _playdateAPI = pointer.bindMemory(to: PlaydateAPI.self, capacity: 1).pointee
-        arc4random_seed = System.millisecondsSinceEpoch
         System.setUpdateCallback(update: { _ in
             (System.updateCallback?() ?? false) ? 1 : 0
         }, userdata: nil)
@@ -48,23 +47,20 @@ public enum Playdate {
     return 0
 }
 
-nonisolated(unsafe) var arc4random_seed: CUnsignedInt = 0
-@_documentation(visibility: internal)
-@_cdecl("arc4random") public func arc4random() -> UInt32 {
-    arc4random_seed = 1664525 &* arc4random_seed &+ 1013904223
-    return arc4random_seed
-}
-
 /// Implement `arc4random_buf` which is required by the Embedded Swift runtime for Hashable, Set, Dictionary,
 /// and random-number generating APIs but is not provided by the Playdate C library.
 @_documentation(visibility: internal)
 @_cdecl("arc4random_buf") public func arc4random_buf(buf: UnsafeMutableRawPointer, nbytes: Int) {
-    var r = arc4random()
-    for i in 0..<nbytes {
-        if i % 4 == 0 {
-            r = arc4random()
+    var i = 0
+    while i <= nbytes - 4 {
+        (buf + i).assumingMemoryBound(to: Int32.self).pointee = rand()
+        i += 4
+    }
+
+    if nbytes - 1 > 0 {
+        var rand = UInt32(rand())
+        for j in 0..<(nbytes - i) {
+            (buf + i + j).assumingMemoryBound(to: UInt8.self).pointee = UInt8(truncatingIfNeeded: rand >> (j * 8))
         }
-        buf.advanced(by: i).assumingMemoryBound(to: UInt8.self).pointee = UInt8(r & 0xff)
-        r >>= 8
     }
 }
