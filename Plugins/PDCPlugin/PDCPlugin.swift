@@ -194,8 +194,8 @@ import PackagePlugin
         }
 
         async let buildDevice: () = Task {
-            // playdatekit_device.o
-            print("building \(playdateKitDevice).o")
+            // playdatekit_device.swiftmodule
+            print("building \(playdateKitDevice).swiftmodule")
             try swiftc(swiftFlags + swiftFlagsDevice + playdateKitSwiftFiles + [
                 "-module-name", playdateKitDevice, "-emit-module", "-emit-module-path", playdateKitDevicePath.string
             ])
@@ -215,8 +215,8 @@ import PackagePlugin
         }.value
 
         async let buildSimulator: () = Task {
-            // playdatekit_simulator.o
-            print("building \(playdateKitSimulator).o")
+            // playdatekit_simulator.swiftmodule
+            print("building \(playdateKitSimulator).swiftmodule")
             try swiftc(swiftFlags + swiftFlagsSimulator + playdateKitSwiftFiles + [
                 "-module-name", playdateKitSimulator, "-emit-module", "-emit-module-path", playdateKitSimulatorPath.string
             ])
