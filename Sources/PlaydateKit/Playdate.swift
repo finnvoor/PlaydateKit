@@ -58,7 +58,7 @@ public enum Playdate {
     }
 
     if nbytes - 1 > 0 {
-        var rand = UInt32(rand())
+        let rand = UInt32(rand())
         for j in 0..<(nbytes - i) {
             (buf + i + j).assumingMemoryBound(to: UInt8.self).pointee = UInt8(truncatingIfNeeded: rand >> (j * 8))
         }
