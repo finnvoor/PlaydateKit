@@ -24,8 +24,10 @@ import PackagePlugin
         let moduleCachePath = context.pluginWorkDirectory.appending(["module-cache"])
         let modulesPath = context.pluginWorkDirectory.appending(["Modules"])
 
-        let playdateKitDevicePath = modulesPath.appending(["playdatekit_device.o"])
-        let playdateKitSimulatorPath = modulesPath.appending(["playdatekit_simulator.o"])
+        let playdateKitDevice = "playdatekit_device"
+        let playdateKitSimulator = "pladatekit_simulator"
+        let playdateKitDevicePath = modulesPath.appending(["\(playdateKitDevice).swiftmodule"])
+        let playdateKitSimulatorPath = modulesPath.appending(["\(playdateKitSimulator).swiftmodule"])
 
         let productDevicePath = context.pluginWorkDirectory.appending(["\(productName.lowercased())_device.o"])
         let productSimulatorPath = context.pluginWorkDirectory.appending(["\(productName.lowercased())_simulator.o"])
@@ -86,13 +88,13 @@ import PackagePlugin
         let swiftFlagsDevice = cFlagsDevice.flatMap { ["-Xcc", $0] } + [
             "-target", "armv7em-none-none-eabi",
             "-Xfrontend", "-experimental-platform-c-calling-convention=arm_aapcs_vfp",
-            "-module-alias", "PlaydateKit=playdatekit_device"
+            "-module-alias", "PlaydateKit=\(playdateKitDevice)"
         ]
 
         let cFlagsSimulator: [String] = []
 
         let swiftFlagsSimulator = cFlagsSimulator.flatMap { ["-Xcc", $0] } + [
-            "-module-alias", "PlaydateKit=playdatekit_simulator"
+            "-module-alias", "PlaydateKit=\(playdateKitSimulator)"
         ]
 
         // MARK: - CLI
@@ -193,15 +195,15 @@ import PackagePlugin
 
         async let buildDevice: () = Task {
             // playdatekit_device.o
-            print("building playdatekit_device.o")
-            try swiftc(swiftFlags + swiftFlagsDevice + ["-c"] + playdateKitSwiftFiles + [
-                "-emit-module", "-o", playdateKitDevicePath.string
+            print("building \(playdateKitDevice).o")
+            try swiftc(swiftFlags + swiftFlagsDevice + playdateKitSwiftFiles + [
+                "-module-name", playdateKitDevice, "-emit-module", "-emit-module-path", playdateKitDevicePath.string
             ])
 
             // $(productName)_device.o
             print("building \(productDevicePath.lastComponent)")
-            try swiftc(swiftFlags + swiftFlagsDevice + ["-c"] + productSwiftFiles + [
-                "-o", productDevicePath.string
+            try swiftc(swiftFlags + swiftFlagsDevice + productSwiftFiles + [
+                "-c", "-o", productDevicePath.string
             ])
 
             print("building pdex.elf")
@@ -214,15 +216,15 @@ import PackagePlugin
 
         async let buildSimulator: () = Task {
             // playdatekit_simulator.o
-            print("building playdatekit_simulator.o")
-            try swiftc(swiftFlags + swiftFlagsSimulator + ["-c"] + playdateKitSwiftFiles + [
-                "-emit-module", "-o", playdateKitSimulatorPath.string
+            print("building \(playdateKitSimulator).o")
+            try swiftc(swiftFlags + swiftFlagsSimulator + playdateKitSwiftFiles + [
+                "-module-name", playdateKitSimulator, "-emit-module", "-emit-module-path", playdateKitSimulatorPath.string
             ])
 
             // $(productName)_simulator.o
             print("building \(productSimulatorPath.lastComponent)")
-            try swiftc(swiftFlags + swiftFlagsSimulator + ["-c"] + productSwiftFiles + [
-                "-o", productSimulatorPath.string
+            try swiftc(swiftFlags + swiftFlagsSimulator + productSwiftFiles + [
+                "-c", "-o", productSimulatorPath.string
             ])
 
             print("building pdex.dylib")
