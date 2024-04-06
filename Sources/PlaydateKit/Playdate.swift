@@ -49,6 +49,7 @@ public enum Playdate {
 }
 
 nonisolated(unsafe) var arc4random_seed: CUnsignedInt = 0
+@_documentation(visibility: internal)
 @_cdecl("arc4random") public func arc4random() -> UInt32 {
     arc4random_seed = 1664525 &* arc4random_seed &+ 1013904223
     return arc4random_seed
@@ -56,6 +57,7 @@ nonisolated(unsafe) var arc4random_seed: CUnsignedInt = 0
 
 /// Implement `arc4random_buf` which is required by the Embedded Swift runtime for Hashable, Set, Dictionary,
 /// and random-number generating APIs but is not provided by the Playdate C library.
+@_documentation(visibility: internal)
 @_cdecl("arc4random_buf") public func arc4random_buf(buf: UnsafeMutableRawPointer, nbytes: Int) {
     var r = arc4random()
     for i in 0..<nbytes {
