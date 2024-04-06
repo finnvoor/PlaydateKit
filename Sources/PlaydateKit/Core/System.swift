@@ -200,6 +200,18 @@ public enum System {
         }
     }
 
+    /// Returns the number of seconds elapsed since midnight (hour 0), January 1, 2000.
+    public static var secondsSinceEpoch: CUnsignedInt {
+        system.getSecondsSinceEpoch.unsafelyUnwrapped(nil)
+    }
+
+    /// Returns the number of milliseconds elapsed since midnight (hour 0), January 1, 2000.
+    public static var millisecondsSinceEpoch: CUnsignedInt {
+        var ms: CUnsignedInt = 0
+        _ = system.getSecondsSinceEpoch.unsafelyUnwrapped(&ms)
+        return ms
+    }
+
     // MARK: - Memory allocation
 
     /// Allocates heap space if `pointer` is nil, else reallocates the given pointer. If `size` is zero, frees the given pointer.
@@ -434,11 +446,6 @@ public enum System {
     public static func removeAllMenuItems() {
         system.removeAllMenuItems.unsafelyUnwrapped()
         menuItems = []
-    }
-
-    /// Returns the number of seconds (and sets milliseconds if not NULL) elapsed since midnight (hour 0), January 1, 2000.
-    public static func getSecondsSinceEpoch(milliseconds: UnsafeMutablePointer<CUnsignedInt>? = nil) -> CUnsignedInt {
-        system.getSecondsSinceEpoch.unsafelyUnwrapped(milliseconds)
     }
 
     /// Resets the high-resolution timer.
