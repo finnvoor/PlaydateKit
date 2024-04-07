@@ -34,6 +34,30 @@ public enum Sound {
             fileplayer.isPlaying.unsafelyUnwrapped(pointer) == 1
         }
 
+        /// Installs a closure that will be called when playback has completed.
+        public var finishCallback: (() -> Void)? {
+            get {
+                _callbackData?.pointee.callback
+            }
+            set {
+                if let callbackData = _callbackData {
+                    callbackData.pointee.callback = newValue
+                } else if let newValue {
+                    let callbackData: UnsafeMutablePointer<CallbackData> = .allocate(capacity: 1)
+                    callbackData.initialize(to: .init(callback: newValue))
+                    _callbackData = callbackData
+                    setFinishCallback(
+                        callback: { _, userdata in
+                            if let callback = userdata?.assumingMemoryBound(to: CallbackData.self).pointee.callback {
+                                callback()
+                            }
+                        },
+                        soundUserdata: callbackData
+                    )
+                }
+            }
+        }
+
         /// Prepares player to stream the file at path. Returns `true` if the file exists, otherwise `false`.
         @discardableResult public func load(path: StaticString) -> Bool {
             fileplayer.loadIntoPlayer(pointer, path.utf8Start) == 1
@@ -49,48 +73,6 @@ public enum Sound {
         /// Returns 1 on success, 0 if buffer allocation failed.
         @discardableResult public func play(repeat: Int32 = 1) -> Int32 {
             fileplayer.play.unsafelyUnwrapped(pointer, `repeat`)
-        }
-        
-        // `CallbackData` wraps the callback closure and is stored in a dynamically allocated block, which
-        // is passed as `userData` to `setFinishCallback` below.
-        private struct CallbackData {
-            var callback: (() -> Void)?
-        }
-        private var _callbackData: UnsafeMutablePointer<CallbackData>?
-
-        /// Installs a closure that will be called when playback has completed.
-        public var finishCallback: (() -> Void)? {
-            get {
-                _callbackData?.pointee.callback
-            }
-            set {
-                if let callbackData = _callbackData {
-                    callbackData.pointee.callback = newValue
-                } else if let newValue {
-                    let callbackData: UnsafeMutablePointer<CallbackData> = .allocate(capacity: 1)
-                    callbackData.initialize(to: .init(callback: newValue))
-                    _callbackData = callbackData
-                    setFinishCallback(
-                        callback: { sourceSource, userdata in
-                            if let callback = userdata?.assumingMemoryBound(to: CallbackData.self).pointee.callback {
-                                callback()
-                            }
-                        },
-                        soundUserdata: callbackData
-                    )
-                }
-            }
-        }
-
-        /// Sets a function to be called when playback has completed.
-        func setFinishCallback(
-            callback: @convention(c) (
-                _ soundSource: OpaquePointer?,
-                _ userdata: UnsafeMutableRawPointer?
-            ) -> Void,
-            soundUserdata: UnsafeMutableRawPointer? = nil
-        ) {
-            fileplayer.setFinishCallback.unsafelyUnwrapped(pointer, callback, soundUserdata)
         }
 
         /// Pauses the file player.
@@ -181,7 +163,28 @@ public enum Sound {
             return (left, right)
         }
 
+        // MARK: Internal
+
+        /// Sets a function to be called when playback has completed.
+        func setFinishCallback(
+            callback: @convention(c) (
+                _ soundSource: OpaquePointer?,
+                _ userdata: UnsafeMutableRawPointer?
+            ) -> Void,
+            soundUserdata: UnsafeMutableRawPointer? = nil
+        ) {
+            fileplayer.setFinishCallback.unsafelyUnwrapped(pointer, callback, soundUserdata)
+        }
+
         // MARK: Private
+
+        /// `CallbackData` wraps the callback closure and is stored in a dynamically allocated block, which
+        /// is passed as `userData` to `setFinishCallback` below.
+        private struct CallbackData {
+            var callback: (() -> Void)?
+        }
+
+        private var _callbackData: UnsafeMutablePointer<CallbackData>?
 
         private let pointer: OpaquePointer
     }
