@@ -71,6 +71,8 @@ final class Game: PlaydateGame {
 ## Contributing
 I'm happy to accept contributions on this project, whether it's bug fixes, implementing missing features, or opening an issue. Please try to follow the existing conventions/style in the project. Code should be formatted before merge using `swiftformat .`, but I can run this before merging if you don't want to install `swiftformat`.
 
+If you create a game using PlaydateKit and would like it listed here, please open an issue or pull request! I am also hoping to add some simple games to an Examples/ directory in this repo if anyone wants to demake a retro game or create a new one that demos PlaydateKit.
+
 ## Acknowledgements
 
 PlaydateKit was inspired by and would not be possible without the excellent work done by [@rauhul](https://github.com/rauhul) on [swift-playdate-examples](https://github.com/apple/swift-playdate-examples). Specifically, PlaydateKit was created due to the note in the swift-playdate-examples repo: 
