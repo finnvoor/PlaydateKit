@@ -727,16 +727,16 @@ public enum Graphics {
         }
     }
 
-    /// Fills the polygon with vertices at the given coordinates (an array of `points`)
-    /// using the given `color` and fill, or winding, rule. See https://en.wikipedia.org/wiki/Nonzero-rule
-    /// for an explanation of the winding rule. An edge between the last vertex and the first is assumed.
+    /// Fills the specified polygon using the given `color` and fill, or winding, rule.
+    /// See https://en.wikipedia.org/wiki/Nonzero-rule for an explanation of the winding rule.
+    /// An edge between the last vertex and the first is assumed.
     public static func fillPolygon(
-        points: [Point<CInt>],
+        _ polygon: Polygon<CInt>,
         color: Color = .black,
         fillRule: PolygonFillRule
     ) {
         color.withLCDColor {
-            var points = points.flatMap { [$0.x, $0.y] }
+            var points = polygon.vertices.flatMap { [$0.x, $0.y] }
             graphics.fillPolygon.unsafelyUnwrapped(CInt(points.count), &points, $0, fillRule)
         }
     }
