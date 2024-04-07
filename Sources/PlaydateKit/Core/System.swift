@@ -218,8 +218,8 @@ public enum System {
     @discardableResult public static func realloc(
         pointer: UnsafeMutableRawPointer?,
         size: Int
-    ) -> UnsafeMutableRawPointer {
-        system.realloc.unsafelyUnwrapped(pointer, size).unsafelyUnwrapped
+    ) -> UnsafeMutableRawPointer? {
+        system.realloc.unsafelyUnwrapped(pointer, size)
     }
 
     // MARK: - Logging
