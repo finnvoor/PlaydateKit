@@ -51,14 +51,14 @@ public enum Sound {
             fileplayer.play.unsafelyUnwrapped(pointer, `repeat`)
         }
         
+        // `CallbackData` wraps the callback closure and is stored in a dynamically allocated block, which
+        // is passed as `userData` to `setFinishCallback` below.
         private struct CallbackData {
             var callback: (() -> Void)?
         }
         private var _callbackData: UnsafeMutablePointer<CallbackData>?
 
-        /// Installs a closure that will be called when playback has completed. This is implemented
-        /// by wrapping the closure in a struct that is stored in a dynamically allocated block, which
-        /// is passed as `userData` to `setFinishCallback` below.  
+        /// Installs a closure that will be called when playback has completed.
         public var finishCallback: (() -> Void)? {
             get {
                 _callbackData?.pointee.callback
@@ -83,7 +83,7 @@ public enum Sound {
         }
 
         /// Sets a function to be called when playback has completed.
-        public func setFinishCallback(
+        func setFinishCallback(
             callback: @convention(c) (
                 _ soundSource: OpaquePointer?,
                 _ userdata: UnsafeMutableRawPointer?
