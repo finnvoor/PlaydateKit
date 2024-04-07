@@ -1,7 +1,7 @@
 // MARK: - Line
 
 /// A structure representing a line with a start and end point in a two-dimensional coordinate system.
-public struct Line<T: Numeric> {
+public struct Line<T: Numeric>: Equatable {
     // MARK: Lifecycle
 
     public init(start: Point<T>, end: Point<T>) {

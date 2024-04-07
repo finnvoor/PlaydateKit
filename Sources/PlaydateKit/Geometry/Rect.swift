@@ -1,9 +1,7 @@
-public import CPlaydate
-
 // MARK: - Rect
 
 /// A structure that contains the location and dimensions of a rectangle.
-public struct Rect<T: Numeric> {
+public struct Rect<T: Numeric>: Equatable {
     // MARK: Lifecycle
 
     public init(x: T, y: T, width: T, height: T) {

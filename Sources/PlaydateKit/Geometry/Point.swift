@@ -1,7 +1,7 @@
 // MARK: - Point
 
 /// A structure that contains a point in a two-dimensional coordinate system.
-public struct Point<T: Numeric> {
+public struct Point<T: Numeric>: Equatable {
     // MARK: Lifecycle
 
     public init(x: T, y: T) {
