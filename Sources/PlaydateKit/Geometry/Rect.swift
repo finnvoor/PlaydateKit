@@ -23,16 +23,22 @@ public struct Rect<T: Numeric>: Equatable {
     public var x, y, width, height: T
 }
 
-public extension Rect {
-    /// The point with location (0,0).
-    static var zero: Rect<T> { Rect(x: 0, y: 0, width: 0, height: 0) }
+// MARK: AffineTransformable
+
+extension Rect: AffineTransformable where T == Float {
+    public mutating func transform(by transform: AffineTransform) {
+        let transformedOrigin = Point(x: x, y: y).transformed(by: transform)
+        let transformedTopRight = Point(x: x + width, y: y + height).transformed(by: transform)
+        x = transformedOrigin.x
+        y = transformedOrigin.y
+        width = transformedTopRight.x - transformedOrigin.x
+        height = transformedTopRight.y - transformedOrigin.y
+    }
 }
 
 public extension Rect {
-    /// Returns a rectangle with an origin that is offset from that of the source rectangle.
-    func offsetBy(dx: T, dy: T) -> Rect {
-        Rect(x: x + dx, y: y + dy, width: width, height: height)
-    }
+    /// The point with location (0,0).
+    static var zero: Rect<T> { Rect(x: 0, y: 0, width: 0, height: 0) }
 }
 
 extension Rect where T == CInt {

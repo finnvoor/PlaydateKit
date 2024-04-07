@@ -1,3 +1,5 @@
+// MARK: - Polygon
+
 /// A structure that contains a two-dimensional open or closed polygon.
 public struct Polygon<T: Numeric>: Equatable {
     // MARK: Lifecycle
@@ -19,5 +21,23 @@ public struct Polygon<T: Numeric>: Equatable {
     public mutating func close() {
         guard !isClosed, let first = vertices.first else { return }
         vertices.append(first)
+    }
+}
+
+// MARK: - Array + AffineTransformable
+
+extension [Point<Float>]: AffineTransformable {
+    public mutating func transform(by transform: AffineTransform) {
+        for i in indices {
+            self[i].transform(by: transform)
+        }
+    }
+}
+
+// MARK: - Polygon + AffineTransformable
+
+extension Polygon: AffineTransformable where T == Float {
+    public mutating func transform(by transform: AffineTransform) {
+        vertices.transform(by: transform)
     }
 }
