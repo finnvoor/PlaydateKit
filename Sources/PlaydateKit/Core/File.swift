@@ -63,7 +63,7 @@ public enum File {
             buffer: UnsafeRawBufferPointer
         ) throws(Playdate.Error) -> CInt {
             let writtenCount = file.write.unsafelyUnwrapped(pointer, buffer.baseAddress, CUnsignedInt(buffer.count))
-            guard writtenCount != 1 else { throw lastError }
+            guard writtenCount != -1 else { throw lastError }
             return writtenCount
         }
 
