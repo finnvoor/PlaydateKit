@@ -6,55 +6,77 @@ public import CPlaydate
 /// or the enemies that chase after your player. Sprites animate efficiently, and offer collision detection and
 /// a host of other built-in functionality.
 public enum Sprite {
-    // MARK: Public
+    // MARK: Open
 
-    public typealias CollisionResponseType = SpriteCollisionResponseType
-
-    public class CollisionInfo {
-        // MARK: Lifecycle
-
-        init(collisions: UnsafeBufferPointer<SpriteCollisionInfo>, actual: Point<Float>) {
-            self.collisions = collisions
-            self.actual = actual
-        }
-
-        deinit { collisions.deallocate() }
-
-        // MARK: Public
-
-        public let collisions: UnsafeBufferPointer<SpriteCollisionInfo>
-        public let actual: Point<Float>
-    }
-
-    public class QueryInfo {
-        // MARK: Lifecycle
-
-        init(info: UnsafeBufferPointer<SpriteQueryInfo>) {
-            self.info = info
-        }
-
-        deinit {
-            info.deallocate()
-        }
-
-        // MARK: Public
-
-        public let info: UnsafeBufferPointer<SpriteQueryInfo>
-    }
-
-    public class Sprite {
+    open class Sprite {
         // MARK: Lifecycle
 
         /// Allocates and returns a new Sprite.
         public init() {
             pointer = sprite.newSprite.unsafelyUnwrapped().unsafelyUnwrapped
+            userdata = unsafeBitCast(self, to: UnsafeMutableRawPointer.self)
+            setUpdateFunction { sprite in
+                let userdata = PlaydateKit.Sprite.getUserdata(sprite.unsafelyUnwrapped).unsafelyUnwrapped
+                let sprite = unsafeBitCast(userdata, to: Sprite.self)
+                sprite.update()
+            }
+//            setDrawFunction { sprite, bounds, drawRect in
+//                let userdata = PlaydateKit.Sprite.getUserdata(sprite.unsafelyUnwrapped).unsafelyUnwrapped
+//                let sprite = unsafeBitCast(userdata, to: Sprite.self)
+//                sprite.draw(bounds: Rect(bounds), drawRect: Rect(drawRect))
+//            }
+            setCollisionResponseFunction { sprite, other in
+                let spriteUserdata = PlaydateKit.Sprite.getUserdata(sprite.unsafelyUnwrapped)
+                let sprite = unsafeBitCast(spriteUserdata, to: Sprite.self)
+                let otherUserdata = PlaydateKit.Sprite.getUserdata(other.unsafelyUnwrapped)
+                let other = unsafeBitCast(otherUserdata, to: Sprite.self)
+                return sprite.collisionResponse(other: other)
+            }
         }
 
         init(pointer: OpaquePointer) {
             self.pointer = pointer
+            userdata = unsafeBitCast(self, to: UnsafeMutableRawPointer.self)
+            setUpdateFunction { sprite in
+                let userdata = PlaydateKit.Sprite.getUserdata(sprite.unsafelyUnwrapped).unsafelyUnwrapped
+                let sprite = unsafeBitCast(userdata, to: Sprite.self)
+                sprite.update()
+            }
+//            setDrawFunction { sprite, bounds, drawRect in
+//                let userdata = PlaydateKit.Sprite.getUserdata(sprite.unsafelyUnwrapped).unsafelyUnwrapped
+//                let sprite = unsafeBitCast(userdata, to: Sprite.self)
+//                sprite.draw(bounds: Rect(bounds), drawRect: Rect(drawRect))
+//            }
+            setCollisionResponseFunction { sprite, other in
+                let spriteUserdata = PlaydateKit.Sprite.getUserdata(sprite.unsafelyUnwrapped)
+                let sprite = unsafeBitCast(spriteUserdata, to: Sprite.self)
+                let otherUserdata = PlaydateKit.Sprite.getUserdata(other.unsafelyUnwrapped)
+                let other = unsafeBitCast(otherUserdata, to: Sprite.self)
+                return sprite.collisionResponse(other: other)
+            }
         }
 
         deinit { sprite.freeSprite.unsafelyUnwrapped(pointer) }
+
+        // MARK: Open
+
+        /// Called by ``Sprite.updateAndDrawDisplayListSprites()`` before sprites are drawn. Overriding this method
+        /// gives you the opportunity to perform some code upon every frame.
+        open func update() {}
+
+        /// If the sprite doesn’t have an image, the sprite’s draw function is called as needed to update the display. Note that this method
+        /// is only called when the sprite is on screen and has a size specified via ``setSize(width:height:)`` or ``bounds``.
+        /// > Warning: This currently does not work due to [apple/swift/issues/72626](https://github.com/apple/swift/issues/72626)
+        @available(*, unavailable) open func draw(bounds _: Rect<Float>, drawRect _: Rect<Float>) {}
+
+        /// Override to control the type of collision response that should happen when a collision with other occurs.
+        ///
+        /// This method should not attempt to modify the sprites in any way. While it might be tempting to deal with
+        /// collisions here, doing so will have unexpected and undesirable results. Instead, this function should return
+        /// one of the collision response values as quickly as possible. If sprites need to be modified as the result of a
+        /// collision, do so elsewhere, such as by inspecting the list of collisions returned by ``moveWithCollisions(goal:)``.
+        /// The default collision response is freeze.
+        open func collisionResponse(other _: Sprite) -> CollisionResponseType { .freeze }
 
         // MARK: Public
 
@@ -123,12 +145,6 @@ public enum Sprite {
         public var isVisible: Bool {
             get { sprite.isVisible.unsafelyUnwrapped(pointer) != 0 }
             set { sprite.setVisible.unsafelyUnwrapped(pointer, newValue ? 1 : 0) }
-        }
-
-        /// Gets/sets the sprite’s userdata, an arbitrary pointer used for associating the sprite with other data.
-        public var userdata: UnsafeMutableRawPointer? {
-            get { sprite.getUserdata.unsafelyUnwrapped(pointer) }
-            set { sprite.setUserdata.unsafelyUnwrapped(pointer, newValue) }
         }
 
         /// Get/set the `collisionsEnabled` flag of the sprite (along with the `collideRect`, this
@@ -237,25 +253,6 @@ public enum Sprite {
             sprite.setIgnoresDrawOffset.unsafelyUnwrapped(pointer, ignoresDrawOffset ? 1 : 0)
         }
 
-        /// Sets the update function for the sprite.
-        public func setUpdateFunction(
-            _ updateFunction: (@convention(c) (_ sprite: OpaquePointer?) -> Void)?
-        ) {
-            sprite.setUpdateFunction.unsafelyUnwrapped(pointer, updateFunction)
-        }
-
-        /// Sets the draw function for the sprite. Note that the callback is only called when the
-        /// sprite is on screen and has a size specified via ``setSize(width:height:)`` or ``bounds``.
-        public func setDrawFunction(
-            drawFunction: (@convention(c) (
-                _ sprite: OpaquePointer?,
-                _ bounds: PDRect,
-                _ drawRect: PDRect
-            ) -> Void)?
-        ) {
-            sprite.setDrawFunction.unsafelyUnwrapped(pointer, drawFunction)
-        }
-
         /// Adds the sprite to the display list, so that it is drawn in the current scene.
         public func addToDisplayList() {
             sprite.addSprite.unsafelyUnwrapped(pointer)
@@ -264,16 +261,6 @@ public enum Sprite {
         /// Removes the given sprite from the display list.
         public func removeFromDisplayList() {
             sprite.removeSprite.unsafelyUnwrapped(pointer)
-        }
-
-        /// Set a callback that returns a `SpriteCollisionResponseType` for a collision between `sprite` and other.
-        public func setCollisionResponseFunction(
-            function: (@convention(c) (
-                _ sprite: OpaquePointer?,
-                _ other: OpaquePointer?
-            ) -> CollisionResponseType)?
-        ) {
-            sprite.setCollisionResponseFunction.unsafelyUnwrapped(pointer, function)
         }
 
         /// Returns the same values as `moveWithCollisions()` but does not actually move the sprite.
@@ -317,6 +304,77 @@ public enum Sprite {
         // MARK: Internal
 
         let pointer: OpaquePointer
+
+        /// Gets/sets the sprite’s userdata, an arbitrary pointer used for associating the sprite with other data.
+        var userdata: UnsafeMutableRawPointer? {
+            get { sprite.getUserdata.unsafelyUnwrapped(pointer) }
+            set { sprite.setUserdata.unsafelyUnwrapped(pointer, newValue) }
+        }
+
+        /// Set a callback that returns a `SpriteCollisionResponseType` for a collision between `sprite` and other.
+        func setCollisionResponseFunction(
+            function: (@convention(c) (
+                _ sprite: OpaquePointer?,
+                _ other: OpaquePointer?
+            ) -> CollisionResponseType)?
+        ) {
+            sprite.setCollisionResponseFunction.unsafelyUnwrapped(pointer, function)
+        }
+
+        /// Sets the draw function for the sprite. Note that the callback is only called when the
+        /// sprite is on screen and has a size specified via ``setSize(width:height:)`` or ``bounds``.
+        func setDrawFunction(
+            drawFunction: (@convention(c) (
+                _ sprite: OpaquePointer?,
+                _ bounds: PDRect,
+                _ drawRect: PDRect
+            ) -> Void)?
+        ) {
+            sprite.setDrawFunction.unsafelyUnwrapped(pointer, drawFunction)
+        }
+
+        /// Sets the update function for the sprite.
+        func setUpdateFunction(
+            _ updateFunction: (@convention(c) (_ sprite: OpaquePointer?) -> Void)?
+        ) {
+            sprite.setUpdateFunction.unsafelyUnwrapped(pointer, updateFunction)
+        }
+    }
+
+    // MARK: Public
+
+    public typealias CollisionResponseType = SpriteCollisionResponseType
+
+    public class CollisionInfo {
+        // MARK: Lifecycle
+
+        init(collisions: UnsafeBufferPointer<SpriteCollisionInfo>, actual: Point<Float>) {
+            self.collisions = collisions
+            self.actual = actual
+        }
+
+        deinit { collisions.deallocate() }
+
+        // MARK: Public
+
+        public let collisions: UnsafeBufferPointer<SpriteCollisionInfo>
+        public let actual: Point<Float>
+    }
+
+    public class QueryInfo {
+        // MARK: Lifecycle
+
+        init(info: UnsafeBufferPointer<SpriteQueryInfo>) {
+            self.info = info
+        }
+
+        deinit {
+            info.deallocate()
+        }
+
+        // MARK: Public
+
+        public let info: UnsafeBufferPointer<SpriteQueryInfo>
     }
 
     // MARK: - Properties
@@ -436,6 +494,12 @@ public enum Sprite {
         var length: CInt = 0
         let sprites = sprite.allOverlappingSprites.unsafelyUnwrapped(&length)
         return UnsafeBufferPointer(start: sprites, count: Int(length))
+    }
+
+    // MARK: Internal
+
+    static func getUserdata(_ sprite: OpaquePointer) -> UnsafeMutableRawPointer? {
+        Self.sprite.getUserdata(sprite)
     }
 
     // MARK: Private

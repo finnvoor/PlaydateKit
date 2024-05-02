@@ -217,3 +217,11 @@ Enumerators:
   SwiftName: nxor
 - Name: kDrawModeInverted
   SwiftName: inverted
+- Name: kCollisionTypeSlide
+  SwiftName: slide
+- Name: kCollisionTypeFreeze
+  SwiftName: freeze
+- Name: kCollisionTypeOverlap
+  SwiftName: overlap
+- Name: kCollisionTypeBounce
+  SwiftName: bounce
