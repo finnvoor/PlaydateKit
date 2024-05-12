@@ -81,14 +81,8 @@ public enum Sprite {
         // MARK: Public
 
         /// The sprite's stencil bitmap, if set.
-        
-        
-        // I don't know why previous public private(set) var stencil
-        // was causing this kind of error https://github.com/finnvoor/PlaydateKit/issues/51
-        // Separating the public getter from ste private storage, resolved the issue
-        private var _stencil: Graphics.Bitmap?
         public var stencil: Graphics.Bitmap? { _stencil }
-        
+
         /// The bitmap currently assigned to the sprite.
         public var image: Graphics.Bitmap? {
             didSet {
@@ -209,7 +203,7 @@ public enum Sprite {
         /// Specifies a stencil image to be set on the frame buffer before the sprite is drawn.
         /// Pass `nil` to clear the sprite’s stencil.
         public func setStencil(_ stencil: Graphics.Bitmap?) {
-            self._stencil = stencil
+            _stencil = stencil
             if let stencil {
                 sprite.setStencil.unsafelyUnwrapped(pointer, stencil.pointer)
             } else {
@@ -220,7 +214,7 @@ public enum Sprite {
         /// Specifies a stencil image to be set on the frame buffer before the sprite is drawn. If `tile` is set, the stencil will be tiled.
         /// Tiled stencils must have width evenly divisible by 32.
         public func setStencilImage(_ stencil: Graphics.Bitmap, tile: CInt) {
-            self._stencil = stencil
+            _stencil = stencil
             sprite.setStencilImage.unsafelyUnwrapped(pointer, stencil.pointer, tile)
         }
 
@@ -345,6 +339,13 @@ public enum Sprite {
         ) {
             sprite.setUpdateFunction.unsafelyUnwrapped(pointer, updateFunction)
         }
+
+        // MARK: Private
+
+        /// I don't know why previous public private(set) var stencil
+        /// was causing this kind of error https://github.com/finnvoor/PlaydateKit/issues/51
+        /// Separating the public getter from ste private storage, resolved the issue
+        private var _stencil: Graphics.Bitmap?
     }
 
     // MARK: Public
