@@ -27,7 +27,7 @@ public enum Display {
         set {
             var refreshRate = newValue
             if !((0...50) ~= refreshRate) {
-                System.error("refreshRate must be between 0...50")
+                System.error(StaticString("refreshRate must be between 0...50"))
                 refreshRate = min(max(refreshRate, 0), 50)
             }
             _refreshRate = refreshRate
@@ -53,7 +53,7 @@ public enum Display {
         set {
             var scale = newValue
             if !([1, 2, 4, 8].contains(scale)) {
-                System.error("scale must be 1, 2, 4, or 8")
+                System.error(StaticString("scale must be 1, 2, 4, or 8"))
                 scale = 1
             }
             _scale = scale

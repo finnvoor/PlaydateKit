@@ -13,7 +13,7 @@ public enum Playdate {
     }
 
     /// Access to the Playdate C API.
-    public nonisolated(unsafe) static var playdateAPI: PlaydateAPI! {
+    public static var playdateAPI: PlaydateAPI! {
         guard let _playdateAPI else {
             fatalError("playdateAPI is not set! Did you forget to call Playdate.initialize(with:)?")
         }
