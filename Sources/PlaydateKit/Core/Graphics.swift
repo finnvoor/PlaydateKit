@@ -737,7 +737,7 @@ public enum Graphics {
     ) {
         color.withLCDColor {
             var points = polygon.vertices.flatMap { [$0.x, $0.y] }
-            graphics.fillPolygon.unsafelyUnwrapped(CInt(points.count), &points, $0, fillRule)
+            graphics.fillPolygon.unsafelyUnwrapped(CInt(points.count / 2), &points, $0, fillRule)
         }
     }
 
