@@ -52,16 +52,12 @@ public enum Playdate {
 /// and random-number generating APIs but is not provided by the Playdate C library.
 @_documentation(visibility: internal)
 @_cdecl("arc4random_buf") public func arc4random_buf(buf: UnsafeMutableRawPointer, nbytes: Int) {
-    var i = 0
-    while i <= nbytes - 4 {
-        (buf + i).assumingMemoryBound(to: Int32.self).pointee = rand()
-        i += 4
+    for i in stride(from: 0, to: nbytes - 1, by: 2) {
+        let randomValue = UInt16(rand() & Int32(UInt16.max))
+        (buf + i).assumingMemoryBound(to: UInt16.self).pointee = randomValue
     }
-
-    if nbytes - 1 > 0 {
-        let rand = UInt32(rand())
-        for j in 0..<(nbytes - i) {
-            (buf + i + j).assumingMemoryBound(to: UInt8.self).pointee = UInt8(truncatingIfNeeded: rand >> (j * 8))
-        }
+    if nbytes % 2 == 1 {
+        let randomValue = UInt8(rand() & Int32(UInt8.max))
+        (buf + nbytes - 1).assumingMemoryBound(to: UInt8.self).pointee = randomValue
     }
 }
