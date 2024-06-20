@@ -1,12 +1,14 @@
 import Foundation
 import PackagePlugin
 
-// MARK: - PDCPlugin
+// MARK: - BuildDestination
 
 enum BuildDestination {
     case simulator
     case device
 }
+
+// MARK: - ModuleType
 
 enum ModuleType {
     case playdateKit
@@ -14,23 +16,26 @@ enum ModuleType {
     case productDependency
 }
 
+// MARK: - ModuleBuildRequest
+
 struct ModuleBuildRequest {
     let name: String
     let type: ModuleType
     let relativePath: Path
     let sourcefiles: [String]
-    
-    func moduleName(for dest:BuildDestination) -> String { "\(name.lowercased())_\(dest)" }
-    
-    func modulePath(for dest:BuildDestination) -> String {
-        let suffix: String
-        switch type {
-        case .product: suffix = "o"
-        default: suffix = "swiftmodule"
+
+    func moduleName(for dest: BuildDestination) -> String { "\(name.lowercased())_\(dest)" }
+
+    func modulePath(for dest: BuildDestination) -> String {
+        let suffix = switch type {
+        case .product: "o"
+        default: "swiftmodule"
         }
         return relativePath.appending(["\(moduleName(for: dest)).\(suffix)"]).string
     }
 }
+
+// MARK: - PDCPlugin
 
 @main struct PDCPlugin: CommandPlugin {
     let home = FileManager.default.homeDirectoryForCurrentUser.path()
@@ -221,13 +226,13 @@ struct ModuleBuildRequest {
                 toPath: sourcePath.appending([resource.lastComponent]).string
             )
         }
-        
+
         func build(module: ModuleBuildRequest) async throws {
             async let deviceBuild: () = try buildDeviceModule(module)
             async let simulatorBuild: () = try buildSimulatorModule(module)
             let _ = try await (deviceBuild, simulatorBuild)
         }
-        
+
         @Sendable func buildDeviceModule(_ module: ModuleBuildRequest) async throws {
             try await Task {
                 print("building \(module.moduleName(for: .device))")
@@ -240,8 +245,6 @@ struct ModuleBuildRequest {
                 case .product:
                     // $(productName)_device.o
                     let linkedModules = productDependencies.map { ["-module-alias", "\($0.name)=\($0.moduleName(for: .device))"] }.flatMap { $0 }
-                    let dbg:[String] = swiftFlags + swiftFlagsDevice + linkedModules + module.sourcefiles + ["-c", "-o", module.modulePath(for: .device)]
-                    print("ZZZ: \(dbg)")
                     try swiftc(swiftFlags + swiftFlagsDevice + linkedModules + module.sourcefiles + [
                         "-c", "-o", module.modulePath(for: .device)
                     ])
@@ -258,7 +261,7 @@ struct ModuleBuildRequest {
                 }
             }.value
         }
-        
+
         @Sendable func buildSimulatorModule(_ module: ModuleBuildRequest) async throws {
             print("building \(module.moduleName(for: .simulator))")
             try await Task {
@@ -270,7 +273,7 @@ struct ModuleBuildRequest {
                 case .product:
                     // $(productName)_simulator.o
                     let linkedModules = productDependencies.map { ["-module-alias", "\($0.name)=\($0.moduleName(for: .simulator))"] }.flatMap { $0 }
-                    try swiftc(swiftFlags + swiftFlagsSimulator + linkedModules  + module.sourcefiles + [
+                    try swiftc(swiftFlags + swiftFlagsSimulator + linkedModules + module.sourcefiles + [
                         "-c", "-o", module.modulePath(for: .simulator)
                     ])
                     print("building pdex.dylib")
@@ -291,13 +294,13 @@ struct ModuleBuildRequest {
                 }
             }.value
         }
-        
+
         try await build(module: playdateKit)
         for dep in productDependencies {
             try await build(module: dep)
         }
         try await build(module: product)
-        
+
         print("running pdc")
         try pdc([
             sourcePath.string,
