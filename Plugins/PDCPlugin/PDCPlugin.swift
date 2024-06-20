@@ -1,6 +1,40 @@
 import Foundation
 import PackagePlugin
 
+// MARK: - BuildDestination
+
+enum BuildDestination {
+    case simulator
+    case device
+}
+
+// MARK: - ModuleType
+
+enum ModuleType {
+    case playdateKit
+    case product
+    case productDependency
+}
+
+// MARK: - ModuleBuildRequest
+
+struct ModuleBuildRequest {
+    let name: String
+    let type: ModuleType
+    let relativePath: Path
+    let sourcefiles: [String]
+
+    func moduleName(for dest: BuildDestination) -> String { "\(name.lowercased())_\(dest)" }
+
+    func modulePath(for dest: BuildDestination) -> String {
+        let suffix = switch type {
+        case .product: "o"
+        default: "swiftmodule"
+        }
+        return relativePath.appending(["\(moduleName(for: dest)).\(suffix)"]).string
+    }
+}
+
 // MARK: - PDCPlugin
 
 @main struct PDCPlugin: CommandPlugin {
@@ -24,16 +58,7 @@ import PackagePlugin
         let moduleCachePath = context.pluginWorkDirectory.appending(["module-cache"])
         let modulesPath = context.pluginWorkDirectory.appending(["Modules"])
 
-        let playdateKitDevice = "playdatekit_device"
-        let playdateKitSimulator = "pladatekit_simulator"
-        let playdateKitDevicePath = modulesPath.appending(["\(playdateKitDevice).swiftmodule"])
-        let playdateKitSimulatorPath = modulesPath.appending(["\(playdateKitSimulator).swiftmodule"])
-
-        let productDevicePath = context.pluginWorkDirectory.appending(["\(productName.lowercased())_device.o"])
-        let productSimulatorPath = context.pluginWorkDirectory.appending(["\(productName.lowercased())_simulator.o"])
-
         let sourcePath = context.pluginWorkDirectory.appending(["Source"])
-
         let productPath: String = if let targetBuildDir = ProcessInfo.processInfo.environment["TARGET_BUILD_DIR"] {
             // Run from Xcode
             targetBuildDir + "/\(productName).pdx"
@@ -54,6 +79,15 @@ import PackagePlugin
         let productResources = productSource.sourceFiles
             .filter { $0.type == .unknown }
             .map(\.path)
+
+        let playdateKit = ModuleBuildRequest(name: "playdatekit", type: .playdateKit, relativePath: modulesPath, sourcefiles: playdateKitSwiftFiles)
+        let product = ModuleBuildRequest(name: productName, type: .product, relativePath: context.pluginWorkDirectory, sourcefiles: productSwiftFiles)
+        let productDependencies = context.package.dependencies.compactMap { dep -> ModuleBuildRequest? in
+            guard dep.package.id != "playdatekit" else { return nil }
+            let sourceModule = dep.package.sourceModules.first!
+            let sourceFiles = sourceModule.sourceFiles(withSuffix: "swift").map(\.path.string)
+            return ModuleBuildRequest(name: sourceModule.name, type: .productDependency, relativePath: modulesPath, sourcefiles: sourceFiles)
+        }
 
         // MARK: - Flags
 
@@ -88,13 +122,13 @@ import PackagePlugin
         let swiftFlagsDevice = cFlagsDevice.flatMap { ["-Xcc", $0] } + [
             "-target", "armv7em-none-none-eabi",
             "-Xfrontend", "-experimental-platform-c-calling-convention=arm_aapcs_vfp",
-            "-module-alias", "PlaydateKit=\(playdateKitDevice)"
+            "-module-alias", "PlaydateKit=\(playdateKit.moduleName(for: .device))"
         ]
 
         let cFlagsSimulator: [String] = []
 
         let swiftFlagsSimulator = cFlagsSimulator.flatMap { ["-Xcc", $0] } + [
-            "-module-alias", "PlaydateKit=\(playdateKitSimulator)"
+            "-module-alias", "PlaydateKit=\(playdateKit.moduleName(for: .simulator))"
         ]
 
         // MARK: - CLI
@@ -193,54 +227,79 @@ import PackagePlugin
             )
         }
 
-        async let buildDevice: () = Task {
-            // playdatekit_device.swiftmodule
-            print("building \(playdateKitDevice).swiftmodule")
-            try swiftc(swiftFlags + swiftFlagsDevice + playdateKitSwiftFiles + [
-                "-module-name", playdateKitDevice, "-emit-module", "-emit-module-path", playdateKitDevicePath.string
-            ])
+        func build(module: ModuleBuildRequest) async throws {
+            async let deviceBuild: () = try buildDeviceModule(module)
+            async let simulatorBuild: () = try buildSimulatorModule(module)
+            let _ = try await (deviceBuild, simulatorBuild)
+        }
 
-            // $(productName)_device.o
-            print("building \(productDevicePath.lastComponent)")
-            try swiftc(swiftFlags + swiftFlagsDevice + productSwiftFiles + [
-                "-c", "-o", productDevicePath.string
-            ])
+        @Sendable func buildDeviceModule(_ module: ModuleBuildRequest) async throws {
+            try await Task {
+                print("building \(module.moduleName(for: .device))")
+                switch module.type {
+                case .playdateKit:
+                    // playdatekit_device.swiftmodule
+                    try swiftc(swiftFlags + swiftFlagsDevice + module.sourcefiles + [
+                        "-module-name", module.moduleName(for: .device), "-emit-module", "-emit-module-path", module.modulePath(for: .device)
+                    ])
+                case .product:
+                    // $(productName)_device.o
+                    let linkedModules = productDependencies.map { ["-module-alias", "\($0.name)=\($0.moduleName(for: .device))"] }.flatMap { $0 }
+                    try swiftc(swiftFlags + swiftFlagsDevice + linkedModules + module.sourcefiles + [
+                        "-c", "-o", module.modulePath(for: .device)
+                    ])
+                    print("building pdex.elf")
+                    try cc([setup, module.modulePath(for: .device)] + mcFlags + [
+                        "-T\(playdateSDK)/C_API/buildsupport/link_map.ld",
+                        "-Wl,-Map=\(context.pluginWorkDirectory.appending(["pdex.map"]).string),--cref,--gc-sections,--no-warn-mismatch,--emit-relocs",
+                        "-o", sourcePath.appending(["pdex.elf"]).string
+                    ])
+                case .productDependency:
+                    try swiftc(swiftFlags + swiftFlagsDevice + module.sourcefiles + [
+                        "-module-name", module.moduleName(for: .device), "-emit-module", "-emit-module-path", module.modulePath(for: .device)
+                    ])
+                }
+            }.value
+        }
 
-            print("building pdex.elf")
-            try cc([setup, productDevicePath.string] + mcFlags + [
-                "-T\(playdateSDK)/C_API/buildsupport/link_map.ld",
-                "-Wl,-Map=\(context.pluginWorkDirectory.appending(["pdex.map"]).string),--cref,--gc-sections,--no-warn-mismatch,--emit-relocs",
-                "-o", sourcePath.appending(["pdex.elf"]).string
-            ])
-        }.value
+        @Sendable func buildSimulatorModule(_ module: ModuleBuildRequest) async throws {
+            print("building \(module.moduleName(for: .simulator))")
+            try await Task {
+                switch module.type {
+                case .playdateKit:
+                    try swiftc(swiftFlags + swiftFlagsSimulator + module.sourcefiles + [
+                        "-module-name", module.moduleName(for: .simulator), "-emit-module", "-emit-module-path", module.modulePath(for: .simulator)
+                    ])
+                case .product:
+                    // $(productName)_simulator.o
+                    let linkedModules = productDependencies.map { ["-module-alias", "\($0.name)=\($0.moduleName(for: .simulator))"] }.flatMap { $0 }
+                    try swiftc(swiftFlags + swiftFlagsSimulator + linkedModules + module.sourcefiles + [
+                        "-c", "-o", module.modulePath(for: .simulator)
+                    ])
+                    print("building pdex.dylib")
+                    try clang([
+                        "-nostdlib", "-dead_strip",
+                        "-Wl,-exported_symbol,_eventHandlerShim", "-Wl,-exported_symbol,_eventHandler",
+                        module.modulePath(for: .simulator), "-dynamiclib", "-rdynamic", "-lm",
+                        "-DTARGET_SIMULATOR=1", "-DTARGET_EXTENSION=1",
+                        "-I", ".",
+                        "-I", "\(playdateSDK)/C_API",
+                        "-o", sourcePath.appending(["pdex.dylib"]).string,
+                        "\(playdateSDK)/C_API/buildsupport/setup.c"
+                    ])
+                case .productDependency:
+                    try swiftc(swiftFlags + swiftFlagsSimulator + module.sourcefiles + [
+                        "-module-name", module.moduleName(for: .simulator), "-emit-module", "-emit-module-path", module.modulePath(for: .simulator)
+                    ])
+                }
+            }.value
+        }
 
-        async let buildSimulator: () = Task {
-            // playdatekit_simulator.swiftmodule
-            print("building \(playdateKitSimulator).swiftmodule")
-            try swiftc(swiftFlags + swiftFlagsSimulator + playdateKitSwiftFiles + [
-                "-module-name", playdateKitSimulator, "-emit-module", "-emit-module-path", playdateKitSimulatorPath.string
-            ])
-
-            // $(productName)_simulator.o
-            print("building \(productSimulatorPath.lastComponent)")
-            try swiftc(swiftFlags + swiftFlagsSimulator + productSwiftFiles + [
-                "-c", "-o", productSimulatorPath.string
-            ])
-
-            print("building pdex.dylib")
-            try clang([
-                "-nostdlib", "-dead_strip",
-                "-Wl,-exported_symbol,_eventHandlerShim", "-Wl,-exported_symbol,_eventHandler",
-                productSimulatorPath.string, "-dynamiclib", "-rdynamic", "-lm",
-                "-DTARGET_SIMULATOR=1", "-DTARGET_EXTENSION=1",
-                "-I", ".",
-                "-I", "\(playdateSDK)/C_API",
-                "-o", sourcePath.appending(["pdex.dylib"]).string,
-                "\(playdateSDK)/C_API/buildsupport/setup.c"
-            ])
-        }.value
-
-        _ = try await [buildDevice, buildSimulator]
+        try await build(module: playdateKit)
+        for dep in productDependencies {
+            try await build(module: dep)
+        }
+        try await build(module: product)
 
         print("running pdc")
         try pdc([
