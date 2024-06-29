@@ -25,18 +25,7 @@ public enum JSON {
     /// and `didDecodeArrayValue`. The `value` pointer, if set, contains the value returned from the top-level `didDecodeSublist` callback.
     public static func decodeString(
         using decoder: inout Decoder,
-        jsonString: StaticString,
-        value: inout Value
-    ) -> CInt {
-        json.decodeString(&decoder, jsonString.utf8Start, &value)
-    }
-
-    /// Decodes a JSON string with the given `decoder`. An instance of `Decoder` must implement `decodeError`.
-    /// The remaining functions are optional although you’ll probably want to implement at least `didDecodeTableValue`
-    /// and `didDecodeArrayValue`. The `value` pointer, if set, contains the value returned from the top-level `didDecodeSublist` callback.
-    public static func decodeString(
-        using decoder: inout Decoder,
-        jsonString: UnsafeMutablePointer<CChar>,
+        jsonString: String,
         value: inout Value
     ) -> CInt {
         json.decodeString.unsafelyUnwrapped(&decoder, jsonString, &value)

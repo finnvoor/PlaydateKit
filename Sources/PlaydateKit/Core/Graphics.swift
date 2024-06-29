@@ -13,12 +13,7 @@ public enum Graphics {
             // MARK: Lifecycle
 
             /// Opens the pdv file at path and returns a new video player object for rendering its frames.
-            public init(path: StaticString) {
-                pointer = video.loadVideo(path.utf8Start).unsafelyUnwrapped
-            }
-
-            /// Opens the pdv file at path and returns a new video player object for rendering its frames.
-            public init(path: UnsafePointer<CChar>) {
+            public init(path: String) {
                 pointer = video.loadVideo.unsafelyUnwrapped(path).unsafelyUnwrapped
             }
 
@@ -77,7 +72,9 @@ public enum Graphics {
 
             /// Returns the most recent error
             private var error: Playdate.Error {
-                Playdate.Error(humanReadableText: video.getError.unsafelyUnwrapped(pointer))
+                Playdate.Error(
+                    humanReadableText: String(cString: video.getError.unsafelyUnwrapped(pointer)!)
+                )
             }
         }
 
@@ -95,19 +92,10 @@ public enum Graphics {
         }
 
         /// Allocates and returns a new `Bitmap` from the file at path. If there is no file at `path`, the function throws.
-        public init(path: StaticString) throws(Playdate.Error) {
-            var error: UnsafePointer<CChar>?
-            let pointer = graphics.loadBitmap(path.utf8Start, &error)
-            if let error { throw Playdate.Error(humanReadableText: error) }
-            self.pointer = pointer.unsafelyUnwrapped
-            free = true
-        }
-
-        /// Allocates and returns a new `Bitmap` from the file at path. If there is no file at `path`, the function throws.
-        public init(path: UnsafeMutablePointer<CChar>) throws(Playdate.Error) {
+        public init(path: String) throws(Playdate.Error) {
             var error: UnsafePointer<CChar>?
             let pointer = graphics.loadBitmap.unsafelyUnwrapped(path, &error)
-            if let error { throw Playdate.Error(humanReadableText: error) }
+            if let error { throw Playdate.Error(humanReadableText: String(cString: error)) }
             self.pointer = pointer.unsafelyUnwrapped
             free = true
         }
@@ -141,17 +129,10 @@ public enum Graphics {
         }
 
         /// Loads the image at `path` into the bitmap.
-        public func load(from path: StaticString) throws(Playdate.Error) {
-            var error: UnsafePointer<CChar>?
-            graphics.loadIntoBitmap(path.utf8Start, pointer, &error)
-            if let error { throw Playdate.Error(humanReadableText: error) }
-        }
-
-        /// Loads the image at `path` into the bitmap.
-        public func load(from path: UnsafeMutablePointer<CChar>) throws(Playdate.Error) {
+        public func load(from path: String) throws(Playdate.Error) {
             var error: UnsafePointer<CChar>?
             graphics.loadIntoBitmap.unsafelyUnwrapped(path, pointer, &error)
-            if let error { throw Playdate.Error(humanReadableText: error) }
+            if let error { throw Playdate.Error(humanReadableText: String(cString: error)) }
         }
 
         /// Clears the bitmap, filling with the given `bgcolor`.
@@ -253,18 +234,10 @@ public enum Graphics {
         // MARK: Lifecycle
 
         /// Allocates and returns a new `BitmapTable` from the file at `path`. If there is no file at `path`, the function throws an error.
-        public init(path: StaticString) throws(Playdate.Error) {
-            var error: UnsafePointer<CChar>?
-            let pointer = graphics.loadBitmapTable(path.utf8Start, &error)
-            if let error { throw Playdate.Error(humanReadableText: error) }
-            self.pointer = pointer.unsafelyUnwrapped
-        }
-
-        /// Allocates and returns a new `BitmapTable` from the file at `path`. If there is no file at `path`, the function throws an error.
-        public init(path: UnsafeMutablePointer<CChar>) throws(Playdate.Error) {
+        public init(path: String) throws(Playdate.Error) {
             var error: UnsafePointer<CChar>?
             let pointer = graphics.loadBitmapTable.unsafelyUnwrapped(path, &error)
-            if let error { throw Playdate.Error(humanReadableText: error) }
+            if let error { throw Playdate.Error(humanReadableText: String(cString: error)) }
             self.pointer = pointer.unsafelyUnwrapped
         }
 
@@ -297,17 +270,10 @@ public enum Graphics {
         }
 
         /// Loads the image table at `path` into the previously allocated `table`.
-        public func load(from path: StaticString) throws(Playdate.Error) {
-            var error: UnsafePointer<CChar>?
-            graphics.loadIntoBitmapTable(path.utf8Start, pointer, &error)
-            if let error { throw Playdate.Error(humanReadableText: error) }
-        }
-
-        /// Loads the image table at `path` into the previously allocated `table`.
-        public func load(from path: UnsafeMutablePointer<CChar>) throws(Playdate.Error) {
+        public func load(from path: String) throws(Playdate.Error) {
             var error: UnsafePointer<CChar>?
             graphics.loadIntoBitmapTable.unsafelyUnwrapped(path, pointer, &error)
-            if let error { throw Playdate.Error(humanReadableText: error) }
+            if let error { throw Playdate.Error(humanReadableText: String(cString: error)) }
         }
 
         // MARK: Private
@@ -319,18 +285,10 @@ public enum Graphics {
         // MARK: Lifecycle
 
         /// Returns a `Font` object for the font file at `path`.
-        public init(path: StaticString) throws(Playdate.Error) {
-            var error: UnsafePointer<CChar>?
-            let pointer = graphics.loadFont(path.utf8Start, &error)
-            if let error { throw Playdate.Error(humanReadableText: error) }
-            self.pointer = pointer.unsafelyUnwrapped
-        }
-
-        /// Returns a `Font` object for the font file at `path`.
-        public init(path: UnsafeMutablePointer<CChar>) throws(Playdate.Error) {
+        public init(path: String) throws(Playdate.Error) {
             var error: UnsafePointer<CChar>?
             let pointer = graphics.loadFont.unsafelyUnwrapped(path, &error)
-            if let error { throw Playdate.Error(humanReadableText: error) }
+            if let error { throw Playdate.Error(humanReadableText: String(cString: error)) }
             self.pointer = pointer.unsafelyUnwrapped
         }
 
@@ -420,26 +378,16 @@ public enum Graphics {
 
         /// Returns the width of the given `text` in the font.
         public func getTextWidth(
-            for text: StaticString,
+            for text: String,
             tracking: CInt
         ) -> CInt {
             graphics.getTextWidth.unsafelyUnwrapped(
                 pointer,
-                text.utf8Start,
-                text.utf8CodeUnitCount,
+                text,
+                text.utf8.count,
                 .kUTF8Encoding,
                 tracking
             )
-        }
-
-        /// Returns the width of the given `text` in the font.
-        public func getTextWidth(
-            for text: UnsafeRawPointer,
-            length: Int,
-            encoding: StringEncoding,
-            tracking: CInt
-        ) -> CInt {
-            graphics.getTextWidth.unsafelyUnwrapped(pointer, text, length, encoding, tracking)
         }
 
         /// Returns a `Font.Page` object for the given character code. Each font page contains information
@@ -614,29 +562,16 @@ public enum Graphics {
     ///
     /// Returns the drawn width of the given `text`.
     @discardableResult public static func drawText(
-        _ text: StaticString,
+        _ text: String,
         at point: Point<CInt>
     ) -> CInt {
         graphics.drawText.unsafelyUnwrapped(
-            text.utf8Start,
-            text.utf8CodeUnitCount,
+            text,
+            text.utf8.count,
             .kUTF8Encoding,
             point.x,
             point.y
         )
-    }
-
-    /// Draws the given `text` using the provided options. If no font has been set with `setFont`, the default
-    /// system font Asheville Sans 14 Light is used.
-    ///
-    /// Returns the drawn width of the given `text`.
-    @discardableResult public static func drawText(
-        _ text: UnsafeRawPointer?,
-        length: Int,
-        encoding: StringEncoding,
-        at point: Point<CInt>
-    ) -> CInt {
-        graphics.drawText.unsafelyUnwrapped(text, length, encoding, point.x, point.y)
     }
 
     /// Draws an ellipse inside the rectangle `rect` of width `lineWidth` (inset from the rectangle bounds).

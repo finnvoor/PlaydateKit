@@ -59,13 +59,14 @@ public enum System {
         // MARK: Public
 
         /// Gets/sets the title of the menu item.
-        public var title: UnsafePointer<CChar> {
-            get { system.getMenuItemTitle.unsafelyUnwrapped(pointer).unsafelyUnwrapped }
-            set { system.setMenuItemTitle.unsafelyUnwrapped(pointer, newValue) }
-        }
-
-        public func setTitle(_ title: StaticString) {
-            system.setMenuItemTitle(pointer, title.utf8Start)
+        public var title: String {
+            get {
+                String(
+                    cString: system.getMenuItemTitle.unsafelyUnwrapped(pointer).unsafelyUnwrapped
+                )
+            } set {
+                system.setMenuItemTitle.unsafelyUnwrapped(pointer, newValue)
+            }
         }
 
         // MARK: Internal
@@ -225,21 +226,7 @@ public enum System {
     // MARK: - Logging
 
     /// Calls the log function, outputting an error in red to the console, then pauses execution.
-    public static func error(_ error: StaticString) {
-        let logError = unsafeBitCast(
-            system.error.unsafelyUnwrapped,
-            to: (@convention(c) (UnsafePointer<CChar>?) -> Void).self
-        )
-        error.utf8Start.withMemoryRebound(
-            to: CChar.self,
-            capacity: error.utf8CodeUnitCount + 1
-        ) { pointer in
-            logError(pointer)
-        }
-    }
-
-    /// Calls the log function, outputting an error in red to the console, then pauses execution.
-    public static func error(_ error: UnsafePointer<CChar>?) {
+    public static func error(_ error: String) {
         let logError = unsafeBitCast(
             system.error.unsafelyUnwrapped,
             to: (@convention(c) (UnsafePointer<CChar>?) -> Void).self
@@ -249,25 +236,11 @@ public enum System {
 
     /// Calls the log function, outputting an error in red to the console, then pauses execution.
     public static func error(_ error: Playdate.Error) {
-        System.error(error.humanReadableText)
+        System.error(error.humanReadableText ?? "")
     }
 
     /// Calls the log function.
-    public static func log(_ log: StaticString) {
-        let logToConsole = unsafeBitCast(
-            system.logToConsole.unsafelyUnwrapped,
-            to: (@convention(c) (UnsafePointer<CChar>?) -> Void).self
-        )
-        log.utf8Start.withMemoryRebound(
-            to: CChar.self,
-            capacity: log.utf8CodeUnitCount + 1
-        ) { pointer in
-            logToConsole(pointer)
-        }
-    }
-
-    /// Calls the log function.
-    public static func log(_ log: UnsafePointer<CChar>) {
+    public static func log(_ log: String) {
         let logToConsole = unsafeBitCast(
             system.logToConsole.unsafelyUnwrapped,
             to: (@convention(c) (UnsafePointer<CChar>?) -> Void).self
@@ -283,10 +256,10 @@ public enum System {
     ///   - callback: The callback invoked when the menu item is selected by the user.
     /// - Returns: The menu item
     @discardableResult public static func addMenuItem(
-        title: StaticString,
+        title: String,
         callback: (() -> Void)? = nil
     ) -> MenuItem {
-        let pointer = system.addMenuItem(title.utf8Start, { userdata in
+        let pointer = system.addMenuItem(title, { userdata in
             let menuItem = unsafeBitCast(userdata, to: MenuItem.self)
             menuItem.callback?()
         }, nil).unsafelyUnwrapped
@@ -297,30 +270,6 @@ public enum System {
         return menuItem
     }
 
-    /// Adds a new menu item to the System Menu.
-    /// - Parameters:
-    ///   - title: The title displayed by the menu item.
-    ///   - callback: The callback invoked when the menu item is selected by the user.
-    /// - Returns: The menu item
-    @discardableResult public static func addMenuItem(
-        title: UnsafePointer<CChar>,
-        callback: (() -> Void)? = nil
-    ) -> MenuItem {
-        let pointer = system.addMenuItem.unsafelyUnwrapped(
-            title,
-            { userdata in
-                let menuItem = unsafeBitCast(userdata, to: MenuItem.self)
-                menuItem.callback?()
-            },
-            nil
-        ).unsafelyUnwrapped
-        let menuItem = MenuItem(pointer: pointer)
-        menuItem.callback = callback
-        menuItem.userdata = unsafeBitCast(menuItem, to: UnsafeMutableRawPointer.self)
-        menuItems.append(menuItem)
-        return menuItem
-    }
-
     /// Adds a new menu item that can be checked or unchecked by the player.
     /// - Parameters:
     ///   - title: The title displayed by the menu item.
@@ -328,38 +277,11 @@ public enum System {
     ///   - callback: The callback invoked when the menu item is selected by the user.
     /// - Returns: The menu item
     @discardableResult public static func addCheckmarkMenuItem(
-        title: StaticString,
+        title: String,
         isChecked: Bool = false,
         callback: ((_ isChecked: Bool) -> Void)? = nil
     ) -> CheckmarkMenuItem {
         let pointer = system.addCheckmarkMenuItem(
-            title.utf8Start,
-            isChecked ? 1 : 0,
-            { userdata in
-                let menuItem = unsafeBitCast(userdata, to: CheckmarkMenuItem.self)
-                menuItem.checkmarkCallback?(menuItem.isChecked)
-            },
-            nil
-        ).unsafelyUnwrapped
-        let menuItem = CheckmarkMenuItem(pointer: pointer)
-        menuItem.checkmarkCallback = callback
-        menuItem.userdata = unsafeBitCast(menuItem, to: UnsafeMutableRawPointer.self)
-        menuItems.append(menuItem)
-        return menuItem
-    }
-
-    /// Adds a new menu item that can be checked or unchecked by the player.
-    /// - Parameters:
-    ///   - title: The title displayed by the menu item.
-    ///   - isChecked: Whether or not the menu item is checked.
-    ///   - callback: The callback invoked when the menu item is selected by the user.
-    /// - Returns: The menu item
-    @discardableResult public static func addCheckmarkMenuItem(
-        title: UnsafePointer<CChar>,
-        isChecked: Bool = false,
-        callback: ((_ isChecked: Bool) -> Void)? = nil
-    ) -> CheckmarkMenuItem {
-        let pointer = system.addCheckmarkMenuItem.unsafelyUnwrapped(
             title,
             isChecked ? 1 : 0,
             { userdata in
@@ -383,39 +305,7 @@ public enum System {
     ///   - callback: The callback invoked when the menu item is selected by the user.
     /// - Returns: The menu item
     @discardableResult public static func addOptionsMenuItem(
-        title: StaticString,
-        options: [StaticString],
-        callback: ((CInt) -> Void)? = nil
-    ) -> OptionsMenuItem {
-        var options = options.map {
-            Optional(UnsafeRawPointer($0.utf8Start).assumingMemoryBound(to: CChar.self))
-        }
-        let pointer = system.addOptionsMenuItem(
-            title.utf8Start,
-            &options,
-            CInt(options.count),
-            { userdata in
-                let menuItem = unsafeBitCast(userdata, to: OptionsMenuItem.self)
-                menuItem.optionsCallback?(menuItem.selectedOption)
-            },
-            nil
-        ).unsafelyUnwrapped
-        let menuItem = OptionsMenuItem(pointer: pointer)
-        menuItem.optionsCallback = callback
-        menuItem.userdata = unsafeBitCast(menuItem, to: UnsafeMutableRawPointer.self)
-        menuItems.append(menuItem)
-        return menuItem
-    }
-
-    /// Adds a new menu item that allows the player to cycle through a set of options.
-    /// - Parameters:
-    ///   - title: The title displayed by the menu item.
-    ///   - options: An array of strings representing the states this menu item can cycle through. Due to limited horizontal space,
-    ///              the option strings and title should be kept short for this type of menu item.
-    ///   - callback: The callback invoked when the menu item is selected by the user.
-    /// - Returns: The menu item
-    @discardableResult public static func addOptionsMenuItem(
-        title: UnsafePointer<CChar>,
+        title: String,
         options: UnsafeMutableBufferPointer<UnsafePointer<CChar>?>,
         callback: ((CInt) -> Void)? = nil
     ) -> OptionsMenuItem {

@@ -9,7 +9,7 @@ public enum Playdate {
 
     /// An error thrown from the Playdate C API.
     public struct Error: Swift.Error, @unchecked Sendable {
-        let humanReadableText: UnsafePointer<CChar>?
+        let humanReadableText: String
     }
 
     /// Access to the Playdate C API.

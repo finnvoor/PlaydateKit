@@ -15,22 +15,7 @@ public enum Scoreboards {
     /// If Wi-Fi is not available, the outgoing value will be queued on device and sent to the server on a later attempt.
     /// In the case that it is added to the outgoing queue, the result will not specify a rank.
     public static func addScore(
-        boardID: StaticString,
-        value: CUnsignedInt,
-        callback: (@convention(c) (
-            _ score: UnsafeMutablePointer<Score>?,
-            _ errorMessage: UnsafePointer<CChar>?
-        ) -> Void)? = nil
-    ) -> CInt {
-        scoreboards.addScore(boardID.utf8Start, value, callback)
-    }
-
-    /// Adds a new score to the specified board. Invokes the given callback with the resulting rank for the given value.
-    ///
-    /// If Wi-Fi is not available, the outgoing value will be queued on device and sent to the server on a later attempt.
-    /// In the case that it is added to the outgoing queue, the result will not specify a rank.
-    public static func addScore(
-        boardID: UnsafePointer<CChar>,
+        boardID: String,
         value: CUnsignedInt,
         callback: (@convention(c) (
             _ score: UnsafeMutablePointer<Score>?,
@@ -45,21 +30,7 @@ public enum Scoreboards {
     /// This will only operate on locally stored scores. In the event that there is no available high score for this player,
     /// the callback will be invoked with nil.
     public static func getPersonalBest(
-        boardID: StaticString,
-        callback: (@convention(c) (
-            _ score: UnsafeMutablePointer<Score>?,
-            _ errorMessage: UnsafePointer<CChar>?
-        ) -> Void)? = nil
-    ) -> CInt {
-        scoreboards.getPersonalBest(boardID.utf8Start, callback)
-    }
-
-    /// Gets the player’s personal best score. Invokes the given callback with the score.
-    ///
-    /// This will only operate on locally stored scores. In the event that there is no available high score for this player,
-    /// the callback will be invoked with nil.
-    public static func getPersonalBest(
-        boardID: UnsafePointer<CChar>,
+        boardID: String,
         callback: (@convention(c) (
             _ score: UnsafeMutablePointer<Score>?,
             _ errorMessage: UnsafePointer<CChar>?
@@ -89,20 +60,8 @@ public enum Scoreboards {
         scoreboards.freeBoardsList.unsafelyUnwrapped(boardsList)
     }
 
-    /// Invokes the given callback with a list of the top scores on the given board. (Typically ten scores or fewer.)
-    /// If the current player is not in the top scores, their highest score is given as the last result.
     public static func getScores(
-        boardID: StaticString,
-        callback: @convention(c) (
-            _ scores: UnsafeMutablePointer<ScoresList>?,
-            _ errorMessage: UnsafePointer<CChar>?
-        ) -> Void
-    ) -> CInt {
-        scoreboards.getScores(boardID.utf8Start, callback)
-    }
-
-    public static func getScores(
-        boardID: UnsafePointer<CChar>,
+        boardID: String,
         callback: @convention(c) (
             _ scores: UnsafeMutablePointer<ScoresList>?,
             _ errorMessage: UnsafePointer<CChar>?
