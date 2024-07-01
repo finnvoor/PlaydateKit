@@ -182,6 +182,13 @@ public enum Graphics {
             return (width, height, rowBytes)
         }
 
+        /// Gets the color of the pixel at `point` in the bitmap. If the coordinate is outside the bounds
+        /// of the bitmap, or if the bitmap has a mask and the pixel is marked transparent, the function
+        /// returns clear; otherwise the return value is white or black.
+        public func getPixel(at point: Point<CInt>) -> Color {
+            .solid(graphics.getBitmapPixel(pointer, point.x, point.y))
+        }
+
         /// Returns a new, rotated and scaled `Bitmap` based on the given `bitmap`.
         public func rotated(by rotation: Float, xScale: Float, yScale: Float) -> (
             bitmap: Bitmap,
@@ -269,6 +276,20 @@ public enum Graphics {
         deinit { graphics.freeBitmapTable(pointer) }
 
         // MARK: Public
+
+        /// The table's image count.
+        public var imageCount: CInt {
+            var count: CInt = 0
+            graphics.getBitmapTableInfo.unsafelyUnwrapped(pointer, &count, nil)
+            return count
+        }
+
+        /// The number of cells across.
+        public var cellsWide: CInt {
+            var cellsWide: CInt = 0
+            graphics.getBitmapTableInfo.unsafelyUnwrapped(pointer, nil, &cellsWide)
+            return cellsWide
+        }
 
         /// Returns the `index` bitmap in `table`, If `index` is out of bounds, the function returns nil.
         public func bitmap(at index: CInt) -> Bitmap? {
@@ -443,7 +464,7 @@ public enum Graphics {
     /// The mode used for drawing bitmaps. Note that text drawing uses bitmaps, so this affects how fonts are displayed as well.
     public nonisolated(unsafe) static var drawMode: Bitmap.DrawMode = .copy {
         didSet {
-            graphics.setDrawMode.unsafelyUnwrapped(drawMode)
+            _ = graphics.setDrawMode.unsafelyUnwrapped(drawMode)
         }
     }
 
@@ -806,6 +827,15 @@ public enum Graphics {
         var color: LCDColor = 0
         graphics.setColorToPattern.unsafelyUnwrapped(&color, pattern.pointer, topLeft.x, topLeft.y)
         return color
+    }
+
+    /// Sets the pixel at `point` in the current drawing context (by default the screen) to the given color.
+    /// Be aware that setting a pixel at a time is not very efficient: In our testing, more than around 20,000
+    /// calls in a tight loop will drop the frame rate below 30 fps.
+    public static func setPixel(at point: Point<CInt>, to color: Color) {
+        color.withLCDColor {
+            graphics.setPixel(point.x, point.y, $0)
+        }
     }
 
     // MARK: Private
