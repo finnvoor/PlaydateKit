@@ -7,7 +7,7 @@
         <img src="https://img.shields.io/badge/Swift-6.0-f05237.svg" />
     </a>
     <a href="https://sdk.play.date">
-        <img src="https://img.shields.io/badge/Playdate_SDK-2.4.2-ffc500.svg" />
+        <img src="https://img.shields.io/badge/Playdate_SDK-2.5.0-ffc500.svg" />
     </a>
     <a href="https://github.com/finnvoor/PlaydateKit/actions/workflows/Build.yml">
         <img src="https://github.com/finnvoor/PlaydateKit/actions/workflows/Build.yml/badge.svg" />
