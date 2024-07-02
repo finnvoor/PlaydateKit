@@ -76,7 +76,7 @@ public enum File {
     /// `listFiles()` does not recurse into subfolders. If `showHidden` is true, files beginning with a period will be included;
     /// otherwise, they are skipped. Throws if no folder exists at path or it can’t be opened.
     public static func listFiles(
-        path: StaticString,
+        path: String,
         callback: @convention(c) (
             _ filename: UnsafePointer<CChar>?,
             _ userdata: UnsafeMutableRawPointer?
@@ -84,38 +84,15 @@ public enum File {
         userdata: UnsafeMutableRawPointer? = nil,
         showHidden: Bool = false
     ) throws(Playdate.Error) {
-        guard file.listfiles(path.utf8Start, callback, userdata, showHidden ? 1 : 0) == 0 else {
+        guard file.listfiles(path, callback, userdata, showHidden ? 1 : 0) == 0 else {
             throw lastError
         }
-    }
-
-    /// Calls the given callback function for every file at path. Subfolders are indicated by a trailing slash '/' in filename.
-    /// `listFiles()` does not recurse into subfolders. If `showHidden` is true, files beginning with a period will be included;
-    /// otherwise, they are skipped. Throws if no folder exists at path or it can’t be opened.
-    public static func listFiles(
-        path: UnsafePointer<CChar>,
-        callback: @convention(c) (
-            _ filename: UnsafePointer<CChar>?,
-            _ userdata: UnsafeMutableRawPointer?
-        ) -> Void,
-        userdata: UnsafeMutableRawPointer? = nil,
-        showHidden: Bool = false
-    ) throws(Playdate.Error) {
-        guard file.listfiles.unsafelyUnwrapped(path, callback, userdata, showHidden ? 1 : 0) == 0 else {
-            throw lastError
-        }
-    }
-
-    /// Deletes the file at path. If recursive is true and the target path is a folder,
-    /// this deletes everything inside the folder (including folders, folders inside those, and so on) as well as the folder itself.
-    public static func unlink(path: StaticString, recursive: Bool = false) throws(Playdate.Error) {
-        guard file.unlink(path.utf8Start, recursive ? 1 : 0) == 0 else { throw lastError }
     }
 
     /// Deletes the file at path. If `recursive` is true and the target path is a folder,
     /// this deletes everything inside the folder (including folders, folders inside those, and so on) as well as the folder itself.
     public static func unlink(
-        path: UnsafePointer<CChar>,
+        path: String,
         recursive: Bool = false
     ) throws(Playdate.Error) {
         guard file.unlink.unsafelyUnwrapped(path, recursive ? 1 : 0) == 0 else {
@@ -124,39 +101,21 @@ public enum File {
     }
 
     /// Creates the given path in the `Data/<gameid>` folder. It does not create intermediate folders.
-    public static func mkdir(path: StaticString) throws(Playdate.Error) {
-        guard file.mkdir(path.utf8Start) == 0 else { throw lastError }
-    }
-
-    /// Creates the given path in the `Data/<gameid>` folder. It does not create intermediate folders.
-    public static func mkdir(path: UnsafePointer<CChar>) throws(Playdate.Error) {
+    public static func mkdir(path: String) throws(Playdate.Error) {
         guard file.mkdir.unsafelyUnwrapped(path) == 0 else { throw lastError }
     }
 
     /// Renames the file at `from` to `to`. It will overwrite the file at to without confirmation.
     /// It does not create intermediate folders.
-    public static func rename(from: StaticString, to: StaticString) throws(Playdate.Error) {
-        guard file.rename(from.utf8Start, to.utf8Start) == 0 else { throw lastError }
-    }
-
-    /// Renames the file at `from` to `to`. It will overwrite the file at to without confirmation.
-    /// It does not create intermediate folders.
     public static func rename(
-        from: UnsafePointer<CChar>,
-        to: UnsafePointer<CChar>
+        from: String,
+        to: String
     ) throws(Playdate.Error) {
         guard file.rename.unsafelyUnwrapped(from, to) == 0 else { throw lastError }
     }
 
     /// Returns the FileStat stat with information about the file at `path`.
-    public static func stat(path: StaticString) throws(Playdate.Error) -> FileStat {
-        var fileStat = FileStat()
-        guard file.stat(path.utf8Start, &fileStat) == 0 else { throw lastError }
-        return fileStat
-    }
-
-    /// Returns the FileStat stat with information about the file at `path`.
-    public static func stat(path: UnsafePointer<CChar>) throws(Playdate.Error) -> FileStat {
+    public static func stat(path: String) throws(Playdate.Error) -> FileStat {
         var fileStat = FileStat()
         guard file.stat.unsafelyUnwrapped(path, &fileStat) == 0 else { throw lastError }
         return fileStat
@@ -169,23 +128,7 @@ public enum File {
     /// > Warning: The filesystem has a limit of 64 simultaneous open files. The returned file handle should be closed,
     /// when it is no longer in use (before deinit).
     public static func open(
-        path: StaticString,
-        mode: Options
-    ) throws(Playdate.Error) -> FileHandle {
-        guard let fileHandle = file.open(path.utf8Start, mode) else {
-            throw lastError
-        }
-        return FileHandle(pointer: fileHandle)
-    }
-
-    /// Opens a handle for the file at path. The `fileRead` mode opens a file in the game pdx,
-    /// while `fileReadData` searches the game’s data folder; to search the data folder first then fall back on the game pdx,
-    /// use the bitwise combination `fileRead|fileReadData.fileWrite` and `fileAppend` always write to the data folder.
-    /// The function throws an error if a file at path cannot be opened.
-    /// > Warning: The filesystem has a limit of 64 simultaneous open files. The returned file handle should be closed,
-    /// when it is no longer in use (before deinit).
-    public static func open(
-        path: UnsafePointer<CChar>,
+        path: String,
         mode: Options
     ) throws(Playdate.Error) -> FileHandle {
         guard let fileHandle = file.open.unsafelyUnwrapped(path, mode) else {
@@ -199,7 +142,9 @@ public enum File {
     /// Returns human-readable text describing the most recent error
     /// (usually indicated by a thrown error from a filesystem function).
     private static var lastError: Playdate.Error {
-        Playdate.Error(humanReadableText: file.geterr.unsafelyUnwrapped())
+        Playdate.Error(
+            humanReadableText: String(cString: file.geterr.unsafelyUnwrapped()!)
+        )
     }
 
     private static var file: playdate_file { Playdate.playdateAPI.file.pointee }

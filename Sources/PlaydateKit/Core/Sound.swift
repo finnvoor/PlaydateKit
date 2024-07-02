@@ -59,12 +59,7 @@ public enum Sound {
         }
 
         /// Prepares player to stream the file at path. Returns `true` if the file exists, otherwise `false`.
-        @discardableResult public func load(path: StaticString) -> Bool {
-            fileplayer.loadIntoPlayer(pointer, path.utf8Start) == 1
-        }
-
-        /// Prepares player to stream the file at path. Returns `true` if the file exists, otherwise `false`.
-        @discardableResult public func load(path: UnsafePointer<CChar>) -> Bool {
+        @discardableResult public func load(path: String) -> Bool {
             fileplayer.loadIntoPlayer(pointer, path) == 1
         }
 
@@ -212,19 +207,7 @@ public enum Sound {
         }
 
         /// Assigns sample to player.
-        @discardableResult public func setSample(path: StaticString) -> Bool {
-            if let samplePointer {
-                sample.freeSample(samplePointer)
-            }
-            samplePointer = sample.load(path.utf8Start)
-            guard samplePointer != nil else { return false }
-
-            sampleplayer.setSample(playerPointer, samplePointer)
-            return true
-        }
-
-        /// Assigns sample to player.
-        @discardableResult public func setSample(path: UnsafePointer<CChar>) -> Bool {
+        @discardableResult public func setSample(path: String) -> Bool {
             if let samplePointer {
                 sample.freeSample(samplePointer)
             }
