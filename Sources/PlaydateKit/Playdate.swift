@@ -61,3 +61,22 @@ public enum Playdate {
         (buf + nbytes - 1).assumingMemoryBound(to: UInt8.self).pointee = randomValue
     }
 }
+
+@_documentation(visibility: internal) private nonisolated(unsafe) var buffer: [CChar] = []
+/// Implement `putchar` which is required by the Embedded Swift runtime for `print` but is
+/// not provided by the Playdate C library.
+///
+/// Due to https://devforum.play.date/t/logtoconsole-without-a-linebreak/1819,
+/// printed characters are stored in a buffer and only logged to the Playdate console once a newline
+/// is printed.
+@_documentation(visibility: internal)
+@_cdecl("putchar") public func putchar(char: CInt) -> CInt {
+    if char == 0x0a {
+        buffer.append(0)
+        System.log(String(cString: &buffer))
+        buffer = []
+    } else {
+        buffer.append(CChar(char))
+    }
+    return char
+}

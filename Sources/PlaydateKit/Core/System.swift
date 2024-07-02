@@ -236,7 +236,7 @@ public enum System {
 
     /// Calls the log function, outputting an error in red to the console, then pauses execution.
     public static func error(_ error: Playdate.Error) {
-        System.error(error.humanReadableText ?? "")
+        System.error(error.humanReadableText)
     }
 
     /// Calls the log function.
