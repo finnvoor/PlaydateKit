@@ -38,20 +38,14 @@ struct ModuleBuildRequest {
 // MARK: - PDCPlugin
 
 @main struct PDCPlugin: CommandPlugin {
-    let home = FileManager.default.homeDirectoryForCurrentUser.path()
-    let arm_none_eabi_gcc = "/usr/local/playdate/gcc-arm-none-eabi-9-2019-q4-major/bin/arm-none-eabi-gcc"
-
     func performCommand(context: PluginContext, arguments: [String]) async throws {
         var arguments = ArgumentExtractor(arguments)
         let verbose = arguments.extractFlag(named: "verbose") > 0
 
+        let tools = Tools(context: context, verbose: verbose)
+        let playdateSDK = try tools.playdateSDK()
+
         // MARK: - Paths
-
-        let swiftToolchain = try swiftToolchain()
-        print("found Swift toolchain: \(swiftToolchain)")
-
-        let playdateSDK = try playdateSDK()
-        print("found Playdate SDK")
 
         let productName = context.package.displayName
 
@@ -131,76 +125,11 @@ struct ModuleBuildRequest {
             "-module-alias", "PlaydateKit=\(playdateKit.moduleName(for: .simulator))"
         ]
 
-        // MARK: - CLI
-
-        @Sendable func cc(_ arguments: [String]) throws {
-            let process = Process()
-            process.executableURL = URL(filePath: arm_none_eabi_gcc)
-            process.arguments = ["-g3"] + arguments
-            if verbose { process.print() }
-            try process.run()
-            process.waitUntilExit()
-            guard process.terminationStatus == 0 else { throw Error.ccFailed(exitCode: process.terminationStatus) }
-        }
-
-        @Sendable func swiftc(_ arguments: [String]) throws {
-            let xcrun = try context.tool(named: "xcrun")
-            let process = Process()
-            process.executableURL = URL(filePath: xcrun.path.string)
-            process.arguments = ["-f", "swiftc", "--toolchain", swiftToolchain]
-            let pipe = Pipe()
-            process.standardOutput = pipe
-            if verbose { process.print() }
-            try process.run()
-            process.waitUntilExit()
-            guard process.terminationStatus == 0 else { throw Error.xcrunFailed(exitCode: process.terminationStatus) }
-            let swiftc = try String(decoding: pipe.fileHandleForReading.readToEnd() ?? Data(), as: UTF8.self)
-                .trimmingCharacters(in: .newlines)
-            let process2 = Process()
-            process2.executableURL = URL(filePath: swiftc)
-            process2.arguments = ["-g"] + arguments
-            if verbose { process2.print() }
-            try process2.run()
-            process2.waitUntilExit()
-            guard process2.terminationStatus == 0 else { throw Error.swiftcFailed(exitCode: process2.terminationStatus) }
-        }
-
-        @Sendable func clang(_ arguments: [String]) throws {
-            let clang = try context.tool(named: "clang")
-            let process = Process()
-            var environment = ProcessInfo.processInfo.environment
-
-            environment["TVOS_DEPLOYMENT_TARGET"] = nil
-            environment["DRIVERKIT_DEPLOYMENT_TARGET"] = nil
-            environment["MACOSX_DEPLOYMENT_TARGET"] = nil
-            environment["WATCHOS_DEPLOYMENT_TARGET"] = nil
-            environment["XROS_DEPLOYMENT_TARGET"] = nil
-            environment["IPHONEOS_DEPLOYMENT_TARGET"] = nil
-
-            process.environment = environment
-            process.executableURL = URL(filePath: clang.path.string)
-            process.arguments = ["-g"] + arguments
-            if verbose { process.print() }
-            try process.run()
-            process.waitUntilExit()
-            guard process.terminationStatus == 0 else { throw Error.clangFailed(exitCode: process.terminationStatus) }
-        }
-
-        func pdc(_ arguments: [String]) throws {
-            let process = Process()
-            process.executableURL = URL(filePath: "\(playdateSDK)/bin/pdc")
-            process.arguments = ["--skip-unknown"] + arguments
-            if verbose { process.print() }
-            try process.run()
-            process.waitUntilExit()
-            guard process.terminationStatus == 0 else { throw Error.pdcFailed(exitCode: process.terminationStatus) }
-        }
-
         // MARK: - Build
 
         // setup.o
         let setup = context.pluginWorkDirectory.appending(["setup.o"]).string
-        try cc(mcFlags + [
+        try tools.cc(mcFlags + [
             "-c", "-O2", "-falign-functions=16", "-fomit-frame-pointer", "-gdwarf-2", "-Wall", "-Wno-unused", "-Wstrict-prototypes", "-Wno-unknown-pragmas", "-fverbose-asm", "-Wdouble-promotion", "-mword-relocations", "-fno-common", "-ffunction-sections", "-fdata-sections", "-Wa,-ahlms=\(context.pluginWorkDirectory.appending(["setup.lst"]).string)", "-DTARGET_PLAYDATE=1", "-DTARGET_EXTENSION=1", "-MD", "-MP", "-MF",
             context.pluginWorkDirectory.appending(["setup.o.d"]).string,
             "-I", ".",
@@ -239,23 +168,23 @@ struct ModuleBuildRequest {
                 switch module.type {
                 case .playdateKit:
                     // playdatekit_device.swiftmodule
-                    try swiftc(swiftFlags + swiftFlagsDevice + module.sourcefiles + [
+                    try tools.swiftc(swiftFlags + swiftFlagsDevice + module.sourcefiles + [
                         "-module-name", module.moduleName(for: .device), "-emit-module", "-emit-module-path", module.modulePath(for: .device)
                     ])
                 case .product:
                     // $(productName)_device.o
                     let linkedModules = productDependencies.map { ["-module-alias", "\($0.name)=\($0.moduleName(for: .device))"] }.flatMap { $0 }
-                    try swiftc(swiftFlags + swiftFlagsDevice + linkedModules + module.sourcefiles + [
+                    try tools.swiftc(swiftFlags + swiftFlagsDevice + linkedModules + module.sourcefiles + [
                         "-c", "-o", module.modulePath(for: .device)
                     ])
                     print("building pdex.elf")
-                    try cc([setup, module.modulePath(for: .device)] + mcFlags + [
+                    try tools.cc([setup, module.modulePath(for: .device)] + mcFlags + [
                         "-T\(playdateSDK)/C_API/buildsupport/link_map.ld",
                         "-Wl,-Map=\(context.pluginWorkDirectory.appending(["pdex.map"]).string),--cref,--gc-sections,--no-warn-mismatch,--emit-relocs",
                         "-o", sourcePath.appending(["pdex.elf"]).string
                     ])
                 case .productDependency:
-                    try swiftc(swiftFlags + swiftFlagsDevice + module.sourcefiles + [
+                    try tools.swiftc(swiftFlags + swiftFlagsDevice + module.sourcefiles + [
                         "-module-name", module.moduleName(for: .device), "-emit-module", "-emit-module-path", module.modulePath(for: .device)
                     ])
                 }
@@ -267,17 +196,17 @@ struct ModuleBuildRequest {
             try await Task {
                 switch module.type {
                 case .playdateKit:
-                    try swiftc(swiftFlags + swiftFlagsSimulator + module.sourcefiles + [
+                    try tools.swiftc(swiftFlags + swiftFlagsSimulator + module.sourcefiles + [
                         "-module-name", module.moduleName(for: .simulator), "-emit-module", "-emit-module-path", module.modulePath(for: .simulator)
                     ])
                 case .product:
                     // $(productName)_simulator.o
                     let linkedModules = productDependencies.map { ["-module-alias", "\($0.name)=\($0.moduleName(for: .simulator))"] }.flatMap { $0 }
-                    try swiftc(swiftFlags + swiftFlagsSimulator + linkedModules + module.sourcefiles + [
+                    try tools.swiftc(swiftFlags + swiftFlagsSimulator + linkedModules + module.sourcefiles + [
                         "-c", "-o", module.modulePath(for: .simulator)
                     ])
                     print("building pdex.dylib")
-                    try clang([
+                    try tools.clang([
                         "-nostdlib", "-dead_strip",
                         "-Wl,-exported_symbol,_eventHandlerShim", "-Wl,-exported_symbol,_eventHandler",
                         module.modulePath(for: .simulator), "-dynamiclib", "-rdynamic", "-lm",
@@ -288,7 +217,7 @@ struct ModuleBuildRequest {
                         "\(playdateSDK)/C_API/buildsupport/setup.c"
                     ])
                 case .productDependency:
-                    try swiftc(swiftFlags + swiftFlagsSimulator + module.sourcefiles + [
+                    try tools.swiftc(swiftFlags + swiftFlagsSimulator + module.sourcefiles + [
                         "-module-name", module.moduleName(for: .simulator), "-emit-module", "-emit-module-path", module.modulePath(for: .simulator)
                     ])
                 }
@@ -302,37 +231,10 @@ struct ModuleBuildRequest {
         try await build(module: product)
 
         print("running pdc")
-        try pdc([
+        try tools.pdc([
             sourcePath.string,
             productPath
         ])
-    }
-
-    func swiftToolchain() throws -> String {
-        struct Info: Decodable { let CFBundleIdentifier: String }
-        let toolchainPath = "Library/Developer/Toolchains/swift-latest.xctoolchain"
-        if let toolchain = ProcessInfo.processInfo.environment["TOOLCHAINS"] {
-            return toolchain
-        } else if FileManager.default.fileExists(atPath: "\(home)\(toolchainPath)"),
-                  let data = try? Data(contentsOf: URL(filePath: "\(home)\(toolchainPath)/Info.plist")),
-                  let info = try? PropertyListDecoder().decode(Info.self, from: data) {
-            return info.CFBundleIdentifier
-        } else if FileManager.default.fileExists(atPath: "/\(toolchainPath)"),
-                  let data = try? Data(contentsOf: URL(filePath: "/\(toolchainPath)/Info.plist")),
-                  let info = try? PropertyListDecoder().decode(Info.self, from: data) {
-            return info.CFBundleIdentifier
-        }
-        throw Error.swiftToolchainNotFound
-    }
-
-    func playdateSDK() throws -> String {
-        if let sdk = ProcessInfo.processInfo.environment["PLAYDATE_SDK_PATH"],
-           FileManager.default.fileExists(atPath: sdk) {
-            return sdk
-        } else if FileManager.default.fileExists(atPath: "\(home)Developer/PlaydateSDK/") {
-            return "\(home)Developer/PlaydateSDK/"
-        }
-        throw Error.playdateSDKNotFound
     }
 }
 
