@@ -206,10 +206,17 @@ struct ModuleBuildRequest {
                         "-c", "-o", module.modulePath(for: .simulator)
                     ])
                     print("building pdex.dylib")
+
+                    #if os(Linux)
+                    let linkerFlags = ["-Wl,--undefined=_eventHandlerShim", "-Wl,--undefined=_eventHandler"]
+                    #else
+                    let linkerFlags = ["-Wl,-exported_symbol,_eventHandlerShim", "-Wl,-exported_symbol,_eventHandler"]
+                    #endif
+
                     try tools.clang([
-                        "-nostdlib", "-dead_strip",
-                        "-Wl,-exported_symbol,_eventHandlerShim", "-Wl,-exported_symbol,_eventHandler",
-                        module.modulePath(for: .simulator), "-dynamiclib", "-rdynamic", "-lm",
+                        "-nostdlib", "-dead_strip"
+                    ] + linkerFlags + [
+                        module.modulePath(for: .simulator), "-dynamiclib", "-rdynamic", "-lc", "-lm",
                         "-DTARGET_SIMULATOR=1", "-DTARGET_EXTENSION=1",
                         "-I", ".",
                         "-I", "\(playdateSDK)/C_API",
