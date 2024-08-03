@@ -93,7 +93,12 @@ struct ModuleBuildRequest {
             "/include",
             "/include-fixed",
             "/../../../../arm-none-eabi/include"
-        ].map { "/usr/local/playdate/gcc-arm-none-eabi-9-2019-q4-major/lib/gcc/arm-none-eabi/9.2.1" + $0 }
+        ].map { (ProcessInfo.processInfo.environment["ARM_TOOLCHAIN_PATH"] ?? "/usr/local/playdate/gcc-arm-none-eabi-9-2019-q4-major/lib/gcc/arm-none-eabi/9.2.1") + $0 }
+
+        guard FileManager.default.fileExists(atPath: gccIncludePaths.first!) else {
+            Diagnostics.error("Arm embedded toolchain not found. Ensure it is installed through the Playdate SDK (macOS) or manually and set in the ARM_TOOLCHAIN_PATH environment variable.")
+            throw Tools.Error.armNoneEabiGCCNotFound
+        }
 
         let cFlags = gccIncludePaths.flatMap { ["-I", $0] }
 
