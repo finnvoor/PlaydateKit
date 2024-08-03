@@ -40,20 +40,29 @@ struct Tools {
     }
 
     func swiftc(_ arguments: [String]) throws {
-        let xcrun = try context.tool(named: "xcrun")
-        let process = Process()
-        process.executableURL = URL(filePath: xcrun.path.string)
-        process.arguments = try ["-f", "swiftc", "--toolchain", swiftToolchain()]
-        let pipe = Pipe()
-        process.standardOutput = pipe
-        if verbose { process.print() }
-        try process.run()
-        process.waitUntilExit()
-        guard process.terminationStatus == 0 else {
-            throw Error.xcrunFailed(exitCode: process.terminationStatus)
+        let swiftc: String
+        if let xcrun = try? context.tool(named: "xcrun") {
+            let process = Process()
+            process.executableURL = URL(filePath: xcrun.path.string)
+            process.arguments = try ["-f", "swiftc", "--toolchain", swiftToolchain()]
+            let pipe = Pipe()
+            process.standardOutput = pipe
+            if verbose { process.print() }
+            try process.run()
+            process.waitUntilExit()
+            guard process.terminationStatus == 0 else {
+                throw Error.xcrunFailed(exitCode: process.terminationStatus)
+            }
+            swiftc = try String(decoding: pipe.fileHandleForReading.readToEnd() ?? Data(), as: UTF8.self)
+                .trimmingCharacters(in: .newlines)
+        } else {
+            do {
+                swiftc = try context.tool(named: "swiftc").path.string
+            } catch {
+                Diagnostics.warning("swiftc not found. Ensure a Swift Toolchain is installed and available.")
+                throw Error.swiftToolchainNotFound
+            }
         }
-        let swiftc = try String(decoding: pipe.fileHandleForReading.readToEnd() ?? Data(), as: UTF8.self)
-            .trimmingCharacters(in: .newlines)
         let process2 = Process()
         process2.executableURL = URL(filePath: swiftc)
         process2.arguments = ["-g"] + arguments
