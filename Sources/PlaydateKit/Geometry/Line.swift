@@ -14,17 +14,16 @@ public struct Line<T: Numeric>: Equatable {
     public var start, end: Point<T>
 }
 
-public extension Line {
-    /// The line whose start and end are both located at (0, 0).
-    static var zero: Line<T> { Line(start: .zero, end: .zero) }
+// MARK: AffineTransformable
+
+extension Line: AffineTransformable where T == Float {
+    public mutating func transform(by transform: AffineTransform) {
+        start.transform(by: transform)
+        end.transform(by: transform)
+    }
 }
 
 public extension Line {
-    /// Returns a line with a start and end that is offset from that of the source line.
-    func offsetBy(dx: T, dy: T) -> Line {
-        Line(
-            start: start.offsetBy(dx: dx, dy: dy),
-            end: end.offsetBy(dx: dx, dy: dy)
-        )
-    }
+    /// The line whose start and end are both located at (0, 0).
+    static var zero: Line<T> { Line(start: .zero, end: .zero) }
 }

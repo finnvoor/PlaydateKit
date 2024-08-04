@@ -14,14 +14,17 @@ public struct Point<T: Numeric>: Equatable {
     public var x, y: T
 }
 
-public extension Point {
-    /// The point with location (0,0).
-    static var zero: Point<T> { Point(x: 0, y: 0) }
+// MARK: AffineTransformable
+
+extension Point: AffineTransformable where T == Float {
+    public mutating func transform(by transform: AffineTransform) {
+        let newX = transform.m11 * x + transform.m12 * y + transform.tx
+        let newY = transform.m21 * x + transform.m22 * y + transform.ty
+        self = Point(x: newX, y: newY)
+    }
 }
 
 public extension Point {
-    /// Returns a point that is offset from that of the source point.
-    func offsetBy(dx: T, dy: T) -> Point {
-        Point(x: x + dx, y: y + dy)
-    }
+    /// The point with location (0,0).
+    static var zero: Point<T> { Point(x: 0, y: 0) }
 }
