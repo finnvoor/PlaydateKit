@@ -73,7 +73,7 @@ public enum Graphics {
             /// Returns the most recent error
             private var error: Playdate.Error {
                 Playdate.Error(
-                    humanReadableText: String(cString: video.getError.unsafelyUnwrapped(pointer)!)
+                    description: String(cString: video.getError.unsafelyUnwrapped(pointer)!)
                 )
             }
         }
@@ -95,7 +95,7 @@ public enum Graphics {
         public init(path: String) throws(Playdate.Error) {
             var error: UnsafePointer<CChar>?
             let pointer = graphics.loadBitmap.unsafelyUnwrapped(path, &error)
-            if let error { throw Playdate.Error(humanReadableText: String(cString: error)) }
+            if let error { throw Playdate.Error(description: String(cString: error)) }
             self.pointer = pointer.unsafelyUnwrapped
             free = true
         }
@@ -132,7 +132,7 @@ public enum Graphics {
         public func load(from path: String) throws(Playdate.Error) {
             var error: UnsafePointer<CChar>?
             graphics.loadIntoBitmap.unsafelyUnwrapped(path, pointer, &error)
-            if let error { throw Playdate.Error(humanReadableText: String(cString: error)) }
+            if let error { throw Playdate.Error(description: String(cString: error)) }
         }
 
         /// Clears the bitmap, filling with the given `bgcolor`.
@@ -237,7 +237,7 @@ public enum Graphics {
         public init(path: String) throws(Playdate.Error) {
             var error: UnsafePointer<CChar>?
             let pointer = graphics.loadBitmapTable.unsafelyUnwrapped(path, &error)
-            if let error { throw Playdate.Error(humanReadableText: String(cString: error)) }
+            if let error { throw Playdate.Error(description: String(cString: error)) }
             self.pointer = pointer.unsafelyUnwrapped
         }
 
@@ -273,7 +273,7 @@ public enum Graphics {
         public func load(from path: String) throws(Playdate.Error) {
             var error: UnsafePointer<CChar>?
             graphics.loadIntoBitmapTable.unsafelyUnwrapped(path, pointer, &error)
-            if let error { throw Playdate.Error(humanReadableText: String(cString: error)) }
+            if let error { throw Playdate.Error(description: String(cString: error)) }
         }
 
         // MARK: Private
@@ -288,7 +288,7 @@ public enum Graphics {
         public init(path: String) throws(Playdate.Error) {
             var error: UnsafePointer<CChar>?
             let pointer = graphics.loadFont.unsafelyUnwrapped(path, &error)
-            if let error { throw Playdate.Error(humanReadableText: String(cString: error)) }
+            if let error { throw Playdate.Error(description: String(cString: error)) }
             self.pointer = pointer.unsafelyUnwrapped
         }
 

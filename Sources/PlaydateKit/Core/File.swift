@@ -143,7 +143,7 @@ public enum File {
     /// (usually indicated by a thrown error from a filesystem function).
     private static var lastError: Playdate.Error {
         Playdate.Error(
-            humanReadableText: String(cString: file.geterr.unsafelyUnwrapped()!)
+            description: String(cString: file.geterr.unsafelyUnwrapped()!)
         )
     }
 
