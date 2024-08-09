@@ -53,7 +53,7 @@ import PlaydateKit
 final class Game: PlaydateGame {
     init() {
         System.addCheckmarkMenuItem(title: "check me") { isChecked in
-            System.log(isChecked ? "checked!" : "not checked")
+            print(isChecked ? "checked!" : "not checked")
         }
     }
 
@@ -63,7 +63,7 @@ final class Game: PlaydateGame {
     }
 
     func gameWillPause() {
-        System.log("Paused!")
+        print("Paused!")
     }
 }
 ```
