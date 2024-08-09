@@ -8,8 +8,8 @@ public enum Playdate {
     // MARK: Public
 
     /// An error thrown from the Playdate C API.
-    public struct Error: Swift.Error, @unchecked Sendable {
-        let humanReadableText: String
+    public struct Error: Swift.Error, CustomStringConvertible, @unchecked Sendable {
+        public let description: String
     }
 
     /// Access to the Playdate C API.
