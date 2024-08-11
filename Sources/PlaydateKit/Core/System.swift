@@ -386,8 +386,8 @@ public enum System {
     }
 
     /// Calculates the current frames per second and draws that value at `point`.
-    public static func drawFPS(at point: Point<CInt> = .zero) {
-        system.drawFPS.unsafelyUnwrapped(point.x, point.y)
+    public static func drawFPS(at point: Point = .zero) {
+        system.drawFPS.unsafelyUnwrapped(CInt(point.x), CInt(point.y))
     }
 
     /// Flush the CPU instruction cache, on the very unlikely chance you’re modifying instruction code on the fly.

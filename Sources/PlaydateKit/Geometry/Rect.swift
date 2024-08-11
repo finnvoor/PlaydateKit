@@ -1,17 +1,17 @@
 // MARK: - Rect
 
 /// A structure that contains the location and dimensions of a rectangle.
-public struct Rect<T: Numeric>: Equatable {
+public struct Rect: Equatable {
     // MARK: Lifecycle
 
-    public init(x: T, y: T, width: T, height: T) {
+    public init(x: Float, y: Float, width: Float, height: Float) {
         self.x = x
         self.y = y
         self.width = width
         self.height = height
     }
 
-    public init(origin: Point<T>, width: T, height: T) {
+    public init(origin: Point, width: Float, height: Float) {
         x = origin.x
         y = origin.y
         self.width = width
@@ -20,12 +20,15 @@ public struct Rect<T: Numeric>: Equatable {
 
     // MARK: Public
 
-    public var x, y, width, height: T
+    /// The point with location (0,0).
+    public static var zero: Rect { Rect(x: 0, y: 0, width: 0, height: 0) }
+
+    public var x, y, width, height: Float
 }
 
 // MARK: AffineTransformable
 
-extension Rect: AffineTransformable where T == Float {
+extension Rect: AffineTransformable {
     public mutating func transform(by transform: AffineTransform) {
         let transformedOrigin = Point(x: x, y: y).transformed(by: transform)
         let transformedTopRight = Point(x: x + width, y: y + height).transformed(by: transform)
@@ -36,25 +39,24 @@ extension Rect: AffineTransformable where T == Float {
     }
 }
 
-public extension Rect {
-    /// The point with location (0,0).
-    static var zero: Rect<T> { Rect(x: 0, y: 0, width: 0, height: 0) }
-}
+// MARK: - Rect + LCDRect
 
-extension Rect where T == CInt {
+public extension Rect {
     var lcdRect: LCDRect {
-        LCDMakeRect(x, y, width, height)
+        LCDMakeRect(CInt(x), CInt(y), CInt(width), CInt(height))
     }
 
     init(_ lcdRect: LCDRect) {
-        x = lcdRect.left
-        y = lcdRect.top
-        width = lcdRect.right - lcdRect.left
-        height = lcdRect.bottom - lcdRect.top
+        x = Float(lcdRect.left)
+        y = Float(lcdRect.top)
+        width = Float(lcdRect.right) - Float(lcdRect.left)
+        height = Float(lcdRect.bottom) - Float(lcdRect.top)
     }
 }
 
-extension Rect where T == Float {
+// MARK: - Rect + PDRect
+
+public extension Rect {
     var pdRect: PDRect {
         PDRect(x: x, y: y, width: width, height: height)
     }
