@@ -6,14 +6,14 @@ public enum Display {
 
     /// Returns the height of the display, taking the current scale into account;
     /// e.g., if the scale is 2, this function returns 120 instead of 240.
-    public static var height: CInt {
-        display.getHeight.unsafelyUnwrapped()
+    public static var height: Int {
+        Int(display.getHeight.unsafelyUnwrapped())
     }
 
     /// Returns the width of the display, taking the current scale into account;
     /// e.g., if the scale is 2, this function returns 200 instead of 400.
-    public static var width: CInt {
-        display.getWidth.unsafelyUnwrapped()
+    public static var width: Int {
+        Int(display.getWidth.unsafelyUnwrapped())
     }
 
     /// The nominal refresh rate in frames per second. The default is 30 fps, which is a recommended
@@ -77,8 +77,8 @@ public enum Display {
 
     /// Offsets the display by the given amount.
     /// Areas outside of the displayed area are filled with the current background color.
-    public static func setOffset(dx: CInt, dy: CInt) {
-        display.setOffset.unsafelyUnwrapped(dx, dy)
+    public static func setOffset(dx: Int, dy: Int) {
+        display.setOffset.unsafelyUnwrapped(CInt(dx), CInt(dy))
     }
 
     // MARK: Private

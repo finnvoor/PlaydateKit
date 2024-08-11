@@ -24,10 +24,10 @@ public enum File {
         }
 
         /// Flushes the output buffer of file immediately. Returns the number of bytes written.
-        public func flush() throws(Playdate.Error) -> CInt {
+        public func flush() throws(Playdate.Error) -> Int {
             let writtenCount = file.flush.unsafelyUnwrapped(pointer)
             guard writtenCount != -1 else { throw lastError }
-            return writtenCount
+            return Int(writtenCount)
         }
 
         /// Reads up to `length` bytes from the file handle into the buffer `buffer`.
@@ -35,36 +35,36 @@ public enum File {
         public func read(
             buffer: UnsafeMutableRawPointer,
             length: CUnsignedInt
-        ) throws(Playdate.Error) -> CInt {
+        ) throws(Playdate.Error) -> Int {
             let readCount = file.read.unsafelyUnwrapped(pointer, buffer, length)
             guard readCount != -1 else { throw lastError }
-            return readCount
+            return Int(readCount)
         }
 
         /// Sets the read/write offset in the file handle to `position`, relative to the `seek`.
         public func seek(
-            to position: CInt,
+            to position: Int,
             seek: Seek = .current
         ) throws(Playdate.Error) {
-            guard file.seek.unsafelyUnwrapped(pointer, position, seek.rawValue) == 0 else {
+            guard file.seek.unsafelyUnwrapped(pointer, CInt(position), seek.rawValue) == 0 else {
                 throw lastError
             }
         }
 
         /// Returns the current read/write offset in the given file handle
-        public func currentSeekPosition() throws(Playdate.Error) -> CInt {
+        public func currentSeekPosition() throws(Playdate.Error) -> Int {
             let offset = file.tell.unsafelyUnwrapped(pointer)
             guard offset != 0 else { throw lastError }
-            return offset
+            return Int(offset)
         }
 
         /// Writes the buffer of bytes `buffer` to the file. Returns the number of bytes written
         public func write(
             buffer: UnsafeRawBufferPointer
-        ) throws(Playdate.Error) -> CInt {
+        ) throws(Playdate.Error) -> Int {
             let writtenCount = file.write.unsafelyUnwrapped(pointer, buffer.baseAddress, CUnsignedInt(buffer.count))
             guard writtenCount != -1 else { throw lastError }
-            return writtenCount
+            return Int(writtenCount)
         }
 
         // MARK: Internal

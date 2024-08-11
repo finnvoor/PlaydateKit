@@ -19,14 +19,14 @@ public enum System {
         // MARK: Public
 
         /// The currently selected option.
-        public var selectedOption: CInt {
+        public var selectedOption: Int {
             get { value }
             set { value = newValue }
         }
 
         // MARK: Internal
 
-        var optionsCallback: ((CInt) -> Void)?
+        var optionsCallback: ((Int) -> Void)?
     }
 
     /// A menu item that can be checked or unchecked by the player.
@@ -79,9 +79,9 @@ public enum System {
         ///
         /// For checkmark menu items, 1 means checked, 0 unchecked.
         /// For option menu items, the value indicates the array index of the currently selected option.
-        var value: CInt {
-            get { system.getMenuItemValue.unsafelyUnwrapped(pointer) }
-            set { system.setMenuItemValue.unsafelyUnwrapped(pointer, newValue) }
+        var value: Int {
+            get { Int(system.getMenuItemValue.unsafelyUnwrapped(pointer)) }
+            set { system.setMenuItemValue.unsafelyUnwrapped(pointer, CInt(newValue)) }
         }
 
         /// Gets/sets the userdata value associated with this menu item.
@@ -133,8 +133,8 @@ public enum System {
     }
 
     /// Returns the system timezone offset from GMT, in seconds.
-    public static var timezoneOffset: CInt {
-        system.getTimezoneOffset.unsafelyUnwrapped()
+    public static var timezoneOffset: Int {
+        Int(system.getTimezoneOffset.unsafelyUnwrapped())
     }
 
     /// Returns true if the user has set the 24-Hour Time preference in the Settings program.
@@ -307,7 +307,7 @@ public enum System {
     @discardableResult public static func addOptionsMenuItem(
         title: String,
         options: UnsafeMutableBufferPointer<UnsafePointer<CChar>?>,
-        callback: ((CInt) -> Void)? = nil
+        callback: ((Int) -> Void)? = nil
     ) -> OptionsMenuItem {
         let pointer = system.addOptionsMenuItem.unsafelyUnwrapped(
             title,
@@ -371,8 +371,8 @@ public enum System {
     /// to animate to a position offset left by xoffset pixels as the menu is animated in.
     ///
     /// This function could be called in response to the kEventPause event in your implementation of eventHandler().
-    public static func setMenuImage(_ bitmap: Graphics.Bitmap, xOffset: CInt = 0) {
-        system.setMenuImage.unsafelyUnwrapped(bitmap.pointer, xOffset)
+    public static func setMenuImage(_ bitmap: Graphics.Bitmap, xOffset: Int = 0) {
+        system.setMenuImage.unsafelyUnwrapped(bitmap.pointer, CInt(xOffset))
     }
 
     /// Provides a callback to receive messages sent to the device over the serial port using the msg command.
@@ -419,15 +419,15 @@ public enum System {
             _ userdata: UnsafeMutableRawPointer?
         ) -> Bool)?,
         buttonUserdata: UnsafeMutableRawPointer? = nil,
-        queueSize: CInt = 5
+        queueSize: Int = 5
     ) {
         buttonCallback = callback
         if callback != nil {
             system.setButtonCallback.unsafelyUnwrapped({ button, down, when, userdata in
                 (System.buttonCallback?(button, down != 0, when, userdata) ?? false) ? 0 : 1
-            }, buttonUserdata, queueSize)
+            }, buttonUserdata, CInt(queueSize))
         } else {
-            system.setButtonCallback.unsafelyUnwrapped(nil, buttonUserdata, queueSize)
+            system.setButtonCallback.unsafelyUnwrapped(nil, buttonUserdata, CInt(queueSize))
         }
     }
 

@@ -213,9 +213,9 @@ public enum Sprite {
 
         /// Specifies a stencil image to be set on the frame buffer before the sprite is drawn. If `tile` is set, the stencil will be tiled.
         /// Tiled stencils must have width evenly divisible by 32.
-        public func setStencilImage(_ stencil: Graphics.Bitmap, tile: CInt) {
+        public func setStencilImage(_ stencil: Graphics.Bitmap, tile: Int) {
             _stencil = stencil
-            sprite.setStencilImage.unsafelyUnwrapped(pointer, stencil.pointer, tile)
+            sprite.setStencilImage.unsafelyUnwrapped(pointer, stencil.pointer, CInt(tile))
         }
 
         /// Sets the sprite’s stencil to the given pattern.
@@ -284,7 +284,7 @@ public enum Sprite {
         /// Moves the given sprite towards `goal` taking collisions into account and returns an array of `SpriteCollisionInfo`.
         /// `actualX`, `actualY` are set to the sprite’s position after collisions. If no collisions occurred, this will be the same as
         /// `goalX`, `goalY`.
-        public func moveWithCollisions(goal: Point) -> CollisionInfo {
+        @discardableResult public func moveWithCollisions(goal: Point) -> CollisionInfo {
             var actualX: Float = 0, actualY: Float = 0
             var length: CInt = 0
             let collisionInfo = sprite.moveWithCollisions.unsafelyUnwrapped(
@@ -387,13 +387,13 @@ public enum Sprite {
     // MARK: - Properties
 
     /// Sets the clipping rectangle for all sprites with a Z index within `startZ` and `endZ` inclusive.
-    public static func setClipRectsInRange(clipRect: Rect, startZ: CInt, endZ: CInt) {
-        sprite.setClipRectsInRange.unsafelyUnwrapped(clipRect.lcdRect, startZ, endZ)
+    public static func setClipRectsInRange(clipRect: Rect, startZ: Int, endZ: Int) {
+        sprite.setClipRectsInRange.unsafelyUnwrapped(clipRect.lcdRect, CInt(startZ), CInt(endZ))
     }
 
     /// Clears the clipping rectangle for all sprites with a Z index within `startZ` and `endZ` inclusive.
-    public static func clearClipRectsInRange(startZ: CInt, endZ: CInt) {
-        sprite.clearClipRectsInRange.unsafelyUnwrapped(startZ, endZ)
+    public static func clearClipRectsInRange(startZ: Int, endZ: Int) {
+        sprite.clearClipRectsInRange.unsafelyUnwrapped(CInt(startZ), CInt(endZ))
     }
 
     /// When `alwaysRedraw` is set to true, this causes all sprites to draw each frame, whether or not they have been marked dirty.
@@ -423,8 +423,8 @@ public enum Sprite {
     }
 
     /// Returns the total number of sprites in the display list.
-    public static func getDisplayListSpriteCount() -> CInt {
-        sprite.getSpriteCount.unsafelyUnwrapped()
+    public static func getDisplayListSpriteCount() -> Int {
+        Int(sprite.getSpriteCount.unsafelyUnwrapped())
     }
 
     /// Draws every sprite in the display list.

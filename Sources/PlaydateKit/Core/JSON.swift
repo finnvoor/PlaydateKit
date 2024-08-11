@@ -16,8 +16,8 @@ public enum JSON {
         using decoder: inout Decoder,
         reader: Reader,
         value: inout Value
-    ) -> CInt {
-        json.decode.unsafelyUnwrapped(&decoder, reader, &value)
+    ) -> Int {
+        Int(json.decode.unsafelyUnwrapped(&decoder, reader, &value))
     }
 
     /// Decodes a JSON string with the given `decoder`. An instance of `Decoder` must implement `decodeError`.
@@ -27,8 +27,8 @@ public enum JSON {
         using decoder: inout Decoder,
         jsonString: String,
         value: inout Value
-    ) -> CInt {
-        json.decodeString.unsafelyUnwrapped(&decoder, jsonString, &value)
+    ) -> Int {
+        Int(json.decodeString.unsafelyUnwrapped(&decoder, jsonString, &value))
     }
 
     /// Populates the given `Encoder` `encoder` with the functions necessary to encode arbitrary data into a JSON string.
