@@ -9,6 +9,11 @@ public struct Point: Equatable {
         self.y = y
     }
 
+    @_disfavoredOverload public init(x: CInt, y: CInt) {
+        self.x = Float(x)
+        self.y = Float(y)
+    }
+
     // MARK: Public
 
     /// The point with location (0,0).

@@ -11,6 +11,13 @@ public struct Rect: Equatable {
         self.height = height
     }
 
+    @_disfavoredOverload public init(x: CInt, y: CInt, width: CInt, height: CInt) {
+        self.x = Float(x)
+        self.y = Float(y)
+        self.width = Float(width)
+        self.height = Float(height)
+    }
+
     public init(origin: Point, width: Float, height: Float) {
         x = origin.x
         y = origin.y
