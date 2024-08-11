@@ -67,7 +67,7 @@ public enum Sprite {
         /// If the sprite doesn’t have an image, the sprite’s draw function is called as needed to update the display. Note that this method
         /// is only called when the sprite is on screen and has a size specified via ``setSize(width:height:)`` or ``bounds``.
         /// > Warning: This currently does not work due to [apple/swift/issues/72626](https://github.com/apple/swift/issues/72626)
-        @available(*, unavailable) open func draw(bounds _: Rect<Float>, drawRect _: Rect<Float>) {}
+        @available(*, unavailable) open func draw(bounds _: Rect, drawRect _: Rect) {}
 
         /// Override to control the type of collision response that should happen when a collision with other occurs.
         ///
@@ -91,14 +91,14 @@ public enum Sprite {
         }
 
         /// Gets the current position of sprite.
-        public var position: Point<Float> {
+        public var position: Point {
             var x: Float = 0, y: Float = 0
             sprite.getPosition.unsafelyUnwrapped(pointer, &x, &y)
             return Point(x: x, y: y)
         }
 
         /// Gets/sets the bounds of the sprite.
-        public var bounds: Rect<Float> {
+        public var bounds: Rect {
             get { Rect(sprite.getBounds.unsafelyUnwrapped(pointer)) }
             set { sprite.setBounds.unsafelyUnwrapped(pointer, newValue.pdRect) }
         }
@@ -107,7 +107,7 @@ public enum Sprite {
         /// Default is 0.5, 0.5 (the center of the sprite).
         /// This means that when you call `moveTo(x, y)`, the center of your sprite will be positioned at x, y.
         /// If you want x and y to represent the upper left corner of your sprite, specify the center as 0, 0.
-        public var center: Point<Float> {
+        public var center: Point {
             get {
                 var x: Float = 0, y: Float = 0
                 sprite.getCenter.unsafelyUnwrapped(pointer, &x, &y)
@@ -155,7 +155,7 @@ public enum Sprite {
         }
 
         /// Marks the area of the given sprite, relative to its bounds, to be checked for collisions with other sprites' collide rects.
-        public var collideRect: Rect<Float>? {
+        public var collideRect: Rect? {
             get { Rect(sprite.getCollideRect.unsafelyUnwrapped(pointer)) }
             set {
                 if let newValue {
@@ -181,7 +181,7 @@ public enum Sprite {
         }
 
         /// Moves the sprite to `point` and resets its bounds based on the bitmap dimensions and center.
-        public func moveTo(_ point: Point<Float>) {
+        public func moveTo(_ point: Point) {
             sprite.moveTo.unsafelyUnwrapped(pointer, point.x, point.y)
         }
 
@@ -226,7 +226,7 @@ public enum Sprite {
 
         /// Sets the clipping rectangle for sprite drawing.
         /// Pass `nil` to clear the sprite’s clipping rectangle.
-        public func setClipRect(_ clipRect: Rect<CInt>?) {
+        public func setClipRect(_ clipRect: Rect?) {
             if let clipRect {
                 sprite.setClipRect.unsafelyUnwrapped(pointer, clipRect.lcdRect)
             } else {
@@ -284,7 +284,7 @@ public enum Sprite {
         /// Moves the given sprite towards `goal` taking collisions into account and returns an array of `SpriteCollisionInfo`.
         /// `actualX`, `actualY` are set to the sprite’s position after collisions. If no collisions occurred, this will be the same as
         /// `goalX`, `goalY`.
-        public func moveWithCollisions(goal: Point<Float>) -> CollisionInfo {
+        public func moveWithCollisions(goal: Point) -> CollisionInfo {
             var actualX: Float = 0, actualY: Float = 0
             var length: CInt = 0
             let collisionInfo = sprite.moveWithCollisions.unsafelyUnwrapped(
@@ -355,7 +355,7 @@ public enum Sprite {
     public class CollisionInfo {
         // MARK: Lifecycle
 
-        init(collisions: UnsafeBufferPointer<SpriteCollisionInfo>, actual: Point<Float>) {
+        init(collisions: UnsafeBufferPointer<SpriteCollisionInfo>, actual: Point) {
             self.collisions = collisions
             self.actual = actual
         }
@@ -365,7 +365,7 @@ public enum Sprite {
         // MARK: Public
 
         public let collisions: UnsafeBufferPointer<SpriteCollisionInfo>
-        public let actual: Point<Float>
+        public let actual: Point
     }
 
     public class QueryInfo {
@@ -387,7 +387,7 @@ public enum Sprite {
     // MARK: - Properties
 
     /// Sets the clipping rectangle for all sprites with a Z index within `startZ` and `endZ` inclusive.
-    public static func setClipRectsInRange(clipRect: Rect<CInt>, startZ: CInt, endZ: CInt) {
+    public static func setClipRectsInRange(clipRect: Rect, startZ: CInt, endZ: CInt) {
         sprite.setClipRectsInRange.unsafelyUnwrapped(clipRect.lcdRect, startZ, endZ)
     }
 
@@ -405,7 +405,7 @@ public enum Sprite {
 
     /// Marks the given dirtyRect (in screen coordinates) as needing a redraw. Graphics drawing functions now call this
     /// automatically, adding their drawn areas to the sprite’s dirty list, so there’s usually no need to call this manually.
-    public static func addDirtyRect(_ dirtyRect: Rect<CInt>) {
+    public static func addDirtyRect(_ dirtyRect: Rect) {
         sprite.addDirtyRect.unsafelyUnwrapped(dirtyRect.lcdRect)
     }
 
@@ -446,7 +446,7 @@ public enum Sprite {
 
     /// Returns an array of all sprites with collision rects containing `point`.
     /// > Warning: The caller is responsible for freeing the returned array.
-    public static func querySpritesAtPoint(_ point: Point<Float>) -> UnsafeBufferPointer<OpaquePointer?> {
+    public static func querySpritesAtPoint(_ point: Point) -> UnsafeBufferPointer<OpaquePointer?> {
         var length: CInt = 0
         let sprites = sprite.querySpritesAtPoint.unsafelyUnwrapped(point.x, point.y, &length)
         return UnsafeBufferPointer(start: sprites, count: Int(length))
@@ -454,7 +454,7 @@ public enum Sprite {
 
     /// Returns an array of all sprites with collision rects that intersect `rect`.
     /// > Warning: The caller is responsible for freeing the returned array.
-    public static func querySpritesInRect(_ rect: Rect<Float>) -> UnsafeBufferPointer<OpaquePointer?> {
+    public static func querySpritesInRect(_ rect: Rect) -> UnsafeBufferPointer<OpaquePointer?> {
         var length: CInt = 0
         let sprites = sprite.querySpritesInRect.unsafelyUnwrapped(
             rect.x,
@@ -468,7 +468,7 @@ public enum Sprite {
 
     /// Returns an array of all sprites with collision rects that intersect `line`.
     /// > Warning: The caller is responsible for freeing the returned array.
-    public static func querySpritesAlongLine(_ line: Line<Float>) -> UnsafeBufferPointer<OpaquePointer?> {
+    public static func querySpritesAlongLine(_ line: Line) -> UnsafeBufferPointer<OpaquePointer?> {
         var length: CInt = 0
         let sprites = sprite.querySpritesAlongLine.unsafelyUnwrapped(
             line.start.x,
@@ -482,7 +482,7 @@ public enum Sprite {
 
     /// Returns an array of `SpriteQueryInfo` for all sprites with collision rects that intersect `line`.
     /// If you don’t need this information, use `querySpritesAlongLine()` as it will be faster.
-    public static func querySpriteInfoAlongLine(_ line: Line<Float>) -> QueryInfo {
+    public static func querySpriteInfoAlongLine(_ line: Line) -> QueryInfo {
         var length: CInt = 0
         let spriteInfo = sprite.querySpriteInfoAlongLine.unsafelyUnwrapped(
             line.start.x,

@@ -166,8 +166,8 @@ public enum Graphics {
         /// Gets the color of the pixel at `point` in the bitmap. If the coordinate is outside the bounds
         /// of the bitmap, or if the bitmap has a mask and the pixel is marked transparent, the function
         /// returns clear; otherwise the return value is white or black.
-        public func getPixel(at point: Point<CInt>) -> Color {
-            .solid(graphics.getBitmapPixel(pointer, point.x, point.y))
+        public func getPixel(at point: Point) -> Color {
+            .solid(graphics.getBitmapPixel(pointer, CInt(point.x), CInt(point.y)))
         }
 
         /// Returns a new, rotated and scaled `Bitmap` based on the given `bitmap`.
@@ -442,13 +442,23 @@ public enum Graphics {
 
     /// Sets the current clip rect, using world coordinates—​that is, the given rectangle will be translated by
     /// the current drawing offset. The clip rect is cleared at the beginning of each update.
-    public static func setClipRect(_ rect: Rect<CInt>) {
-        graphics.setClipRect.unsafelyUnwrapped(rect.x, rect.y, rect.width, rect.height)
+    public static func setClipRect(_ rect: Rect) {
+        graphics.setClipRect.unsafelyUnwrapped(
+            CInt(rect.x),
+            CInt(rect.y),
+            CInt(rect.width),
+            CInt(rect.height)
+        )
     }
 
     /// Sets the current clip rect in screen coordinates.
-    public static func setScreenClipRect(_ rect: Rect<CInt>) {
-        graphics.setScreenClipRect.unsafelyUnwrapped(rect.x, rect.y, rect.width, rect.height)
+    public static func setScreenClipRect(_ rect: Rect) {
+        graphics.setScreenClipRect.unsafelyUnwrapped(
+            CInt(rect.x),
+            CInt(rect.y),
+            CInt(rect.width),
+            CInt(rect.height)
+        )
     }
 
     /// Clears the current clip rect.
@@ -476,43 +486,43 @@ public enum Graphics {
     /// if no pixels overlap or if one or both fall completely outside of rect.
     public static func checkMaskCollision(
         bitmap1: Bitmap,
-        point1: Point<CInt>,
+        point1: Point,
         flip1: Bitmap.Flip,
         bitmap2: Bitmap,
-        point2: Point<CInt>,
+        point2: Point,
         flip2: Bitmap.Flip,
-        rect: Rect<CInt>
+        rect: Rect
     ) -> Bool {
         graphics.checkMaskCollision.unsafelyUnwrapped(
             bitmap1.pointer,
-            point1.x,
-            point1.y,
+            CInt(point1.x),
+            CInt(point1.y),
             flip1,
             bitmap2.pointer,
-            point2.x,
-            point2.y,
+            CInt(point2.x),
+            CInt(point2.y),
             flip2,
             rect.lcdRect
         ) != 0
     }
 
     /// Draws the `bitmap` with its upper-left corner at location `point`, using the given `flip` orientation.
-    public static func drawBitmap(_ bitmap: Bitmap, at point: Point<CInt>, flip: Bitmap.Flip) {
-        graphics.drawBitmap.unsafelyUnwrapped(bitmap.pointer, point.x, point.y, flip)
+    public static func drawBitmap(_ bitmap: Bitmap, at point: Point, flip: Bitmap.Flip) {
+        graphics.drawBitmap.unsafelyUnwrapped(bitmap.pointer, CInt(point.x), CInt(point.y), flip)
     }
 
     /// Draws the `bitmap` scaled to `xScale` and `yScale` with its upper-left corner at location `point`.
     /// Note that `flip` is not available when drawing scaled bitmaps but negative scale values will achieve the same effect.
     public static func drawBitmap(
         _ bitmap: Bitmap,
-        at point: Point<CInt>,
+        at point: Point,
         xScale: Float = 1,
         yScale: Float = 1
     ) {
         graphics.drawScaledBitmap.unsafelyUnwrapped(
             bitmap.pointer,
-            point.x,
-            point.y,
+            CInt(point.x),
+            CInt(point.y),
             xScale,
             yScale
         )
@@ -523,16 +533,16 @@ public enum Graphics {
     /// if `center` is (0, 0) the top left corner of the image (before rotation) is at (point.x, point.y), etc.
     public static func drawBitmap(
         _ bitmap: Bitmap,
-        at point: Point<CInt>,
+        at point: Point,
         degrees: Float,
-        center: Point<Float>,
+        center: Point,
         xScale: Float = 1,
         yScale: Float = 1
     ) {
         graphics.drawRotatedBitmap.unsafelyUnwrapped(
             bitmap.pointer,
-            point.x,
-            point.y,
+            CInt(point.x),
+            CInt(point.y),
             degrees,
             center.x,
             center.y,
@@ -544,15 +554,15 @@ public enum Graphics {
     /// Draws the `bitmap` tiled inside `rect`.
     public static func tileBitmap(
         _ bitmap: Bitmap,
-        inside rect: Rect<CInt>,
+        inside rect: Rect,
         flip: Bitmap.Flip
     ) {
         graphics.tileBitmap.unsafelyUnwrapped(
             bitmap.pointer,
-            rect.x,
-            rect.y,
-            rect.width,
-            rect.height,
+            CInt(rect.x),
+            CInt(rect.y),
+            CInt(rect.width),
+            CInt(rect.height),
             flip
         )
     }
@@ -563,14 +573,14 @@ public enum Graphics {
     /// Returns the drawn width of the given `text`.
     @discardableResult public static func drawText(
         _ text: String,
-        at point: Point<CInt>
+        at point: Point
     ) -> CInt {
         graphics.drawText.unsafelyUnwrapped(
             text,
             text.utf8.count,
             .kUTF8Encoding,
-            point.x,
-            point.y
+            CInt(point.x),
+            CInt(point.y)
         )
     }
 
@@ -578,7 +588,7 @@ public enum Graphics {
     /// If `startAngle` != `endAngle`, this draws an arc between the given angles.
     /// Angles are given in degrees, clockwise from due north.
     public static func drawEllipse(
-        in rect: Rect<CInt>,
+        in rect: Rect,
         lineWidth: CInt = 1,
         startAngle: Float = 0,
         endAngle: Float = 360,
@@ -586,10 +596,10 @@ public enum Graphics {
     ) {
         color.withLCDColor {
             graphics.drawEllipse.unsafelyUnwrapped(
-                rect.x,
-                rect.y,
-                rect.width,
-                rect.height,
+                CInt(rect.x),
+                CInt(rect.y),
+                CInt(rect.width),
+                CInt(rect.height),
                 lineWidth,
                 startAngle,
                 endAngle,
@@ -601,17 +611,17 @@ public enum Graphics {
     /// Fills an ellipse inside the rectangle `rect`. If `startAngle` != `endAngle`, this draws a
     /// wedge/Pacman between the given angles. Angles are given in degrees, clockwise from due north.
     public static func fillEllipse(
-        in rect: Rect<CInt>,
+        in rect: Rect,
         startAngle: Float = 0,
         endAngle: Float = 360,
         color: Color = .black
     ) {
         color.withLCDColor {
             graphics.fillEllipse.unsafelyUnwrapped(
-                rect.x,
-                rect.y,
-                rect.width,
-                rect.height,
+                CInt(rect.x),
+                CInt(rect.y),
+                CInt(rect.width),
+                CInt(rect.height),
                 startAngle,
                 endAngle,
                 $0
@@ -621,16 +631,16 @@ public enum Graphics {
 
     /// Draws `line` with a stroke width of `lineWidth` and color `color`.
     public static func drawLine(
-        _ line: Line<CInt>,
+        _ line: Line,
         lineWidth: CInt = 1,
         color: Color = .black
     ) {
         color.withLCDColor {
             graphics.drawLine.unsafelyUnwrapped(
-                line.start.x,
-                line.start.y,
-                line.end.x,
-                line.end.y,
+                CInt(line.start.x),
+                CInt(line.start.y),
+                CInt(line.end.x),
+                CInt(line.end.y),
                 lineWidth,
                 $0
             )
@@ -639,25 +649,31 @@ public enum Graphics {
 
     /// Draws a `rect` with the specified `color`.
     public static func drawRect(
-        _ rect: Rect<CInt>,
+        _ rect: Rect,
         color: Color = .black
     ) {
         color.withLCDColor {
-            graphics.drawRect.unsafelyUnwrapped(rect.x, rect.y, rect.width, rect.height, $0)
+            graphics.drawRect.unsafelyUnwrapped(
+                CInt(rect.x),
+                CInt(rect.y),
+                CInt(rect.width),
+                CInt(rect.height),
+                $0
+            )
         }
     }
 
     /// Draws a `rect` filled with the specified `color`
     public static func fillRect(
-        _ rect: Rect<CInt>,
+        _ rect: Rect,
         color: Color = .black
     ) {
         color.withLCDColor {
             graphics.fillRect.unsafelyUnwrapped(
-                rect.x,
-                rect.y,
-                rect.width,
-                rect.height,
+                CInt(rect.x),
+                CInt(rect.y),
+                CInt(rect.width),
+                CInt(rect.height),
                 $0
             )
         }
@@ -665,19 +681,19 @@ public enum Graphics {
 
     /// Draws a filled triangle with points at `p1`, `p2`, and `p3`.
     public static func fillTriangle(
-        p1: Point<CInt>,
-        p2: Point<CInt>,
-        p3: Point<CInt>,
+        p1: Point,
+        p2: Point,
+        p3: Point,
         color: Color = .black
     ) {
         color.withLCDColor {
             graphics.fillTriangle.unsafelyUnwrapped(
-                p1.x,
-                p1.y,
-                p2.x,
-                p2.y,
-                p3.x,
-                p3.y,
+                CInt(p1.x),
+                CInt(p1.y),
+                CInt(p2.x),
+                CInt(p2.y),
+                CInt(p3.x),
+                CInt(p3.y),
                 $0
             )
         }
@@ -687,12 +703,12 @@ public enum Graphics {
     /// See https://en.wikipedia.org/wiki/Nonzero-rule for an explanation of the winding rule.
     /// An edge between the last vertex and the first is assumed.
     public static func fillPolygon(
-        _ polygon: Polygon<CInt>,
+        _ polygon: Polygon,
         color: Color = .black,
         fillRule: PolygonFillRule
     ) {
         color.withLCDColor {
-            var points = polygon.vertices.flatMap { [$0.x, $0.y] }
+            var points = polygon.vertices.flatMap { [CInt($0.x), CInt($0.y)] }
             graphics.fillPolygon.unsafelyUnwrapped(CInt(points.count / 2), &points, $0, fillRule)
         }
     }
@@ -758,18 +774,18 @@ public enum Graphics {
     }
 
     /// Returns a color using an 8 x 8 pattern using the given `bitmap`. `topLeft` indicates the top left corner of the 8 x 8 pattern.
-    public static func colorFromPattern(_ pattern: Bitmap, topLeft: Point<CInt> = .zero) -> LCDColor {
+    public static func colorFromPattern(_ pattern: Bitmap, topLeft: Point = .zero) -> LCDColor {
         var color: LCDColor = 0
-        graphics.setColorToPattern.unsafelyUnwrapped(&color, pattern.pointer, topLeft.x, topLeft.y)
+        graphics.setColorToPattern.unsafelyUnwrapped(&color, pattern.pointer, CInt(topLeft.x), CInt(topLeft.y))
         return color
     }
 
     /// Sets the pixel at `point` in the current drawing context (by default the screen) to the given color.
     /// Be aware that setting a pixel at a time is not very efficient: In our testing, more than around 20,000
     /// calls in a tight loop will drop the frame rate below 30 fps.
-    public static func setPixel(at point: Point<CInt>, to color: Color) {
+    public static func setPixel(at point: Point, to color: Color) {
         color.withLCDColor {
-            graphics.setPixel(point.x, point.y, $0)
+            graphics.setPixel(CInt(point.x), CInt(point.y), $0)
         }
     }
 
