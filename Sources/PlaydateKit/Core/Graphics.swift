@@ -23,9 +23,9 @@ public enum Graphics {
 
             /// Retrieves information about the video.
             public var info: (
-                width: CInt, height: CInt,
+                width: Int, height: Int,
                 frameRate: Float,
-                frameCount: CInt, currentFrame: CInt
+                frameCount: Int, currentFrame: Int
             ) {
                 var width: CInt = 0, height: CInt = 0
                 var frameRate: Float = 0
@@ -38,7 +38,7 @@ public enum Graphics {
                     &frameCount,
                     &currentFrame
                 )
-                return (width, height, frameRate, frameCount, currentFrame)
+                return (Int(width), Int(height), frameRate, Int(frameCount), Int(currentFrame))
             }
 
             /// Gets the rendering destination for the video player. If no rendering context has been set, a context bitmap with the same
@@ -60,8 +60,8 @@ public enum Graphics {
             }
 
             /// Renders frame number `frameNumber` into the current context.
-            public func renderFrame(_ frameNumber: CInt) throws(Playdate.Error) {
-                guard video.renderFrame.unsafelyUnwrapped(pointer, frameNumber) != 0 else {
+            public func renderFrame(_ frameNumber: Int) throws(Playdate.Error) {
+                guard video.renderFrame.unsafelyUnwrapped(pointer, CInt(frameNumber)) != 0 else {
                     throw error
                 }
             }
@@ -101,9 +101,9 @@ public enum Graphics {
         }
 
         /// Allocates and returns a new `width` by `height` `Bitmap` filled with `bgcolor`.
-        public init(width: CInt, height: CInt, bgColor: Color) {
+        public init(width: Int, height: Int, bgColor: Color) {
             pointer = bgColor.withLCDColor {
-                graphics.newBitmap.unsafelyUnwrapped(width, height, $0).unsafelyUnwrapped
+                graphics.newBitmap.unsafelyUnwrapped(CInt(width), CInt(height), $0).unsafelyUnwrapped
             }
             free = true
         }
@@ -156,11 +156,11 @@ public enum Graphics {
             mask: UnsafeMutablePointer<UnsafeMutablePointer<UInt8>?>?,
             data: UnsafeMutablePointer<UnsafeMutablePointer<UInt8>?>?
         ) -> (
-            width: CInt, height: CInt, rowBytes: CInt
+            width: Int, height: Int, rowBytes: Int
         ) {
             var width: CInt = 0, height: CInt = 0, rowBytes: CInt = 0
             graphics.getBitmapData.unsafelyUnwrapped(pointer, &width, &height, &rowBytes, mask, data)
-            return (width, height, rowBytes)
+            return (Int(width), Int(height), Int(rowBytes))
         }
 
         /// Gets the color of the pixel at `point` in the bitmap. If the coordinate is outside the bounds
@@ -173,11 +173,11 @@ public enum Graphics {
         /// Returns a new, rotated and scaled `Bitmap` based on the given `bitmap`.
         public func rotated(by rotation: Float, xScale: Float, yScale: Float) -> (
             bitmap: Bitmap,
-            allocatedSize: CInt
+            allocatedSize: Int
         ) {
             var allocatedSize: CInt = 0
             let bitmap = graphics.rotatedBitmap.unsafelyUnwrapped(pointer, rotation, xScale, yScale, &allocatedSize).unsafelyUnwrapped
-            return (Bitmap(pointer: bitmap), allocatedSize)
+            return (Bitmap(pointer: bitmap), Int(allocatedSize))
         }
 
         // MARK: Internal
@@ -242,8 +242,12 @@ public enum Graphics {
         }
 
         /// Allocates and returns a new `BitmapTable` that can hold `count` `width` by `height` `Bitmaps`.
-        public init(count: CInt, width: CInt, height: CInt) {
-            pointer = graphics.newBitmapTable.unsafelyUnwrapped(count, width, height).unsafelyUnwrapped
+        public init(count: Int, width: Int, height: Int) {
+            pointer = graphics.newBitmapTable.unsafelyUnwrapped(
+                CInt(count),
+                CInt(width),
+                CInt(height)
+            ).unsafelyUnwrapped
         }
 
         deinit { graphics.freeBitmapTable(pointer) }
@@ -251,22 +255,22 @@ public enum Graphics {
         // MARK: Public
 
         /// The table's image count.
-        public var imageCount: CInt {
+        public var imageCount: Int {
             var count: CInt = 0
             graphics.getBitmapTableInfo.unsafelyUnwrapped(pointer, &count, nil)
-            return count
+            return Int(count)
         }
 
         /// The number of cells across.
-        public var cellsWide: CInt {
+        public var cellsWide: Int {
             var cellsWide: CInt = 0
             graphics.getBitmapTableInfo.unsafelyUnwrapped(pointer, nil, &cellsWide)
-            return cellsWide
+            return Int(cellsWide)
         }
 
         /// Returns the `index` bitmap in `table`, If `index` is out of bounds, the function returns nil.
-        public func bitmap(at index: CInt) -> Bitmap? {
-            graphics.getTableBitmap.unsafelyUnwrapped(pointer, index).map { Bitmap(pointer: $0) }
+        public func bitmap(at index: Int) -> Bitmap? {
+            graphics.getTableBitmap.unsafelyUnwrapped(pointer, CInt(index)).map { Bitmap(pointer: $0) }
         }
 
         /// Loads the image table at `path` into the previously allocated `table`.
@@ -326,7 +330,7 @@ public enum Graphics {
             public func glyph(for character: CUnsignedInt) -> (
                 pageGlyph: Glyph?,
                 bitmap: Bitmap?,
-                advance: CInt
+                advance: Int
             ) {
                 var advance: CInt = 0
                 var bitmap: OpaquePointer?
@@ -339,7 +343,7 @@ public enum Graphics {
                 return (
                     pageGlyph.map { Glyph(pointer: $0) },
                     bitmap.map { Bitmap(pointer: $0) },
-                    advance
+                    Int(advance)
                 )
             }
 
@@ -362,8 +366,8 @@ public enum Graphics {
             // MARK: Public
 
             /// Returns the kerning adjustment between characters `character1` and `character2` as specified by the font.
-            public func kerning(between character1: CUnsignedInt, and character2: CUnsignedInt) -> CInt {
-                graphics.getGlyphKerning.unsafelyUnwrapped(pointer, character1, character2)
+            public func kerning(between character1: CUnsignedInt, and character2: CUnsignedInt) -> Int {
+                Int(graphics.getGlyphKerning.unsafelyUnwrapped(pointer, character1, character2))
             }
 
             // MARK: Private
@@ -379,15 +383,15 @@ public enum Graphics {
         /// Returns the width of the given `text` in the font.
         public func getTextWidth(
             for text: String,
-            tracking: CInt
-        ) -> CInt {
-            graphics.getTextWidth.unsafelyUnwrapped(
+            tracking: Int
+        ) -> Int {
+            Int(graphics.getTextWidth.unsafelyUnwrapped(
                 pointer,
                 text,
                 text.utf8.count,
                 .kUTF8Encoding,
-                tracking
-            )
+                CInt(tracking)
+            ))
         }
 
         /// Returns a `Font.Page` object for the given character code. Each font page contains information
@@ -404,9 +408,9 @@ public enum Graphics {
     }
 
     /// The tracking to use when drawing text.
-    public static var textTracking: CInt {
-        get { graphics.getTextTracking.unsafelyUnwrapped() }
-        set { graphics.setTextTracking.unsafelyUnwrapped(newValue) }
+    public static var textTracking: Int {
+        get { Int(graphics.getTextTracking.unsafelyUnwrapped()) }
+        set { graphics.setTextTracking.unsafelyUnwrapped(CInt(newValue)) }
     }
 
     /// The mode used for drawing bitmaps. Note that text drawing uses bitmaps, so this affects how fonts are displayed as well.
@@ -477,8 +481,8 @@ public enum Graphics {
     }
 
     /// Sets the leading adjustment (added to the leading specified in the font) to use when drawing text.
-    public static func setTextLeading(_ leading: CInt) {
-        graphics.setTextLeading.unsafelyUnwrapped(leading)
+    public static func setTextLeading(_ leading: Int) {
+        graphics.setTextLeading.unsafelyUnwrapped(CInt(leading))
     }
 
     /// Returns true if any of the opaque pixels in `bitmap1` when positioned at `point1` with `flip1` overlap any
@@ -574,14 +578,14 @@ public enum Graphics {
     @discardableResult public static func drawText(
         _ text: String,
         at point: Point
-    ) -> CInt {
-        graphics.drawText.unsafelyUnwrapped(
+    ) -> Int {
+        Int(graphics.drawText.unsafelyUnwrapped(
             text,
             text.utf8.count,
             .kUTF8Encoding,
             CInt(point.x),
             CInt(point.y)
-        )
+        ))
     }
 
     /// Draws an ellipse inside the rectangle `rect` of width `lineWidth` (inset from the rectangle bounds).
@@ -589,7 +593,7 @@ public enum Graphics {
     /// Angles are given in degrees, clockwise from due north.
     public static func drawEllipse(
         in rect: Rect,
-        lineWidth: CInt = 1,
+        lineWidth: Int = 1,
         startAngle: Float = 0,
         endAngle: Float = 360,
         color: Color = .black
@@ -600,7 +604,7 @@ public enum Graphics {
                 CInt(rect.y),
                 CInt(rect.width),
                 CInt(rect.height),
-                lineWidth,
+                CInt(lineWidth),
                 startAngle,
                 endAngle,
                 $0
@@ -632,7 +636,7 @@ public enum Graphics {
     /// Draws `line` with a stroke width of `lineWidth` and color `color`.
     public static func drawLine(
         _ line: Line,
-        lineWidth: CInt = 1,
+        lineWidth: Int = 1,
         color: Color = .black
     ) {
         color.withLCDColor {
@@ -641,7 +645,7 @@ public enum Graphics {
                 CInt(line.start.y),
                 CInt(line.end.x),
                 CInt(line.end.y),
-                lineWidth,
+                CInt(lineWidth),
                 $0
             )
         }
@@ -762,15 +766,15 @@ public enum Graphics {
     /// After updating pixels in the buffer returned by `getFrame()`, you must tell the graphics system which rows were updated.
     /// This function marks a contiguous range of rows as updated (e.g., `markUpdatedRows(0, LCD_ROWS - 1)` tells the system
     /// to update the entire display). Both `start` and `end` are included in the range.
-    public static func markUpdatedRows(start: CInt, end: CInt) {
-        graphics.markUpdatedRows.unsafelyUnwrapped(start, end)
+    public static func markUpdatedRows(start: Int, end: Int) {
+        graphics.markUpdatedRows.unsafelyUnwrapped(CInt(start), CInt(end))
     }
 
     /// Offsets the origin point for all drawing calls to `dx`, `dy` (can be negative).
     ///
     /// This is useful, for example, for centering a "camera" on a sprite that is moving around a world larger than the screen.
-    public static func setDrawOffset(dx: CInt, dy: CInt) {
-        graphics.setDrawOffset.unsafelyUnwrapped(dx, dy)
+    public static func setDrawOffset(dx: Int, dy: Int) {
+        graphics.setDrawOffset.unsafelyUnwrapped(CInt(dx), CInt(dy))
     }
 
     /// Returns a color using an 8 x 8 pattern using the given `bitmap`. `topLeft` indicates the top left corner of the 8 x 8 pattern.

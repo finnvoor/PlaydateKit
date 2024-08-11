@@ -9,7 +9,7 @@ public struct Point: Equatable {
         self.y = y
     }
 
-    @_disfavoredOverload public init(x: CInt, y: CInt) {
+    @_disfavoredOverload public init(x: Int, y: Int) {
         self.x = Float(x)
         self.y = Float(y)
     }

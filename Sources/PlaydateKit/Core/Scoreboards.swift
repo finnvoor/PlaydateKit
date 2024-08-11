@@ -21,8 +21,8 @@ public enum Scoreboards {
             _ score: UnsafeMutablePointer<Score>?,
             _ errorMessage: UnsafePointer<CChar>?
         ) -> Void)? = nil
-    ) -> CInt {
-        scoreboards.addScore.unsafelyUnwrapped(boardID, value, callback)
+    ) -> Int {
+        Int(scoreboards.addScore.unsafelyUnwrapped(boardID, value, callback))
     }
 
     /// Gets the player’s personal best score. Invokes the given callback with the score.
@@ -35,8 +35,8 @@ public enum Scoreboards {
             _ score: UnsafeMutablePointer<Score>?,
             _ errorMessage: UnsafePointer<CChar>?
         ) -> Void)? = nil
-    ) -> CInt {
-        scoreboards.getPersonalBest.unsafelyUnwrapped(boardID, callback)
+    ) -> Int {
+        Int(scoreboards.getPersonalBest.unsafelyUnwrapped(boardID, callback))
     }
 
     /// Free a score struct that was provided to a callback.
@@ -51,8 +51,8 @@ public enum Scoreboards {
             _ boards: UnsafeMutablePointer<BoardsList>?,
             _ errorMessage: UnsafePointer<CChar>?
         ) -> Void
-    ) -> CInt {
-        scoreboards.getScoreboards.unsafelyUnwrapped(callback)
+    ) -> Int {
+        Int(scoreboards.getScoreboards.unsafelyUnwrapped(callback))
     }
 
     /// Free a list of scoreboards.
@@ -66,8 +66,8 @@ public enum Scoreboards {
             _ scores: UnsafeMutablePointer<ScoresList>?,
             _ errorMessage: UnsafePointer<CChar>?
         ) -> Void
-    ) -> CInt {
-        scoreboards.getScores.unsafelyUnwrapped(boardID, callback)
+    ) -> Int {
+        Int(scoreboards.getScores.unsafelyUnwrapped(boardID, callback))
     }
 
     /// Free a list of scores.
