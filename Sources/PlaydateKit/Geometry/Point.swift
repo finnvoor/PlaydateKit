@@ -22,6 +22,60 @@ public struct Point: Equatable {
     public var x, y: Float
 }
 
+public extension Point {
+    static func + (lhs: Point, rhs: Point) -> Point {
+        Point(x: lhs.x + rhs.x, y: lhs.y + rhs.y)
+    }
+
+    static func += (lhs: inout Point, rhs: Point) {
+        lhs = lhs + rhs
+    }
+
+    static func - (lhs: Point, rhs: Point) -> Point {
+        Point(x: lhs.x - rhs.x, y: lhs.y - rhs.y)
+    }
+
+    static func -= (lhs: inout Point, rhs: Point) {
+        lhs = lhs - rhs
+    }
+
+    static func * (lhs: Point, rhs: Point) -> Point {
+        Point(x: lhs.x * rhs.x, y: lhs.y * rhs.y)
+    }
+
+    static func *= (lhs: inout Point, rhs: Point) {
+        lhs = lhs * rhs
+    }
+
+    static func * (lhs: Point, rhs: Float) -> Point {
+        Point(x: lhs.x * rhs, y: lhs.y * rhs)
+    }
+
+    static func *= (lhs: inout Point, rhs: Float) {
+        lhs = lhs * rhs
+    }
+
+    static func / (lhs: Point, rhs: Point) -> Point {
+        Point(x: lhs.x / rhs.x, y: lhs.y / rhs.y)
+    }
+
+    static func /= (lhs: inout Point, rhs: Point) {
+        lhs = lhs / rhs
+    }
+
+    static func / (lhs: Point, rhs: Float) -> Point {
+        Point(x: lhs.x / rhs, y: lhs.y / rhs)
+    }
+
+    static func /= (lhs: inout Point, rhs: Float) {
+        lhs = lhs / rhs
+    }
+
+    static prefix func - (point: Point) -> Point {
+        Point(x: -point.x, y: -point.y)
+    }
+}
+
 // MARK: AffineTransformable
 
 extension Point: AffineTransformable {
