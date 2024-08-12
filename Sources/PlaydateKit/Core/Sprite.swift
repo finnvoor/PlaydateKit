@@ -80,6 +80,8 @@ public enum Sprite {
 
         // MARK: Public
 
+        public let pointer: OpaquePointer
+
         /// The sprite's stencil bitmap, if set.
         public var stencil: Graphics.Bitmap? { _stencil }
 
@@ -101,9 +103,14 @@ public enum Sprite {
 
         /// Gets the current position of sprite.
         public var position: Point {
-            var x: Float = 0, y: Float = 0
-            sprite.getPosition.unsafelyUnwrapped(pointer, &x, &y)
-            return Point(x: x, y: y)
+            get {
+                var x: Float = 0, y: Float = 0
+                sprite.getPosition.unsafelyUnwrapped(pointer, &x, &y)
+                return Point(x: x, y: y)
+            } set {
+                bounds.x = newValue.x
+                bounds.y = newValue.y
+            }
         }
 
         /// Gets/sets the bounds of the sprite.
@@ -315,8 +322,6 @@ public enum Sprite {
         }
 
         // MARK: Internal
-
-        let pointer: OpaquePointer
 
         /// Gets/sets the sprite’s userdata, an arbitrary pointer used for associating the sprite with other data.
         var userdata: UnsafeMutableRawPointer? {

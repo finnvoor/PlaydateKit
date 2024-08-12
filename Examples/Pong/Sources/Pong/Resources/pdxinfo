@@ -1,0 +1,5 @@
+name=Pong
+author=Finn Voorhees
+description=Pong built using PlaydateKit
+bundleID=com.finnvoorhees.Pong
+imagePath=
