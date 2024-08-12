@@ -273,7 +273,7 @@ public enum Sprite {
         }
 
         /// Returns the same values as `moveWithCollisions()` but does not actually move the sprite.
-        public func checkCollisions(goalX: Float, goalY: Float) -> CollisionInfo {
+        public func checkCollisions(goalX: Float, goalY: Float) -> CollisionResult {
             var actualX: Float = 0, actualY: Float = 0
             var length: CInt = 0
             let collisionInfo = sprite.checkCollisions.unsafelyUnwrapped(
@@ -284,7 +284,7 @@ public enum Sprite {
                 &actualY,
                 &length
             )
-            return CollisionInfo(
+            return CollisionResult(
                 collisions: UnsafeBufferPointer(start: collisionInfo, count: Int(length)),
                 actual: Point(x: actualX, y: actualY)
             )
@@ -293,7 +293,7 @@ public enum Sprite {
         /// Moves the given sprite towards `goal` taking collisions into account and returns an array of `SpriteCollisionInfo`.
         /// `actualX`, `actualY` are set to the sprite’s position after collisions. If no collisions occurred, this will be the same as
         /// `goalX`, `goalY`.
-        @discardableResult public func moveWithCollisions(goal: Point) -> CollisionInfo {
+        @discardableResult public func moveWithCollisions(goal: Point) -> CollisionResult {
             var actualX: Float = 0, actualY: Float = 0
             var length: CInt = 0
             let collisionInfo = sprite.moveWithCollisions.unsafelyUnwrapped(
@@ -304,7 +304,7 @@ public enum Sprite {
                 &actualY,
                 &length
             )
-            return CollisionInfo(
+            return CollisionResult(
                 collisions: UnsafeBufferPointer(start: collisionInfo, count: Int(length)),
                 actual: Point(x: actualX, y: actualY)
             )
@@ -361,19 +361,91 @@ public enum Sprite {
 
     public typealias CollisionResponseType = SpriteCollisionResponseType
 
-    public class CollisionInfo {
+    public class CollisionResult {
         // MARK: Lifecycle
 
         init(collisions: UnsafeBufferPointer<SpriteCollisionInfo>, actual: Point) {
-            self.collisions = collisions
+            // Trading performance for ergonomics
+            self.collisions = Array(collisions).map(CollisionInfo.init)
+            collisions.deallocate()
             self.actual = actual
         }
 
-        deinit { collisions.deallocate() }
-
         // MARK: Public
 
-        public let collisions: UnsafeBufferPointer<SpriteCollisionInfo>
+        public class CollisionInfo {
+            // MARK: Lifecycle
+
+            init(collisionInfo: SpriteCollisionInfo) {
+                self.collisionInfo = collisionInfo
+            }
+
+            // MARK: Public
+
+            /// The sprite being moved.
+            public var sprite: Sprite {
+                let userdata = PlaydateKit.Sprite.getUserdata(
+                    collisionInfo.sprite.unsafelyUnwrapped
+                ).unsafelyUnwrapped
+                return unsafeBitCast(userdata, to: Sprite.self)
+            }
+
+            /// The sprite colliding with the sprite being moved.
+            public var other: Sprite {
+                let userdata = PlaydateKit.Sprite.getUserdata(
+                    collisionInfo.other.unsafelyUnwrapped
+                ).unsafelyUnwrapped
+                return unsafeBitCast(userdata, to: Sprite.self)
+            }
+
+            /// The result of collisionResponse.
+            public var responseType: SpriteCollisionResponseType {
+                collisionInfo.responseType
+            }
+
+            /// True if the sprite was overlapping other when the collision started.
+            /// False if it didn’t overlap but tunneled through other.
+            public var overlaps: Bool {
+                collisionInfo.overlaps != 0
+            }
+
+            /// A number between 0 and 1 indicating how far along the movement to the goal the collision occurred.
+            public var ti: Float {
+                collisionInfo.ti
+            }
+
+            /// The difference between the original coordinates and the actual ones when the collision happened.
+            public var move: Point {
+                Point(x: collisionInfo.move.x, y: collisionInfo.move.y)
+            }
+
+            /// The collision normal; usually -1, 0, or 1 in x and y. Use this value to determine things
+            /// like if your character is touching the ground.
+            public var normal: Point {
+                Point(x: Float(collisionInfo.normal.x), y: Float(collisionInfo.normal.y))
+            }
+
+            /// The coordinates where the sprite started touching other.
+            public var touch: Point {
+                Point(x: collisionInfo.touch.x, y: collisionInfo.touch.y)
+            }
+
+            /// The rectangle the sprite occupied when the touch happened.
+            public var spriteRect: Rect {
+                Rect(collisionInfo.spriteRect)
+            }
+
+            /// The rectangle the colliding sprite occupied when the touch happened.
+            public var otherRect: Rect {
+                Rect(collisionInfo.otherRect)
+            }
+
+            // MARK: Private
+
+            private let collisionInfo: SpriteCollisionInfo
+        }
+
+        public let collisions: [CollisionInfo]
         public let actual: Point
     }
 
