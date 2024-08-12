@@ -8,7 +8,7 @@ public import CPlaydate
 public enum Sprite {
     // MARK: Open
 
-    open class Sprite {
+    open class Sprite: Equatable {
         // MARK: Lifecycle
 
         /// Allocates and returns a new Sprite.
@@ -182,6 +182,10 @@ public enum Sprite {
             var length: CInt = 0
             let sprites = sprite.overlappingSprites.unsafelyUnwrapped(pointer, &length)
             return UnsafeBufferPointer(start: sprites, count: Int(length))
+        }
+
+        public static func == (lhs: Sprite, rhs: Sprite) -> Bool {
+            lhs.pointer == rhs.pointer
         }
 
         /// Allocates and returns a copy of the sprite.
