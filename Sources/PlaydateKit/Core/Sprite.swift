@@ -20,11 +20,11 @@ public enum Sprite {
                 let sprite = unsafeBitCast(userdata, to: Sprite.self)
                 sprite.update()
             }
-//            setDrawFunction { sprite, bounds, drawRect in
-//                let userdata = PlaydateKit.Sprite.getUserdata(sprite.unsafelyUnwrapped).unsafelyUnwrapped
-//                let sprite = unsafeBitCast(userdata, to: Sprite.self)
-//                sprite.draw(bounds: Rect(bounds), drawRect: Rect(drawRect))
-//            }
+            setDrawFunction { sprite, bounds, drawRect in
+                let userdata = PlaydateKit.Sprite.getUserdata(sprite.unsafelyUnwrapped).unsafelyUnwrapped
+                let sprite = unsafeBitCast(userdata, to: Sprite.self)
+                sprite.draw(bounds: Rect(bounds), drawRect: Rect(drawRect))
+            }
             setCollisionResponseFunction { sprite, other in
                 let spriteUserdata = PlaydateKit.Sprite.getUserdata(sprite.unsafelyUnwrapped)
                 let sprite = unsafeBitCast(spriteUserdata, to: Sprite.self)
@@ -42,11 +42,11 @@ public enum Sprite {
                 let sprite = unsafeBitCast(userdata, to: Sprite.self)
                 sprite.update()
             }
-//            setDrawFunction { sprite, bounds, drawRect in
-//                let userdata = PlaydateKit.Sprite.getUserdata(sprite.unsafelyUnwrapped).unsafelyUnwrapped
-//                let sprite = unsafeBitCast(userdata, to: Sprite.self)
-//                sprite.draw(bounds: Rect(bounds), drawRect: Rect(drawRect))
-//            }
+            setDrawFunction { sprite, bounds, drawRect in
+                let userdata = PlaydateKit.Sprite.getUserdata(sprite.unsafelyUnwrapped).unsafelyUnwrapped
+                let sprite = unsafeBitCast(userdata, to: Sprite.self)
+                sprite.draw(bounds: Rect(bounds), drawRect: Rect(drawRect))
+            }
             setCollisionResponseFunction { sprite, other in
                 let spriteUserdata = PlaydateKit.Sprite.getUserdata(sprite.unsafelyUnwrapped)
                 let sprite = unsafeBitCast(spriteUserdata, to: Sprite.self)
@@ -66,8 +66,8 @@ public enum Sprite {
 
         /// If the sprite doesn’t have an image, the sprite’s draw function is called as needed to update the display. Note that this method
         /// is only called when the sprite is on screen and has a size specified via ``setSize(width:height:)`` or ``bounds``.
-        /// > Warning: This currently does not work due to [apple/swift/issues/72626](https://github.com/apple/swift/issues/72626)
-        @available(*, unavailable) open func draw(bounds _: Rect, drawRect _: Rect) {}
+        /// > Note: This is only called when ``image`` is `nil`
+        open func draw(bounds _: Rect, drawRect _: Rect) {}
 
         /// Override to control the type of collision response that should happen when a collision with other occurs.
         ///
@@ -84,9 +84,18 @@ public enum Sprite {
         public var stencil: Graphics.Bitmap? { _stencil }
 
         /// The bitmap currently assigned to the sprite.
+        /// > Note: Setting an image will override a Sprite's custom ``draw(bounds:drawRect:)`` function.
         public var image: Graphics.Bitmap? {
             didSet {
+                if image != nil { setDrawFunction(drawFunction: nil) }
                 sprite.setImage.unsafelyUnwrapped(pointer, image?.pointer, imageFlip)
+                if image == nil {
+                    setDrawFunction { sprite, bounds, drawRect in
+                        let userdata = PlaydateKit.Sprite.getUserdata(sprite.unsafelyUnwrapped).unsafelyUnwrapped
+                        let sprite = unsafeBitCast(userdata, to: Sprite.self)
+                        sprite.draw(bounds: Rect(bounds), drawRect: Rect(drawRect))
+                    }
+                }
             }
         }
 
