@@ -19,7 +19,7 @@ public enum Display {
     /// The nominal refresh rate in frames per second. The default is 30 fps, which is a recommended
     /// figure that balances animation smoothness with performance and power considerations. Maximum is 50 fps.
     ///
-    /// If rate is 0, the game’s update callback (the function specified by `Playdate.updateCallback`) is called as soon as possible.
+    /// If rate is 0, the game’s update callback (the function specified by ``PlaydateGame/update()``) is called as soon as possible.
     /// Since the display refreshes line-by-line, and unchanged lines aren’t sent to the display,
     /// the update cycle will be faster than 30 times a second but at an indeterminate rate.
     public static var refreshRate: Float {

@@ -33,6 +33,7 @@ Currently, the following sections of the API are implemented:
 - [ ] Sound
   - [x] FilePlayer
   - [x] SamplePlayer
+  - [x] Synth (partial)
 - [x] Sprite
 - [x] System
 
