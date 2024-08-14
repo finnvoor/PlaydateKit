@@ -72,7 +72,7 @@ final class Game: PlaydateGame {
 ## Contributing
 I'm happy to accept contributions on this project, whether it's bug fixes, implementing missing features, or opening an issue. Please try to follow the existing conventions/style in the project.
 
-If you create a game using PlaydateKit and would like it listed here, please open an issue or pull request! I am also hoping to add some simple games to an Examples/ directory in this repo if anyone wants to demake a retro game or create a new one that demos PlaydateKit.
+If you create a game using PlaydateKit and would like it featured here, please open an issue or pull request! If you would like to demake a retro game or create a new one that demonstrates PlaydateKit's capabilities, feel free to add an example game in the `Examples/` directory.
 
 ## Acknowledgements
 
