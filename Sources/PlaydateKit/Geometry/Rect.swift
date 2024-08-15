@@ -31,6 +31,24 @@ public struct Rect: Equatable {
     public static var zero: Rect { Rect(x: 0, y: 0, width: 0, height: 0) }
 
     public var x, y, width, height: Float
+
+    public var origin: Point {
+        get {
+            Point(x: x, y: y)
+        } set {
+            x = newValue.x
+            y = newValue.y
+        }
+    }
+
+    public var center: Point {
+        get {
+            Point(x: x + width / 2, y: y + height / 2)
+        } set {
+            x = newValue.x - width / 2
+            y = newValue.y - height / 2
+        }
+    }
 }
 
 // MARK: AffineTransformable

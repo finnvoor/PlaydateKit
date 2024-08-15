@@ -101,7 +101,7 @@ public enum Graphics {
         }
 
         /// Allocates and returns a new `width` by `height` `Bitmap` filled with `bgcolor`.
-        public init(width: Int, height: Int, bgColor: Color) {
+        public init(width: Int, height: Int, bgColor: Color = .clear) {
             pointer = bgColor.withLCDColor {
                 graphics.newBitmap.unsafelyUnwrapped(CInt(width), CInt(height), $0).unsafelyUnwrapped
             }
@@ -136,7 +136,7 @@ public enum Graphics {
         }
 
         /// Clears the bitmap, filling with the given `bgcolor`.
-        public func clear(bgColor: Color) {
+        public func clear(bgColor: Color = .clear) {
             bgColor.withLCDColor {
                 graphics.clearBitmap.unsafelyUnwrapped(pointer, $0)
             }
@@ -271,6 +271,10 @@ public enum Graphics {
         /// Returns the `index` bitmap in `table`, If `index` is out of bounds, the function returns nil.
         public func bitmap(at index: Int) -> Bitmap? {
             graphics.getTableBitmap.unsafelyUnwrapped(pointer, CInt(index)).map { Bitmap(pointer: $0) }
+        }
+
+        public subscript(_ index: Int) -> Bitmap? {
+            bitmap(at: index)
         }
 
         /// Loads the image table at `path` into the previously allocated `table`.
@@ -511,7 +515,11 @@ public enum Graphics {
     }
 
     /// Draws the `bitmap` with its upper-left corner at location `point`, using the given `flip` orientation.
-    public static func drawBitmap(_ bitmap: Bitmap, at point: Point, flip: Bitmap.Flip) {
+    public static func drawBitmap(
+        _ bitmap: Bitmap,
+        at point: Point = .zero,
+        flip: Bitmap.Flip = .unflipped
+    ) {
         graphics.drawBitmap.unsafelyUnwrapped(bitmap.pointer, CInt(point.x), CInt(point.y), flip)
     }
 
