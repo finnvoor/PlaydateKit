@@ -225,3 +225,11 @@ Enumerators:
   SwiftName: overlap
 - Name: kCollisionTypeBounce
   SwiftName: bounce
+- Name: kBitmapUnflipped
+  SwiftName: unflipped
+- Name: kBitmapFlippedX
+  SwiftName: flippedX
+- Name: kBitmapFlippedY
+  SwiftName: flippedY
+- Name: kBitmapFlippedXY
+  SwiftName: flippedXY
