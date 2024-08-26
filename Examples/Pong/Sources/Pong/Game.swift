@@ -186,7 +186,7 @@ class ComputerPaddle: Paddle {
 
 class PlayerPaddle: Paddle {
     override func update() {
-        if System.isCrankDocked{
+        if System.isCrankDocked {
             if System.buttonState.current.contains(.down) {
                 moveWithCollisions(
                     goal: position + Vector(x: 0, y: speed)
@@ -197,11 +197,11 @@ class PlayerPaddle: Paddle {
                     goal: position - Vector(x: 0, y: speed)
                 )
             }
-        }else{
-            /// 0 at the top, 1 at the bottom
-            let zeroToOne :Float = (180 - abs(System.crankAngle-180))/180
+        } else {
+            // 0 at the top, 1 at the bottom
+            let zeroToOne: Float = (180 - abs(System.crankAngle - 180)) / 180
             let targetY = zeroToOne * Float(Display.height)
-            moveWithCollisions(goal: Point(x:position.x,y:targetY))
+            moveWithCollisions(goal: Point(x: position.x, y: targetY))
         }
     }
 }
