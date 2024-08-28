@@ -106,10 +106,33 @@ class Ball: Sprite.Sprite {
 
     var velocity = Vector(x: 4, y: 5)
 
+    static func computeNewVelocity(collisionPoint: Float, speed: Float, direction: Bool) -> Vector {
+        // Maximum and minimum angle from vertical
+        let maxAngleDegrees = 20
+
+        let bounceDegrees = Float(180 - 2 * maxAngleDegrees) * collisionPoint + Float(maxAngleDegrees)
+
+        let bounceRadians = bounceDegrees * Float.pi / 180
+
+        let unitVectorX = sinf(bounceRadians)
+        let unitVectorY = cosf(bounceRadians)
+
+        let flip: Float = direction ? -1 : 1
+
+        let velocityX = speed * unitVectorX * flip
+        let velocityY = speed * unitVectorY
+
+        return Vector(x: velocityX, y: velocityY)
+    }
+
     func reset() {
         position = Point(x: Display.width / 2, y: 10)
         velocity.x *= Bool.random() ? 1 : -1
         velocity.y = abs(velocity.y)
+    }
+
+    func speed() -> Float {
+        sqrtf(velocity.x * velocity.x + velocity.y * velocity.y)
     }
 
     override func update() {
@@ -128,7 +151,9 @@ class Ball: Sprite.Sprite {
             } else {
                 synth.playNote(frequency: 220.0, volume: 0.7, length: 0.1)
                 if collision.normal.x != 0 {
-                    velocity.x *= -1
+                    let distance = collision.otherRect.center.y - collision.spriteRect.center.y
+                    let positionWithinPaddle = ((distance + collision.spriteRect.height / 2 + collision.otherRect.height / 2) / (collision.spriteRect.height + collision.otherRect.height))
+                    velocity = Ball.computeNewVelocity(collisionPoint: positionWithinPaddle, speed: speed(), direction: velocity.x > 0)
                 }
                 if collision.normal.y != 0 {
                     velocity.y *= -1
