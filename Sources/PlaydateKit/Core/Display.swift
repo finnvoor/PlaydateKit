@@ -4,6 +4,31 @@ public import CPlaydate
 public enum Display {
     // MARK: Public
 
+    public enum Scale: CUnsignedInt {
+        case oneTimes = 1
+        case twoTimes = 2
+        case fourTimes = 4
+        case eightTimes = 8
+
+        public var next: Scale {
+            switch self {
+            case .oneTimes: .twoTimes
+            case .twoTimes: .fourTimes
+            case .fourTimes: .eightTimes
+            case .eightTimes: .eightTimes
+            }
+        }
+
+        public var previous: Scale {
+            switch self {
+            case .oneTimes: .oneTimes
+            case .twoTimes: .oneTimes
+            case .fourTimes: .twoTimes
+            case .eightTimes: .fourTimes
+            }
+        }
+    }
+
     /// Returns the height of the display, taking the current scale into account;
     /// e.g., if the scale is 2, this function returns 120 instead of 240.
     public static var height: Int {
@@ -48,16 +73,11 @@ public enum Display {
     ///
     /// The top-left corner of the frame buffer is scaled up to fill the display; e.g., if the scale is set to 4,
     /// the pixels in rectangle [0,100] x [0,60] are drawn on the screen as 4 x 4 squares.
-    public static var scale: CUnsignedInt {
+    public static var scale: Scale {
         get { _scale }
         set {
-            var scale = newValue
-            if !([1, 2, 4, 8].contains(scale)) {
-                System.error("scale must be 1, 2, 4, or 8")
-                scale = 1
-            }
-            _scale = scale
-            display.setScale.unsafelyUnwrapped(scale)
+            _scale = newValue
+            display.setScale.unsafelyUnwrapped(newValue.rawValue)
         }
     }
 
@@ -85,7 +105,7 @@ public enum Display {
 
     private nonisolated(unsafe) static var _flipped: (x: Bool, y: Bool) = (false, false)
 
-    private nonisolated(unsafe) static var _scale: CUnsignedInt = 1
+    private nonisolated(unsafe) static var _scale = Scale.oneTimes
 
     private nonisolated(unsafe) static var _inverted = false
 
