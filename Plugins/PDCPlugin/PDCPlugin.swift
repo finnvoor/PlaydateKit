@@ -73,7 +73,7 @@ struct ModuleBuildRequest {
         let playdateKitSwiftFiles = playdateKitSource.sourceFiles(withSuffix: "swift").map(\.path.string)
         let cPlaydateInclude = playdateKitPackage.package.sourceModules
             .first(where: { $0.name == "CPlaydate" })!.directory.appending("include")
-
+            
         let productSource = context.package.sourceModules.first!
         let productSwiftFiles = productSource.sourceFiles(withSuffix: "swift").map(\.path.string)
         let productResources = productSource.sourceFiles
@@ -219,11 +219,24 @@ struct ModuleBuildRequest {
             atPath: sourcePath.string,
             withIntermediateDirectories: true
         )
-        print("copying resources")
+        
+        print("copying resources...")
         for resource in productResources {
+            let relativePath = resource.string
+                .replacingOccurrences(of: productSource.directory.string + "/", with: "")
+            let dest = sourcePath.appending([relativePath])
+            let destDirectory = dest.removingLastComponent()
+            var isDirectory: ObjCBool = false
+            
+            if !FileManager.default.fileExists(atPath: destDirectory.string, isDirectory: &isDirectory) {
+                print("creating \(destDirectory.string) directory")
+                try FileManager.default.createDirectory(atPath: destDirectory.string, withIntermediateDirectories: true)
+            }
+            
+            print("copying \(relativePath)")
             try FileManager.default.copyItem(
                 atPath: resource.string,
-                toPath: sourcePath.appending([resource.lastComponent]).string
+                toPath: dest.string
             )
         }
 
