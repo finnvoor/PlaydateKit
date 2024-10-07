@@ -80,6 +80,10 @@ struct ModuleBuildRequest {
             .filter { $0.type == .unknown }
             .map(\.path)
 
+        let playdateKitResources = playdateKitSource.sourceFiles(withSuffix: "png")
+            .filter { $0.type == .unknown }
+            .map(\.path)
+
         let playdateKit = ModuleBuildRequest(name: "playdatekit", type: .playdateKit, relativePath: modulesPath, sourcefiles: playdateKitSwiftFiles)
         let product = ModuleBuildRequest(name: productName, type: .product, relativePath: context.pluginWorkDirectory, sourcefiles: productSwiftFiles)
         let productDependencies = context.package.dependencies.compactMap { dep -> ModuleBuildRequest? in
@@ -220,7 +224,8 @@ struct ModuleBuildRequest {
             withIntermediateDirectories: true
         )
         print("copying resources")
-        for resource in productResources {
+        for resource in productResources + playdateKitResources {
+            print(resource.string)
             try FileManager.default.copyItem(
                 atPath: resource.string,
                 toPath: sourcePath.appending([resource.lastComponent]).string

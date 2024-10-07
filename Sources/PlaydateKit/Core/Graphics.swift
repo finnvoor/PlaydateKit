@@ -426,7 +426,7 @@ public enum Graphics {
 
     /// Push a new drawing context for drawing into the given bitmap.
     /// If context is nil, the drawing functions will use the display framebuffer.
-    public static func pushContext(_ context: Bitmap?) {
+    public static func pushContext(_ context: Bitmap? = nil) {
         graphics.pushContext.unsafelyUnwrapped(context?.pointer)
     }
 
