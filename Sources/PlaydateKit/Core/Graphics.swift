@@ -380,8 +380,8 @@ public enum Graphics {
         }
 
         /// Returns the height of the font.
-        public var height: UInt8 {
-            graphics.getFontHeight.unsafelyUnwrapped(pointer)
+        public var height: Int {
+            Int(graphics.getFontHeight.unsafelyUnwrapped(pointer))
         }
 
         /// Returns the width of the given `text` in the font.

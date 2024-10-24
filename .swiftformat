@@ -16,7 +16,8 @@
 --ifdef no-indent
 --funcattributes same-line
 --typeattributes same-line
---varattributes same-line
+--storedvarattrs same-line
+--computedvarattrs same-line
 --ranges no-space
 --header strip
 --selfrequired log,debug,info,notice,warning,trace,error,critical,fault

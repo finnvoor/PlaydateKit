@@ -10,6 +10,8 @@ public enum Display {
         case fourTimes = 4
         case eightTimes = 8
 
+        // MARK: Public
+
         public var next: Scale {
             switch self {
             case .oneTimes: .twoTimes
