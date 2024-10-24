@@ -1,35 +1,16 @@
 public enum UI {
     public final class CrankIndicator {
-        private var lastScale: Display.Scale?
-        private var bubbleX: Int = 0
-        private var bubbleY: Int = 0
-        private var bubbleWidth: Int = 0
-        private var bubbleHeight: Int = 0
-        private var bubbleImage: Graphics.Bitmap?
-
-        private var lastTime: CUnsignedInt = 0
-        private var currentFrame: Int = 1
-        private var currentScale: Display.Scale?
-
-        private var crankIndicatorY: Int = 0
-
-        private var bubbleFlip: Graphics.Bitmap.Flip = .unflipped
-        private var textOffset = 76
-
-        private var crankFrames: Graphics.BitmapTable?
-        private var frameCount = 0
-
-        private var textFrameImage: Graphics.Bitmap?
-        private var textFrameCount = 14
-
-        public var clockwise: Bool
+        // MARK: Lifecycle
 
         public init(clockwise: Bool = true) {
             self.clockwise = clockwise
         }
 
-        public func draw(xOffset: Int = 0, yOffset: Int = 0) throws(Playdate.Error) {
+        // MARK: Public
 
+        public var clockwise: Bool
+
+        public func draw(xOffset: Int = 0, yOffset: Int = 0) throws(Playdate.Error) {
             var xOffset = xOffset
             var yOffset = yOffset
 
@@ -90,12 +71,11 @@ public enum UI {
                 Graphics.drawBitmap(
                     frame,
                     at: Point(
-                        x: (bubbleX + xOffset + (textOffset - frameWidth) / 2),
-                        y: (bubbleY + yOffset + (bubbleHeight - frameHeight) / 2)
+                        x: bubbleX + xOffset + (textOffset - frameWidth) / 2,
+                        y: bubbleY + yOffset + (bubbleHeight - frameHeight) / 2
                     )
                 )
             } else {
-
                 // draw text
                 if let textFrameImage {
                     let (textWidth, textHeight, _) = textFrameImage.getData(mask: nil, data: nil)
@@ -105,8 +85,8 @@ public enum UI {
                     Graphics.drawBitmap(
                         textFrameImage,
                         at: Point(
-                            x: (bubbleX + xOffset + (textOffset - textWidth) / 2),
-                            y: (bubbleY + yOffset + (bubbleHeight - textHeight) / 2)
+                            x: bubbleX + xOffset + (textOffset - textWidth) / 2,
+                            y: bubbleY + yOffset + (bubbleHeight - textHeight) / 2
                         )
                     )
                 }
@@ -134,8 +114,31 @@ public enum UI {
             currentFrame = 1
         }
 
-        private func loadImages(for scale: Display.Scale) throws(Playdate.Error) {
+        // MARK: Private
 
+        private var lastScale: Display.Scale?
+        private var bubbleX: Int = 0
+        private var bubbleY: Int = 0
+        private var bubbleWidth: Int = 0
+        private var bubbleHeight: Int = 0
+        private var bubbleImage: Graphics.Bitmap?
+
+        private var lastTime: CUnsignedInt = 0
+        private var currentFrame: Int = 1
+        private var currentScale: Display.Scale?
+
+        private var crankIndicatorY: Int = 0
+
+        private var bubbleFlip: Graphics.Bitmap.Flip = .unflipped
+        private var textOffset = 76
+
+        private var crankFrames: Graphics.BitmapTable?
+        private var frameCount = 0
+
+        private var textFrameImage: Graphics.Bitmap?
+        private var textFrameCount = 14
+
+        private func loadImages(for scale: Display.Scale) throws(Playdate.Error) {
             lastTime = 0
             currentFrame = 1
             currentScale = Display.scale
