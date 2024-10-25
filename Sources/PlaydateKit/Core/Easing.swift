@@ -1,4 +1,5 @@
 public enum Easing {
+    case linear
     case inSine
     case outSine
     case inOutSine
@@ -37,6 +38,8 @@ public enum Easing {
             .clamped(to: 0...1)
         let ease = {
             switch self {
+            case .linear:
+                return x
             case .inSine:
                 return 1 - cosf((x * Float.pi) / 2)
             case .outSine:
