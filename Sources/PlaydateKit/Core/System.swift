@@ -260,12 +260,12 @@ public enum System {
         callback: (() -> Void)? = nil
     ) -> MenuItem {
         let pointer = system.addMenuItem(title, { userdata in
-            let menuItem = unsafeBitCast(userdata, to: MenuItem.self)
+            let menuItem = Unmanaged<MenuItem>.fromOpaque(userdata.unsafelyUnwrapped).takeUnretainedValue()
             menuItem.callback?()
         }, nil).unsafelyUnwrapped
         let menuItem = MenuItem(pointer: pointer)
         menuItem.callback = callback
-        menuItem.userdata = unsafeBitCast(menuItem, to: UnsafeMutableRawPointer.self)
+        menuItem.userdata = Unmanaged.passRetained(menuItem).toOpaque()
         menuItems.append(menuItem)
         return menuItem
     }
@@ -285,14 +285,14 @@ public enum System {
             title,
             isChecked ? 1 : 0,
             { userdata in
-                let menuItem = unsafeBitCast(userdata, to: CheckmarkMenuItem.self)
+                let menuItem = Unmanaged<CheckmarkMenuItem>.fromOpaque(userdata.unsafelyUnwrapped).takeUnretainedValue()
                 menuItem.checkmarkCallback?(menuItem.isChecked)
             },
             nil
         ).unsafelyUnwrapped
         let menuItem = CheckmarkMenuItem(pointer: pointer)
         menuItem.checkmarkCallback = callback
-        menuItem.userdata = unsafeBitCast(menuItem, to: UnsafeMutableRawPointer.self)
+        menuItem.userdata = Unmanaged.passRetained(menuItem).toOpaque()
         menuItems.append(menuItem)
         return menuItem
     }
@@ -314,14 +314,14 @@ public enum System {
             options.baseAddress,
             CInt(options.count),
             { userdata in
-                let menuItem = unsafeBitCast(userdata, to: OptionsMenuItem.self)
+                let menuItem = Unmanaged<OptionsMenuItem>.fromOpaque(userdata.unsafelyUnwrapped).takeUnretainedValue()
                 menuItem.optionsCallback?(menuItem.selectedOption)
             },
             nil
         ).unsafelyUnwrapped
         let menuItem = OptionsMenuItem(pointer: pointer)
         menuItem.optionsCallback = callback
-        menuItem.userdata = unsafeBitCast(menuItem, to: UnsafeMutableRawPointer.self)
+        menuItem.userdata = Unmanaged.passRetained(menuItem).toOpaque()
         menuItems.append(menuItem)
         return menuItem
     }
