@@ -3,6 +3,19 @@ import PlaydateKit
 // MARK: - GameScene
 
 final class GameScene: Scene {
+    // MARK: Lifecycle
+
+    override init() {
+        super.init()
+        dieSynth.setWaveform(.sawtooth)
+        dieSynth.setAttackTime(0.01)
+        dieSynth.setDecayTime(0.3)
+        dieSynth.setSustainLevel(0.0)
+        dieSynth.setReleaseTime(0.2)
+    }
+
+    // MARK: Internal
+
     enum State {
         case waiting
         case playing
@@ -21,9 +34,12 @@ final class GameScene: Scene {
     let ground = Ground()
     var pipes: [Pipe] = []
 
+    let dieSynth = Sound.Synth()
+
     var state: State = .waiting {
         didSet {
             if state == .gameOver {
+                dieSynth.playNote(frequency: 440, volume: 0.5, length: 0.5)
                 game.highScore = max(game.highScore, score.score)
             }
 
@@ -167,6 +183,12 @@ final class Player: Sprite.Sprite {
         bounds.center.y = (Float(Display.height) / 2) - 40
         zIndex = 2
         image = Self.image
+
+        flapSynth.setWaveform(.sine)
+        flapSynth.setAttackTime(0.001)
+        flapSynth.setDecayTime(0.05)
+        flapSynth.setSustainLevel(0.0)
+        flapSynth.setReleaseTime(0.05)
     }
 
     // MARK: Internal
@@ -189,6 +211,7 @@ final class Player: Sprite.Sprite {
         if (game.scene as? GameScene)?.state == .playing,
            !System.buttonState.pushed.intersection([.a, .b, .up, .left, .right, .down]).isEmpty {
             velocity.y = jumpVelocity
+            flapSynth.playNote(frequency: 1200, volume: 0.5, length: 0.03)
         }
 
         if velocity.y > 1 {
@@ -202,7 +225,7 @@ final class Player: Sprite.Sprite {
         // Update position
         let goal = Point(x: position.x, y: position.y + velocity.y)
         let collisionInfo = moveWithCollisions(goal: goal)
-        if !collisionInfo.collisions.isEmpty {
+        if !collisionInfo.collisions.isEmpty, (game.scene as? GameScene)?.state != .gameOver {
             (game.scene as? GameScene)?.state = .gameOver
         }
 
@@ -213,6 +236,10 @@ final class Player: Sprite.Sprite {
     override func collisionResponse(other _: Sprite.Sprite) -> Sprite.CollisionResponseType {
         .overlap
     }
+
+    // MARK: Private
+
+    private let flapSynth = Sound.Synth()
 }
 
 // MARK: - Pipe
