@@ -51,7 +51,11 @@ struct ModuleBuildRequest {
         print("found Swift toolchain: \(swiftToolchain)")
 
         let playdateSDK = try playdateSDK()
-        print("found Playdate SDK")
+        let playdateSDKVersion = (try? String(
+            contentsOf: URL(filePath: playdateSDK).appending(path: "VERSION.txt"),
+            encoding: .utf8
+        ))?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "???"
+        print("found Playdate SDK (\(playdateSDKVersion))")
 
         let productName = context.package.displayName
 
