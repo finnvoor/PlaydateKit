@@ -2,4 +2,4 @@ name=Flappy Swift
 author=Finn Voorhees
 description=Built using PlaydateKit
 bundleID=com.finnvoorhees.FlappySwift
-imagePath=
+imagePath=/
