@@ -14,49 +14,54 @@ public enum Sprite {
         /// Allocates and returns a new Sprite.
         public init() {
             pointer = sprite.newSprite.unsafelyUnwrapped().unsafelyUnwrapped
-            userdata = unsafeBitCast(self, to: UnsafeMutableRawPointer.self)
+            userdata = Unmanaged.passUnretained(self).toOpaque()
             setUpdateFunction { sprite in
                 let userdata = PlaydateKit.Sprite.getUserdata(sprite.unsafelyUnwrapped).unsafelyUnwrapped
-                let sprite = unsafeBitCast(userdata, to: Sprite.self)
+                let sprite = Unmanaged<Sprite>.fromOpaque(userdata).takeUnretainedValue()
                 sprite.update()
             }
             setDrawFunction { sprite, bounds, drawRect in
                 let userdata = PlaydateKit.Sprite.getUserdata(sprite.unsafelyUnwrapped).unsafelyUnwrapped
-                let sprite = unsafeBitCast(userdata, to: Sprite.self)
+                let sprite = Unmanaged<Sprite>.fromOpaque(userdata).takeUnretainedValue()
                 sprite.draw(bounds: Rect(bounds), drawRect: Rect(drawRect))
             }
             setCollisionResponseFunction { sprite, other in
-                let spriteUserdata = PlaydateKit.Sprite.getUserdata(sprite.unsafelyUnwrapped)
-                let sprite = unsafeBitCast(spriteUserdata, to: Sprite.self)
-                let otherUserdata = PlaydateKit.Sprite.getUserdata(other.unsafelyUnwrapped)
-                let other = unsafeBitCast(otherUserdata, to: Sprite.self)
+                let spriteUserdata = PlaydateKit.Sprite.getUserdata(sprite.unsafelyUnwrapped).unsafelyUnwrapped
+                let sprite = Unmanaged<Sprite>.fromOpaque(spriteUserdata).takeUnretainedValue()
+                let otherUserdata = PlaydateKit.Sprite.getUserdata(other.unsafelyUnwrapped).unsafelyUnwrapped
+                let other = Unmanaged<Sprite>.fromOpaque(otherUserdata).takeUnretainedValue()
                 return sprite.collisionResponse(other: other)
             }
         }
 
         init(pointer: OpaquePointer) {
             self.pointer = pointer
-            userdata = unsafeBitCast(self, to: UnsafeMutableRawPointer.self)
+            userdata = Unmanaged.passUnretained(self).toOpaque()
             setUpdateFunction { sprite in
                 let userdata = PlaydateKit.Sprite.getUserdata(sprite.unsafelyUnwrapped).unsafelyUnwrapped
-                let sprite = unsafeBitCast(userdata, to: Sprite.self)
+                let sprite = Unmanaged<Sprite>.fromOpaque(userdata).takeUnretainedValue()
                 sprite.update()
             }
             setDrawFunction { sprite, bounds, drawRect in
                 let userdata = PlaydateKit.Sprite.getUserdata(sprite.unsafelyUnwrapped).unsafelyUnwrapped
-                let sprite = unsafeBitCast(userdata, to: Sprite.self)
+                let sprite = Unmanaged<Sprite>.fromOpaque(userdata).takeUnretainedValue()
                 sprite.draw(bounds: Rect(bounds), drawRect: Rect(drawRect))
             }
             setCollisionResponseFunction { sprite, other in
-                let spriteUserdata = PlaydateKit.Sprite.getUserdata(sprite.unsafelyUnwrapped)
-                let sprite = unsafeBitCast(spriteUserdata, to: Sprite.self)
-                let otherUserdata = PlaydateKit.Sprite.getUserdata(other.unsafelyUnwrapped)
-                let other = unsafeBitCast(otherUserdata, to: Sprite.self)
+                let spriteUserdata = PlaydateKit.Sprite.getUserdata(sprite.unsafelyUnwrapped).unsafelyUnwrapped
+                let sprite = Unmanaged<Sprite>.fromOpaque(spriteUserdata).takeUnretainedValue()
+                let otherUserdata = PlaydateKit.Sprite.getUserdata(other.unsafelyUnwrapped).unsafelyUnwrapped
+                let other = Unmanaged<Sprite>.fromOpaque(otherUserdata).takeUnretainedValue()
                 return sprite.collisionResponse(other: other)
             }
         }
 
-        deinit { sprite.freeSprite.unsafelyUnwrapped(pointer) }
+        deinit {
+            setUpdateFunction { _ in }
+            setDrawFunction { _, _, _ in }
+            setCollisionResponseFunction { _, _ in .freeze }
+            sprite.freeSprite.unsafelyUnwrapped(pointer)
+        }
 
         // MARK: Open
 
@@ -89,12 +94,12 @@ public enum Sprite {
         /// > Note: Setting an image will override a Sprite's custom ``draw(bounds:drawRect:)`` function.
         public var image: Graphics.Bitmap? {
             didSet {
-                if image != nil { setDrawFunction(drawFunction: nil) }
+                if image != nil { setDrawFunction(nil) }
                 sprite.setImage.unsafelyUnwrapped(pointer, image?.pointer, imageFlip)
                 if image == nil {
                     setDrawFunction { sprite, bounds, drawRect in
                         let userdata = PlaydateKit.Sprite.getUserdata(sprite.unsafelyUnwrapped).unsafelyUnwrapped
-                        let sprite = unsafeBitCast(userdata, to: Sprite.self)
+                        let sprite = Unmanaged<Sprite>.fromOpaque(userdata).takeUnretainedValue()
                         sprite.draw(bounds: Rect(bounds), drawRect: Rect(drawRect))
                     }
                 }
@@ -331,7 +336,7 @@ public enum Sprite {
 
         /// Set a callback that returns a `SpriteCollisionResponseType` for a collision between `sprite` and other.
         func setCollisionResponseFunction(
-            function: (@convention(c) (
+            _ function: (@convention(c) (
                 _ sprite: OpaquePointer?,
                 _ other: OpaquePointer?
             ) -> CollisionResponseType)?
@@ -342,7 +347,7 @@ public enum Sprite {
         /// Sets the draw function for the sprite. Note that the callback is only called when the
         /// sprite is on screen and has a size specified via ``setSize(width:height:)`` or ``bounds``.
         func setDrawFunction(
-            drawFunction: (@convention(c) (
+            _ drawFunction: (@convention(c) (
                 _ sprite: OpaquePointer?,
                 _ bounds: PDRect,
                 _ drawRect: PDRect
@@ -396,7 +401,7 @@ public enum Sprite {
                 let userdata = PlaydateKit.Sprite.getUserdata(
                     collisionInfo.sprite.unsafelyUnwrapped
                 ).unsafelyUnwrapped
-                return unsafeBitCast(userdata, to: Sprite.self)
+                return Unmanaged<Sprite>.fromOpaque(userdata).takeUnretainedValue()
             }
 
             /// The sprite colliding with the sprite being moved.
@@ -404,7 +409,7 @@ public enum Sprite {
                 let userdata = PlaydateKit.Sprite.getUserdata(
                     collisionInfo.other.unsafelyUnwrapped
                 ).unsafelyUnwrapped
-                return unsafeBitCast(userdata, to: Sprite.self)
+                return Unmanaged<Sprite>.fromOpaque(userdata).takeUnretainedValue()
             }
 
             /// The result of collisionResponse.

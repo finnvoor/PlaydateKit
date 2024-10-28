@@ -249,6 +249,7 @@ public enum System {
     }
 
     // TODO: - Log/error format string + args
+    // TODO: - switch menu item callback to unsafe bitcase / clear callback on deinit
 
     /// Adds a new menu item to the System Menu.
     /// - Parameters:
