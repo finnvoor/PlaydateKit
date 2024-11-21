@@ -97,7 +97,7 @@ struct ModuleBuildRequest {
         let moduleCachePath = context.pluginWorkDirectory.appending(["module-cache"])
         let modulesPath = context.pluginWorkDirectory.appending(["Modules"])
 
-        let sourcePath = context.pluginWorkDirectory.appending(["Source"])
+        let sourcePath = context.pluginWorkDirectory.appending(["\(productName)-Source"])
         let productPath: String = if let targetBuildDir = ProcessInfo.processInfo.environment["TARGET_BUILD_DIR"] {
             // Run from Xcode
             targetBuildDir + "/\(productName).pdx"
