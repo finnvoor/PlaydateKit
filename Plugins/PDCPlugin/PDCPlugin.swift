@@ -261,15 +261,27 @@ struct ModuleBuildRequest {
         var resourcePaths: [(path: String, relativePath: String)] = []
 
         // Scan package and dependencies for resources
-        for package in context.package.dependencies.map(\.package) + [context.package] {
-            for module in package.sourceModules {
-                let moduleResources = module.sourceFiles.filter { $0.type == .unknown }.map(\.path)
-                for resource in moduleResources {
-                    let relativePrefix = module.directory.string + "/Resources/"
-                    // Only copy resource from the Package's "Resources" directory
-                    guard resource.string.hasPrefix(relativePrefix) else {continue}            
-                    let relativePath = resource.string.replacingOccurrences(of: relativePrefix, with: "")
-                    resourcePaths.append((resource.string, relativePath))
+        func appendResources(for module: any SourceModuleTarget) {
+            let moduleResources = module.sourceFiles.filter { $0.type == .unknown }.map(\.path)
+            for resource in moduleResources {
+                let relativePrefix = module.directory.string + "/Resources/"
+                // Only copy resource from the Package's "Resources" directory
+                guard resource.string.hasPrefix(relativePrefix) else {continue}            
+                let relativePath = resource.string.replacingOccurrences(of: relativePrefix, with: "")
+                resourcePaths.append((resource.string, relativePath))
+            }
+        }
+        
+        appendResources(for: productModule)
+        for dependency in productModule.dependencies {
+            switch dependency {
+            case .product(let product):
+                for module in product.sourceModules {
+                    appendResources(for: module)
+                }
+            case .target(let target):
+                if let module = target.sourceModule {
+                    appendResources(for: module)
                 }
             }
         }
