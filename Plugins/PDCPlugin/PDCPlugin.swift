@@ -92,7 +92,7 @@ struct ModuleBuildRequest {
         ))?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "???"
         print("found Playdate SDK (\(playdateSDKVersion))")
 
-        let productName = context.package.displayName
+        let productName = productModule.name
 
         let moduleCachePath = context.pluginWorkDirectory.appending(["module-cache"])
         let modulesPath = context.pluginWorkDirectory.appending(["Modules"])
