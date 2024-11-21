@@ -253,7 +253,7 @@ struct ModuleBuildRequest {
             
             // If the resource is pdxinfo, always place it in the pdx root
             var destination = dest.string
-            if resource.path.hasSuffix("pdxinfo") {
+            if resource.path.hasSuffix("/pdxinfo") {
                 destination = sourcePath.appending(["pdxinfo"]).string
             }
             
