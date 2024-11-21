@@ -145,7 +145,7 @@ public enum UI {
 
             crankIndicatorY = 210 / Int(scale.rawValue)
 
-            let imagePath = "crank-notice-bubble-\(scale.rawValue)x.png"
+            let imagePath = "PlaydateKit/UI/images/crank/crank-notice-bubble-\(scale.rawValue)x.png"
             bubbleImage = try Graphics.Bitmap(path: imagePath)
 
             if let bubbleImage {
@@ -163,12 +163,12 @@ public enum UI {
                     textOffset = 76 / Int(scale.rawValue)
                 }
 
-                crankFrames = try Graphics.BitmapTable(path: "crank-frames-\(scale.rawValue)x.png")
+                crankFrames = try Graphics.BitmapTable(path: "PlaydateKit/UI/images/crank/crank-frames-\(scale.rawValue)x.png")
                 frameCount = (crankFrames?.imageCount ?? 0) * 3
 
                 switch scale {
                 case .oneTimes, .twoTimes:
-                    textFrameImage = try Graphics.Bitmap(path: "crank-notice-text-\(scale.rawValue)x.png")
+                    textFrameImage = try Graphics.Bitmap(path: "PlaydateKit/UI/images/crank/crank-notice-text-\(scale.rawValue)x.png")
                     textFrameCount = 14
                     frameCount += textFrameCount
                 default:
