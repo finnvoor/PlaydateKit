@@ -80,13 +80,6 @@ struct ModuleBuildRequest {
 
         let productSource = context.package.sourceModules.first!
         let productSwiftFiles = productSource.sourceFiles(withSuffix: "swift").map(\.path.string)
-        let productResources = productSource.sourceFiles
-            .filter { $0.type == .unknown }
-            .map(\.path)
-
-        let playdateKitResources = playdateKitSource.sourceFiles(withSuffix: "png")
-            .filter { $0.type == .unknown }
-            .map(\.path)
 
         let playdateKit = ModuleBuildRequest(name: "playdatekit", type: .playdateKit, relativePath: modulesPath, sourcefiles: playdateKitSwiftFiles)
         let product = ModuleBuildRequest(name: productName, type: .product, relativePath: context.pluginWorkDirectory, sourcefiles: productSwiftFiles)
@@ -227,12 +220,47 @@ struct ModuleBuildRequest {
             atPath: sourcePath.string,
             withIntermediateDirectories: true
         )
-        print("copying resources")
-        for resource in productResources + playdateKitResources {
-            print(resource.string)
+
+        print("copying resources...")
+        // Create list or resources including a relative path
+        var resourcePaths: [(path: String, relativePath: String)] = []
+
+        // Scan package and dependencies for resources
+        for package in context.package.dependencies.map(\.package) + [context.package] {
+            for module in package.sourceModules {
+                let moduleResources = module.sourceFiles.filter { $0.type == .unknown }.map(\.path)
+                for resource in moduleResources {
+                    let relativePrefix = module.directory.string + "/Resources/"
+                    // Only copy resource from the Package's "Resources" directory
+                    guard resource.string.hasPrefix(relativePrefix) else {continue}            
+                    let relativePath = resource.string.replacingOccurrences(of: relativePrefix, with: "")
+                    resourcePaths.append((resource.string, relativePath))
+                }
+            }
+        }
+        
+        // Copy resources
+        for resource in resourcePaths {
+            let dest = sourcePath.appending([resource.relativePath])
+            let destDirectory = dest.removingLastComponent()
+            
+            var isDirectory: ObjCBool = false
+            if !FileManager.default.fileExists(atPath: destDirectory.string, isDirectory: &isDirectory) {
+                let relativeDestDirectory = Path(resource.relativePath).removingLastComponent()
+                print("creating directory \(relativeDestDirectory.string)/")
+                try FileManager.default.createDirectory(atPath: destDirectory.string, withIntermediateDirectories: true)
+            }
+            
+            // If the resource is pdxinfo, always place it in the pdx root
+            var destination = dest.string
+            if resource.path.hasSuffix("pdxinfo") {
+                destination = sourcePath.appending(["pdxinfo"]).string
+            }
+            
+            print("copying \(resource.relativePath)")
             try FileManager.default.copyItem(
-                atPath: resource.string,
-                toPath: sourcePath.appending([resource.lastComponent]).string
+                atPath: resource.path,
+                toPath: destination
             )
         }
 
