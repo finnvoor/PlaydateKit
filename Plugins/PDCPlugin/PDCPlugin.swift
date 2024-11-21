@@ -222,7 +222,7 @@ struct ModuleBuildRequest {
         )
 
         print("copying resources...")
-        // Create list or resources including a relative path
+        // Create a list of resources including the relative path
         var resourcePaths: [(path: String, relativePath: String)] = []
 
         // Scan package and dependencies for resources
