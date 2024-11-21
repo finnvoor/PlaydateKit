@@ -45,6 +45,41 @@ struct ModuleBuildRequest {
         var arguments = ArgumentExtractor(arguments)
         let verbose = arguments.extractFlag(named: "verbose") > 0
 
+        // Find the product for the provided argument
+        var productModule: (any SourceModuleTarget)! = nil
+        if productModule == nil, let productNameArg = arguments.extractOption(named: "product").first {
+            if let argModule = context.package.products.first(where: {
+                return $0.name == productNameArg
+            })?.sourceModules.first {
+                productModule = argModule
+                print("Found product named \(productNameArg).")
+            }else{
+                // If the provided product was not found, error out
+                print("Failed to locate product named \(productNameArg).")
+                throw Error.productNotFound
+            }
+        }
+        // Find the first product most liekly to be a Playdate game
+        if productModule == nil {
+            if let searchedModule = context.package.products.first(where: {
+                $0.targets.first(where: {
+                    $0.dependencies.first(where: {
+                        if case .product(let product) = $0 {
+                            return product.name == "PlaydateKit"
+                        }
+                        return false
+                    }) != nil
+                }) != nil
+            })?.sourceModules.first {
+                productModule = searchedModule
+                print("Found product named \(productModule.name).")
+            }
+        }
+        if productModule == nil {
+            print("Failed to locate a suitable Package product.")
+            throw Error.productNotFound
+        }
+        
         // MARK: - Paths
 
         let swiftToolchain = try swiftToolchain()
@@ -78,7 +113,7 @@ struct ModuleBuildRequest {
         let cPlaydateInclude = playdateKitPackage.package.sourceModules
             .first(where: { $0.name == "CPlaydate" })!.directory.appending("include")
 
-        let productSource = context.package.sourceModules.first!
+        let productSource = productModule!
         let productSwiftFiles = productSource.sourceFiles(withSuffix: "swift").map(\.path.string)
 
         let playdateKit = ModuleBuildRequest(name: "playdatekit", type: .playdateKit, relativePath: modulesPath, sourcefiles: playdateKitSwiftFiles)
@@ -376,6 +411,7 @@ struct ModuleBuildRequest {
 
 extension PDCPlugin {
     enum Error: Swift.Error {
+        case productNotFound
         case swiftToolchainNotFound
         case playdateSDKNotFound
         case ccFailed(exitCode: Int32)
