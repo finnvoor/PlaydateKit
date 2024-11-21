@@ -244,8 +244,7 @@ struct ModuleBuildRequest {
             let dest = sourcePath.appending([resource.relativePath])
             let destDirectory = dest.removingLastComponent()
             
-            var isDirectory: ObjCBool = false
-            if !FileManager.default.fileExists(atPath: destDirectory.string, isDirectory: &isDirectory) {
+            if FileManager.default.fileExists(atPath: destDirectory.string, isDirectory: nil) == false {
                 let relativeDestDirectory = Path(resource.relativePath).removingLastComponent()
                 print("creating directory \(relativeDestDirectory.string)/")
                 try FileManager.default.createDirectory(atPath: destDirectory.string, withIntermediateDirectories: true)
