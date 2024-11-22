@@ -190,7 +190,7 @@ struct ModuleBuildRequest {
         func pdc(_ arguments: [String]) throws {
             let process = Process()
             process.executableURL = URL(filePath: "\(playdateSDK)/bin/pdc")
-            process.arguments = ["--skip-unknown"] + arguments
+            process.arguments = arguments
             if verbose { process.print() }
             try process.run()
             process.waitUntilExit()
