@@ -168,7 +168,7 @@ struct ModuleBuildRequest {
         }
 
         @Sendable func clang(_ arguments: [String]) throws {
-            let clang = try context.tool(named: "clang")
+            let clangPath = swiftToolchain.path + "/usr/bin/clang"
             let process = Process()
             var environment = ProcessInfo.processInfo.environment
 
@@ -180,7 +180,7 @@ struct ModuleBuildRequest {
             environment["IPHONEOS_DEPLOYMENT_TARGET"] = nil
 
             process.environment = environment
-            process.executableURL = URL(filePath: clang.path.string)
+            process.executableURL = URL(filePath: clangPath)
             process.arguments = ["-g"] + arguments
             if verbose { process.print() }
             try process.run()
