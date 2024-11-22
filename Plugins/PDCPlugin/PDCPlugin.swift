@@ -236,6 +236,8 @@ struct ModuleBuildRequest {
                     let relativePath = resource.string.replacingOccurrences(of: relativePrefix, with: "")
                     resourcePaths.append((resource.string, relativePath))
                 }
+            @unknown default:
+                fatalError()
             }
         }
         
