@@ -220,7 +220,7 @@ struct ModuleBuildRequest {
         @Sendable func swiftc(_ arguments: [String]) throws {
             let xcrun = try context.tool(named: "xcrun")
             let process = Process()
-            process.executableURL = URL(filePath: xcrun.path.string)
+            process.executableURL = xcrun.url
             process.arguments = ["-f", "swiftc", "--toolchain", swiftToolchain.id]
             let pipe = Pipe()
             process.standardOutput = pipe
@@ -273,10 +273,11 @@ struct ModuleBuildRequest {
         // MARK: - Build
 
         // setup.o
-        let setup = context.pluginWorkDirectory.appending(["setup.o"]).string
+        let setup = context.pluginWorkDirectoryURL.appending(path: "setup.o").path(percentEncoded: false)
+        let setupLst = context.pluginWorkDirectoryURL.appending(path: "setup.lst").path(percentEncoded: false)
         try cc(mcFlags + [
-            "-c", "-O2", "-falign-functions=16", "-fomit-frame-pointer", "-gdwarf-2", "-Wall", "-Wno-unused", "-Wstrict-prototypes", "-Wno-unknown-pragmas", "-fverbose-asm", "-Wdouble-promotion", "-mword-relocations", "-fno-common", "-ffunction-sections", "-fdata-sections", "-Wa,-ahlms=\(context.pluginWorkDirectory.appending(["setup.lst"]).string)", "-DTARGET_PLAYDATE=1", "-DTARGET_EXTENSION=1", "-MD", "-MP", "-MF",
-            context.pluginWorkDirectory.appending(["setup.o.d"]).string,
+            "-c", "-O2", "-falign-functions=16", "-fomit-frame-pointer", "-gdwarf-2", "-Wall", "-Wno-unused", "-Wstrict-prototypes", "-Wno-unknown-pragmas", "-fverbose-asm", "-Wdouble-promotion", "-mword-relocations", "-fno-common", "-ffunction-sections", "-fdata-sections", "-Wa,-ahlms=\(setupLst)", "-DTARGET_PLAYDATE=1", "-DTARGET_EXTENSION=1", "-MD", "-MP", "-MF",
+            context.pluginWorkDirectoryURL.appending(path: "setup.o.d").path(percentEncoded: false),
             "-I", ".",
             "-I", ".",
             "-I", "\(playdateSDK)/C_API",
@@ -373,7 +374,7 @@ struct ModuleBuildRequest {
                     print("building pdex.elf")
                     var ccArgs: [String] = [setup, module.modulePath(for: .device)] + mcFlags + [
                         "-T\(playdateSDK)/C_API/buildsupport/link_map.ld",
-                        "-Wl,-Map=\(context.pluginWorkDirectory.appending(["pdex.map"]).string),--cref,--gc-sections,--no-warn-mismatch,--emit-relocs",
+                        "-Wl,-Map=\(context.pluginWorkDirectoryURL.appending(path: "pdex.map").path(percentEncoded: false)),--cref,--gc-sections,--no-warn-mismatch,--emit-relocs",
                         "-o", sourcePath.appending(["pdex.elf"]).string
                     ]
                     if useSwiftUnicodeDataTables {
