@@ -83,6 +83,41 @@ struct ModuleBuildRequest {
         let productModule: any SourceModuleTarget = try findProductModule()
         
 
+        // Find the product for the provided argument
+        var productModule: (any SourceModuleTarget)! = nil
+        if productModule == nil, let productNameArg = arguments.extractOption(named: "product").first {
+            if let argModule = context.package.products.first(where: {
+                $0.name == productNameArg
+            })?.sourceModules.first {
+                productModule = argModule
+                print("Found product named \(productNameArg).")
+            } else {
+                // If the provided product was not found, error out
+                print("Failed to locate product named \(productNameArg).")
+                throw Error.productNotFound
+            }
+        }
+        // Find the first product most liekly to be a Playdate game
+        if productModule == nil {
+            if let searchedModule = context.package.products.first(where: {
+                $0.targets.first(where: {
+                    $0.dependencies.first(where: {
+                        if case let .product(product) = $0 {
+                            return product.name == "PlaydateKit"
+                        }
+                        return false
+                    }) != nil
+                }) != nil
+            })?.sourceModules.first {
+                productModule = searchedModule
+                print("Found product named \(productModule.name).")
+            }
+        }
+        if productModule == nil {
+            print("Failed to locate a suitable Package product.")
+            throw Error.productNotFound
+        }
+
         // MARK: - Paths
 
         let swiftToolchain = try swiftToolchain()
@@ -95,12 +130,12 @@ struct ModuleBuildRequest {
         ))?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "???"
         print("found Playdate SDK (\(playdateSDKVersion))")
 
-        let productName = context.package.displayName
+        let productName = productModule.name
 
         let moduleCachePath = context.pluginWorkDirectory.appending(["module-cache"])
         let modulesPath = context.pluginWorkDirectory.appending(["Modules"])
 
-        let sourcePath = context.pluginWorkDirectory.appending(["Source"])
+        let sourcePath = context.pluginWorkDirectory.appending(["\(productName)-Source"])
         let productPath: String = if let targetBuildDir = ProcessInfo.processInfo.environment["TARGET_BUILD_DIR"] {
             // Run from Xcode
             targetBuildDir + "/\(productName).pdx"
@@ -260,41 +295,53 @@ struct ModuleBuildRequest {
         )
 
         print("copying resources...")
-        // Create list or resources including a relative path
+        // Create a list of resources including the relative path
         var resourcePaths: [(path: String, relativePath: String)] = []
 
         // Scan package and dependencies for resources
-        for package in context.package.dependencies.map(\.package) + [context.package] {
-            for module in package.sourceModules {
-                let moduleResources = module.sourceFiles.filter { $0.type == .unknown }.map(\.path)
-                for resource in moduleResources {
-                    let relativePrefix = module.directory.string + "/Resources/"
-                    // Only copy resource from the Package's "Resources" directory
-                    guard resource.string.hasPrefix(relativePrefix) else {continue}            
-                    let relativePath = resource.string.replacingOccurrences(of: relativePrefix, with: "")
-                    resourcePaths.append((resource.string, relativePath))
-                }
+        func appendResources(for module: any SourceModuleTarget) {
+            let moduleResources = module.sourceFiles.filter { $0.type == .unknown }.map(\.path)
+            for resource in moduleResources {
+                let relativePrefix = module.directory.string + "/Resources/"
+                // Only copy resource from the Package's "Resources" directory
+                guard resource.string.hasPrefix(relativePrefix) else { continue }
+                let relativePath = resource.string.replacingOccurrences(of: relativePrefix, with: "")
+                resourcePaths.append((resource.string, relativePath))
             }
         }
-        
+
+        appendResources(for: productModule)
+        for dependency in productModule.dependencies {
+            switch dependency {
+            case let .product(product):
+                for module in product.sourceModules {
+                    appendResources(for: module)
+                }
+            case let .target(target):
+                if let module = target.sourceModule {
+                    appendResources(for: module)
+                }
+            default: break
+            }
+        }
+
         // Copy resources
         for resource in resourcePaths {
             let dest = sourcePath.appending([resource.relativePath])
             let destDirectory = dest.removingLastComponent()
-            
-            var isDirectory: ObjCBool = false
-            if !FileManager.default.fileExists(atPath: destDirectory.string, isDirectory: &isDirectory) {
+
+            if FileManager.default.fileExists(atPath: destDirectory.string, isDirectory: nil) == false {
                 let relativeDestDirectory = Path(resource.relativePath).removingLastComponent()
                 print("creating directory \(relativeDestDirectory.string)/")
                 try FileManager.default.createDirectory(atPath: destDirectory.string, withIntermediateDirectories: true)
             }
-            
+
             // If the resource is pdxinfo, always place it in the pdx root
             var destination = dest.string
-            if resource.path.hasSuffix("pdxinfo") {
+            if resource.path.hasSuffix("/pdxinfo") {
                 destination = sourcePath.appending(["pdxinfo"]).string
             }
-            
+
             print("copying \(resource.relativePath)")
             try FileManager.default.copyItem(
                 atPath: resource.path,
