@@ -274,8 +274,6 @@ struct ModuleBuildRequest {
                     let relativePath = resource.string.replacingOccurrences(of: relativePrefix, with: "")
                     resourcePaths.append((resource.string, relativePath))
                 }
-            @unknown default:
-                fatalError()
             }
         }
         
@@ -470,6 +468,7 @@ struct ModuleBuildRequest {
 
 extension PDCPlugin {
     enum Error: Swift.Error {
+        case productNotFound
         case swiftToolchainNotFound
         case playdateSDKNotFound
         case ccFailed(exitCode: Int32)
