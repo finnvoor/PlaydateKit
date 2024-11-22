@@ -91,6 +91,13 @@ public enum System {
         }
     }
 
+    /// A custom update function.
+    ///
+    /// The update function should return true to tell the system to update the display, or false if an update isn’t needed.
+    public nonisolated(unsafe) static var updateCallback: (() -> Bool)? = nil
+
+    public private(set) nonisolated(unsafe) static var menuItems: [MenuItem] = []
+
     /// Returns the last-read accelerometer data.
     public static var accelerometer: (x: Float, y: Float, z: Float) {
         var x: Float = 0, y: Float = 0, z: Float = 0
@@ -108,13 +115,6 @@ public enum System {
         system.getButtonState.unsafelyUnwrapped(&current, &pushed, &released)
         return (current, pushed, released)
     }
-
-    /// A custom update function.
-    ///
-    /// The update function should return true to tell the system to update the display, or false if an update isn’t needed.
-    public nonisolated(unsafe) static var updateCallback: (() -> Bool)? = nil
-
-    public private(set) nonisolated(unsafe) static var menuItems: [MenuItem] = []
 
     // MARK: - Time and Date
 

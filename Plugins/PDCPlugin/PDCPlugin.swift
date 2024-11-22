@@ -49,11 +49,11 @@ struct ModuleBuildRequest {
         var productModule: (any SourceModuleTarget)! = nil
         if productModule == nil, let productNameArg = arguments.extractOption(named: "product").first {
             if let argModule = context.package.products.first(where: {
-                return $0.name == productNameArg
+                $0.name == productNameArg
             })?.sourceModules.first {
                 productModule = argModule
                 print("Found product named \(productNameArg).")
-            }else{
+            } else {
                 // If the provided product was not found, error out
                 print("Failed to locate product named \(productNameArg).")
                 throw Error.productNotFound
@@ -64,7 +64,7 @@ struct ModuleBuildRequest {
             if let searchedModule = context.package.products.first(where: {
                 $0.targets.first(where: {
                     $0.dependencies.first(where: {
-                        if case .product(let product) = $0 {
+                        if case let .product(product) = $0 {
                             return product.name == "PlaydateKit"
                         }
                         return false
@@ -79,7 +79,7 @@ struct ModuleBuildRequest {
             print("Failed to locate a suitable Package product.")
             throw Error.productNotFound
         }
-        
+
         // MARK: - Paths
 
         let swiftToolchain = try swiftToolchain()
@@ -266,43 +266,44 @@ struct ModuleBuildRequest {
             for resource in moduleResources {
                 let relativePrefix = module.directory.string + "/Resources/"
                 // Only copy resource from the Package's "Resources" directory
-                guard resource.string.hasPrefix(relativePrefix) else {continue}            
+                guard resource.string.hasPrefix(relativePrefix) else { continue }
                 let relativePath = resource.string.replacingOccurrences(of: relativePrefix, with: "")
                 resourcePaths.append((resource.string, relativePath))
             }
         }
-        
+
         appendResources(for: productModule)
         for dependency in productModule.dependencies {
             switch dependency {
-            case .product(let product):
+            case let .product(product):
                 for module in product.sourceModules {
                     appendResources(for: module)
                 }
-            case .target(let target):
+            case let .target(target):
                 if let module = target.sourceModule {
                     appendResources(for: module)
                 }
+            default: break
             }
         }
-        
+
         // Copy resources
         for resource in resourcePaths {
             let dest = sourcePath.appending([resource.relativePath])
             let destDirectory = dest.removingLastComponent()
-            
+
             if FileManager.default.fileExists(atPath: destDirectory.string, isDirectory: nil) == false {
                 let relativeDestDirectory = Path(resource.relativePath).removingLastComponent()
                 print("creating directory \(relativeDestDirectory.string)/")
                 try FileManager.default.createDirectory(atPath: destDirectory.string, withIntermediateDirectories: true)
             }
-            
+
             // If the resource is pdxinfo, always place it in the pdx root
             var destination = dest.string
             if resource.path.hasSuffix("/pdxinfo") {
                 destination = sourcePath.appending(["pdxinfo"]).string
             }
-            
+
             print("copying \(resource.relativePath)")
             try FileManager.default.copyItem(
                 atPath: resource.path,
