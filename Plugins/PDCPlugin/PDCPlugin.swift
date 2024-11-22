@@ -49,7 +49,7 @@ struct ModuleBuildRequest {
         // MARK: - Paths
 
         let swiftToolchain = try swiftToolchain()
-        print("found Swift toolchain: \(swiftToolchain)")
+        print("found Swift toolchain: \(swiftToolchain.id)")
 
         let playdateSDK = try playdateSDK()
         let playdateSDKVersion = (try? String(
@@ -149,7 +149,7 @@ struct ModuleBuildRequest {
             let xcrun = try context.tool(named: "xcrun")
             let process = Process()
             process.executableURL = URL(filePath: xcrun.path.string)
-            process.arguments = ["-f", "swiftc", "--toolchain", swiftToolchain]
+            process.arguments = ["-f", "swiftc", "--toolchain", swiftToolchain.id]
             let pipe = Pipe()
             process.standardOutput = pipe
             if verbose { process.print() }
@@ -371,20 +371,50 @@ struct ModuleBuildRequest {
         ])
     }
 
-    func swiftToolchain() throws -> String {
+    func swiftToolchain() throws -> (id: String, path: String) {
         struct Info: Decodable { let CFBundleIdentifier: String }
-        let toolchainPath = "Library/Developer/Toolchains/swift-latest.xctoolchain"
+        
+        // Explicit toolchain request
         if let toolchain = ProcessInfo.processInfo.environment["TOOLCHAINS"] {
-            return toolchain
-        } else if FileManager.default.fileExists(atPath: "\(home)\(toolchainPath)"),
-                  let data = try? Data(contentsOf: URL(filePath: "\(home)\(toolchainPath)/Info.plist")),
-                  let info = try? PropertyListDecoder().decode(Info.self, from: data) {
-            return info.CFBundleIdentifier
-        } else if FileManager.default.fileExists(atPath: "/\(toolchainPath)"),
-                  let data = try? Data(contentsOf: URL(filePath: "/\(toolchainPath)/Info.plist")),
-                  let info = try? PropertyListDecoder().decode(Info.self, from: data) {
-            return info.CFBundleIdentifier
+            if let toolchainPath = ProcessInfo.processInfo.environment["TOOLCHAIN_PATH"] {
+                return (toolchain, toolchainPath)
+            }
         }
+        
+        // Find the toolchain based on DYLD_LIBRARY_PATH
+        if let dyldLibraryPath = ProcessInfo.processInfo.environment["DYLD_LIBRARY_PATH"] {
+            if dyldLibraryPath.contains(".xctoolchain") {
+                let toolchainPath = dyldLibraryPath
+                    .components(separatedBy: ":")
+                    .filter({$0.contains(".xctoolchain")})[0]
+                    .components(separatedBy: ".xctoolchain")[0] + ".xctoolchain"
+                if FileManager.default.fileExists(atPath: "\(toolchainPath)/usr/bin/swift") {
+                    if let data = try? Data(contentsOf: URL(filePath: "\(home)\(toolchainPath)/Info.plist")),
+                       let info = try? PropertyListDecoder().decode(Info.self, from: data) {
+                        return (info.CFBundleIdentifier, toolchainPath)
+                    }
+                }
+            }
+        }
+
+        // Find the toolchain based on known common paths
+        let toolchainPath = "Library/Developer/Toolchains/swift-latest.xctoolchain"
+        if FileManager.default.fileExists(atPath: "\(home)\(toolchainPath)") {
+            if let data = try? Data(contentsOf: URL(filePath: "\(home)\(toolchainPath)/Info.plist")) {
+                if let info = try? PropertyListDecoder().decode(Info.self, from: data) {
+                    return (info.CFBundleIdentifier, "\(home)\(toolchainPath)")
+                }
+            }
+        }
+        if FileManager.default.fileExists(atPath: "/\(toolchainPath)") {
+            if let data = try? Data(contentsOf: URL(filePath: "/\(toolchainPath)/Info.plist")) {
+                if let info = try? PropertyListDecoder().decode(Info.self, from: data) {
+                    return (info.CFBundleIdentifier, "/\(toolchainPath)")
+                }
+            }
+        }
+        
+        // Failed to find a toolchain
         throw Error.swiftToolchainNotFound
     }
 
