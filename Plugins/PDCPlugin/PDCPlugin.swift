@@ -44,6 +44,7 @@ struct ModuleBuildRequest {
     func performCommand(context: PluginContext, arguments: [String]) async throws {
         var arguments = ArgumentExtractor(arguments)
         let verbose = arguments.extractFlag(named: "verbose") > 0
+        // TODO: swiftUnicodeDataTables links fine for simulator but symbols are not found for gcc+device
         let useSwiftUnicodeDataTables = arguments.extractFlag(named: "swiftUnicodeDataTables") > 0
         
         func findProductModule() throws -> any SourceModuleTarget {
