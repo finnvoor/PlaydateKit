@@ -1,5 +1,5 @@
 import Foundation
-import PackagePlugin
+@preconcurrency import PackagePlugin
 
 // MARK: - BuildDestination
 
