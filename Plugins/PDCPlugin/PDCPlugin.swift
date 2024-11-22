@@ -44,6 +44,7 @@ struct ModuleBuildRequest {
     func performCommand(context: PluginContext, arguments: [String]) async throws {
         var arguments = ArgumentExtractor(arguments)
         let verbose = arguments.extractFlag(named: "verbose") > 0
+        let useSwiftUnicodeDataTables = arguments.extractFlag(named: "swiftUnicodeDataTables") > 0
 
         // MARK: - Paths
 
@@ -288,11 +289,18 @@ struct ModuleBuildRequest {
                         "-c", "-o", module.modulePath(for: .device)
                     ])
                     print("building pdex.elf")
-                    try cc([setup, module.modulePath(for: .device)] + mcFlags + [
+                    var ccArgs: [String] = [setup, module.modulePath(for: .device)] + mcFlags + [
                         "-T\(playdateSDK)/C_API/buildsupport/link_map.ld",
                         "-Wl,-Map=\(context.pluginWorkDirectory.appending(["pdex.map"]).string),--cref,--gc-sections,--no-warn-mismatch,--emit-relocs",
                         "-o", sourcePath.appending(["pdex.elf"]).string
-                    ])
+                    ]
+                    if useSwiftUnicodeDataTables {
+                        ccArgs.append(contentsOf: [
+                            "-L\(swiftToolchain.path)/usr/lib/swift/embedded/armv7em-none-none-eabi",
+                            "-lswiftUnicodeDataTables",
+                        ])
+                    }
+                    try cc(ccArgs)
                 case .productDependency:
                     try swiftc(swiftFlags + swiftFlagsDevice + module.sourcefiles + [
                         "-module-name", module.moduleName(for: .device), "-emit-module", "-emit-module-path", module.modulePath(for: .device)
@@ -316,7 +324,7 @@ struct ModuleBuildRequest {
                         "-c", "-o", module.modulePath(for: .simulator)
                     ])
                     print("building pdex.dylib")
-                    try clang([
+                    var clangArgs: [String] = [
                         "-nostdlib", "-dead_strip",
                         "-Wl,-exported_symbol,_eventHandlerShim", "-Wl,-exported_symbol,_eventHandler",
                         module.modulePath(for: .simulator), "-dynamiclib", "-rdynamic", "-lm",
@@ -324,8 +332,24 @@ struct ModuleBuildRequest {
                         "-I", ".",
                         "-I", "\(playdateSDK)/C_API",
                         "-o", sourcePath.appending(["pdex.dylib"]).string,
-                        "\(playdateSDK)/C_API/buildsupport/setup.c"
-                    ])
+                        "\(playdateSDK)/C_API/buildsupport/setup.c",
+                    ]
+                    if useSwiftUnicodeDataTables {
+                        #if arch(arm64) && os(macOS) 
+                        let hostTriple = "arm64-apple-macos"
+                        #elseif arch(x86_64) && os(macOS)
+                        let hostTriple = "x86_64-apple-macos"
+                        #elseif arch(x86_64)
+                        let hostTriple = "x86_64-unknown-none-elf"
+                        #elseif arch(arm64)
+                        let hostTriple = "aarch64-none-none-elf"
+                        #endif
+                        clangArgs.append(contentsOf: [
+                            "-L\(swiftToolchain.path)/usr/lib/swift/embedded/\(hostTriple)",
+                            "-l", "swiftUnicodeDataTables",
+                        ])
+                    }
+                    try clang(clangArgs)
                 case .productDependency:
                     try swiftc(swiftFlags + swiftFlagsSimulator + module.sourcefiles + [
                         "-module-name", module.moduleName(for: .simulator), "-emit-module", "-emit-module-path", module.modulePath(for: .simulator)
