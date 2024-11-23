@@ -452,6 +452,7 @@ struct ModuleBuildRequest {
 
         print("running pdc")
         try pdc([
+            "-sdkpath", playdateSDK,
             sourcePath.string,
             productPath
         ])
