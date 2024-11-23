@@ -456,6 +456,10 @@ struct ModuleBuildRequest {
             sourcePath.string,
             productPath
         ])
+        
+        print("\ncreated \(productName).pdx at:")
+        print(productPath)
+        print("\nbuild succeeded.")
     }
 
     func swiftToolchain() throws -> (id: String, path: String) {
