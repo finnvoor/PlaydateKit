@@ -44,8 +44,7 @@ struct ModuleBuildRequest {
     func performCommand(context: PluginContext, arguments: [String]) async throws {
         var arguments = ArgumentExtractor(arguments)
         let verbose = arguments.extractFlag(named: "verbose") > 0
-        // TODO: swiftUnicodeDataTables links fine for simulator but symbols are not found for gcc+device
-        let useSwiftUnicodeDataTables = arguments.extractFlag(named: "swiftUnicodeDataTables") > 0
+        let disableSwiftUnicodeDataTables = arguments.extractFlag(named: "disableSwiftUnicodeDataTables") > 0
         
         func findProductModule() throws -> any SourceModuleTarget {
             // Find the product for the provided argument
@@ -224,6 +223,18 @@ struct ModuleBuildRequest {
             process.waitUntilExit()
             guard process.terminationStatus == 0 else { throw Error.clangFailed(exitCode: process.terminationStatus) }
         }
+        
+        @Sendable func ar(workingDir: String, args arguments: [String]) throws {
+            let ar = try context.tool(named: "ar")
+            let process = Process()
+            process.executableURL = URL(filePath: ar.url.path(percentEncoded: false))
+            process.currentDirectoryURL = URL(fileURLWithPath: workingDir)
+            process.arguments = arguments
+            if verbose { process.print() }
+            try process.run()
+            process.waitUntilExit()
+            guard process.terminationStatus == 0 else { throw Error.arFailed(exitCode: process.terminationStatus) }
+        }
 
         func pdc(_ arguments: [String]) throws {
             let process = Process()
@@ -336,18 +347,45 @@ struct ModuleBuildRequest {
                     try swiftc(swiftFlags + swiftFlagsDevice + linkedModules + module.sourcefiles + [
                         "-c", "-o", module.modulePath(for: .device)
                     ])
+                    
                     print("building pdex.elf")
-                    var ccArgs: [String] = [setup, module.modulePath(for: .device)] + mcFlags + [
-                        "-T\(playdateSDK)/C_API/buildsupport/link_map.ld",
-                        "-Wl,-Map=\(context.pluginWorkDirectoryURL.appending(path: "pdex.map").path(percentEncoded: false)),--cref,--gc-sections,--no-warn-mismatch,--emit-relocs",
-                        "-o", sourcePath.appending(["pdex.elf"]).string
+                    var ccObjects: [String] = [
+                        setup,
+                        module.modulePath(for: .device)
                     ]
-                    if useSwiftUnicodeDataTables {
-                        ccArgs.append(contentsOf: [
-                            "-L\(swiftToolchain.path)/usr/lib/swift/embedded/armv7em-none-none-eabi",
-                            "-lswiftUnicodeDataTables",
-                        ])
+                    var ccArgs: [String] = []
+                    if disableSwiftUnicodeDataTables == false {
+                        // libswiftUnicodeDataTables is in a format the linker won't like 
+                        // Disassemble libswiftUnicodeDataTables into object files
+                        let tableObjectsPath = context.pluginWorkDirectoryURL.appending(path: "SwiftUnicodeDataTables/armv7em-none-none-eabi/").path(percentEncoded: false)
+                        try FileManager.default.createDirectory(atPath: tableObjectsPath, withIntermediateDirectories: true)
+                        let lib = "\(swiftToolchain.path)/usr/lib/swift/embedded/armv7em-none-none-eabi/libswiftUnicodeDataTables.a"
+                        try ar(workingDir: tableObjectsPath, args: ["x", lib])
+                        let libObjFiles = try FileManager.default.contentsOfDirectory(atPath: tableObjectsPath).filter({$0.hasSuffix(".o")})
+                        // Add object files to be compiled compiled
+                        ccObjects.append(contentsOf: libObjFiles.map({tableObjectsPath + $0}))
+                        // Avoid linking `_exit`, `_kill`, and `_getpid` from libswiftUnicodeDataTables 
+                        ccArgs.append("--specs=nosys.specs")
                     }
+                    ccArgs.append(contentsOf: ccObjects + mcFlags)
+                    if disableSwiftUnicodeDataTables == false {
+                        // Create a customized link_map that allows ARM.exidx
+                        // The SDK default linkmap has these off, but libswiftUnicodeDataTables uses them.
+                        let linkMapPath = context.pluginWorkDirectoryURL.appending(path: "link_map.ld").path(percentEncoded: false)
+                        var linkMap = try String(contentsOf: URL(fileURLWithPath: "\(playdateSDK)/C_API/buildsupport/link_map.ld"), encoding: .utf8)
+                        linkMap = linkMap.components(separatedBy: "/DISCARD/")[0]
+                        linkMap += "      .ARM.exidx :\n    {\n            __exidx_start = .;\n            *(.ARM.exidx* .gnu.linkonce.armexidx.*)\n            __exidx_end = .;\n    }\n}"
+                        try linkMap.data(using: .utf8)!.write(to: URL(fileURLWithPath: linkMapPath))
+                        // Use customized link_map
+                        ccArgs.append("-T\(linkMapPath)")
+                    }else{
+                        // Use the unmodified SDK link_map
+                        ccArgs.append("-T\(playdateSDK)/C_API/buildsupport/link_map.ld")
+                    }
+                    ccArgs.append(contentsOf: [
+                        "-Wl,-Map=\(context.pluginWorkDirectoryURL.appending(path: "pdex.map").path(percentEncoded: false)),--cref,--gc-sections,--no-warn-mismatch,--emit-relocs",
+                        "-o", sourcePath.appending(["pdex.elf"]).string,
+                    ])
                     try cc(ccArgs)
                 case .productDependency:
                     try swiftc(swiftFlags + swiftFlagsDevice + module.sourcefiles + [
@@ -382,7 +420,7 @@ struct ModuleBuildRequest {
                         "-o", sourcePath.appending(["pdex.dylib"]).string,
                         "\(playdateSDK)/C_API/buildsupport/setup.c",
                     ]
-                    if useSwiftUnicodeDataTables {
+                    if disableSwiftUnicodeDataTables == false {
                         #if arch(arm64) && os(macOS) 
                         let hostTriple = "arm64-apple-macos"
                         #elseif arch(x86_64) && os(macOS)
@@ -488,6 +526,7 @@ extension PDCPlugin {
         case xcrunFailed(exitCode: Int32)
         case swiftcFailed(exitCode: Int32)
         case clangFailed(exitCode: Int32)
+        case arFailed(exitCode: Int32)
         case pdcFailed(exitCode: Int32)
     }
 }
