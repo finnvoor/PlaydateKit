@@ -450,8 +450,9 @@ struct ModuleBuildRequest {
         }
         try await build(module: product)
 
-        print("running pdc")
+        print("\nrunning pdc")
         try pdc([
+            "--quiet", "--version",
             "-sdkpath", playdateSDK,
             sourcePath.string,
             productPath
