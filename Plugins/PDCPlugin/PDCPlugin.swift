@@ -353,40 +353,11 @@ struct ModuleBuildRequest {
                         setup,
                         module.modulePath(for: .device)
                     ]
-                    var ccArgs: [String] = []
-                    if disableSwiftUnicodeDataTables == false {
-                        // libswiftUnicodeDataTables is in a format the linker won't like 
-                        // Disassemble libswiftUnicodeDataTables into object files
-                        let tableObjectsPath = context.pluginWorkDirectoryURL.appending(path: "SwiftUnicodeDataTables/armv7em-none-none-eabi/").path(percentEncoded: false)
-                        try FileManager.default.createDirectory(atPath: tableObjectsPath, withIntermediateDirectories: true)
-                        let lib = "\(swiftToolchain.path)/usr/lib/swift/embedded/armv7em-none-none-eabi/libswiftUnicodeDataTables.a"
-                        try ar(workingDir: tableObjectsPath, args: ["x", lib])
-                        let libObjFiles = try FileManager.default.contentsOfDirectory(atPath: tableObjectsPath).filter({$0.hasSuffix(".o")})
-                        // Add object files to be compiled compiled
-                        ccObjects.append(contentsOf: libObjFiles.map({tableObjectsPath + $0}))
-                        // Avoid linking `_exit`, `_kill`, and `_getpid` from libswiftUnicodeDataTables 
-                        ccArgs.append("--specs=nosys.specs")
-                    }
-                    ccArgs.append(contentsOf: ccObjects + mcFlags)
-                    if disableSwiftUnicodeDataTables == false {
-                        // Create a customized link_map that allows ARM.exidx
-                        // The SDK default linkmap has these off, but libswiftUnicodeDataTables uses them.
-                        let linkMapPath = context.pluginWorkDirectoryURL.appending(path: "link_map.ld").path(percentEncoded: false)
-                        var linkMap = try String(contentsOf: URL(fileURLWithPath: "\(playdateSDK)/C_API/buildsupport/link_map.ld"), encoding: .utf8)
-                        linkMap = linkMap.components(separatedBy: "/DISCARD/")[0]
-                        linkMap += "      .ARM.exidx :\n    {\n            __exidx_start = .;\n            *(.ARM.exidx* .gnu.linkonce.armexidx.*)\n            __exidx_end = .;\n    }\n}"
-                        try linkMap.data(using: .utf8)!.write(to: URL(fileURLWithPath: linkMapPath))
-                        // Use customized link_map
-                        ccArgs.append("-T\(linkMapPath)")
-                    }else{
-                        // Use the unmodified SDK link_map
-                        ccArgs.append("-T\(playdateSDK)/C_API/buildsupport/link_map.ld")
-                    }
-                    ccArgs.append(contentsOf: [
+                    try cc(ccObjects + mcFlags + [
+                        "-T\(playdateSDK)/C_API/buildsupport/link_map.ld",
                         "-Wl,-Map=\(context.pluginWorkDirectoryURL.appending(path: "pdex.map").path(percentEncoded: false)),--cref,--gc-sections,--no-warn-mismatch,--emit-relocs",
                         "-o", sourcePath.appending(["pdex.elf"]).string,
                     ])
-                    try cc(ccArgs)
                 case .productDependency:
                     try swiftc(swiftFlags + swiftFlagsDevice + module.sourcefiles + [
                         "-module-name", module.moduleName(for: .device), "-emit-module", "-emit-module-path", module.modulePath(for: .device)
@@ -410,7 +381,7 @@ struct ModuleBuildRequest {
                         "-c", "-o", module.modulePath(for: .simulator)
                     ])
                     print("building pdex.dylib")
-                    var clangArgs: [String] = [
+                    try clang([
                         "-nostdlib", "-dead_strip",
                         "-Wl,-exported_symbol,_eventHandlerShim", "-Wl,-exported_symbol,_eventHandler",
                         module.modulePath(for: .simulator), "-dynamiclib", "-rdynamic", "-lm",
@@ -419,23 +390,7 @@ struct ModuleBuildRequest {
                         "-I", "\(playdateSDK)/C_API",
                         "-o", sourcePath.appending(["pdex.dylib"]).string,
                         "\(playdateSDK)/C_API/buildsupport/setup.c",
-                    ]
-                    if disableSwiftUnicodeDataTables == false {
-                        #if arch(arm64) && os(macOS) 
-                        let hostTriple = "arm64-apple-macos"
-                        #elseif arch(x86_64) && os(macOS)
-                        let hostTriple = "x86_64-apple-macos"
-                        #elseif arch(x86_64)
-                        let hostTriple = "x86_64-unknown-none-elf"
-                        #elseif arch(arm64)
-                        let hostTriple = "aarch64-none-none-elf"
-                        #endif
-                        clangArgs.append(contentsOf: [
-                            "-L\(swiftToolchain.path)/usr/lib/swift/embedded/\(hostTriple)",
-                            "-l", "swiftUnicodeDataTables",
-                        ])
-                    }
-                    try clang(clangArgs)
+                    ])
                 case .productDependency:
                     try swiftc(swiftFlags + swiftFlagsSimulator + module.sourcefiles + [
                         "-module-name", module.moduleName(for: .simulator), "-emit-module", "-emit-module-path", module.modulePath(for: .simulator)
