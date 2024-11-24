@@ -12,11 +12,11 @@ let package = Package(
     targets: [
         .target(
             name: "PlaydateKit", 
-            dependencies: ["CPlaydate"], 
+            dependencies: ["CPlaydate", "SwiftUnicodeDataTables"], 
             swiftSettings: swiftSettings
         ),
         .target(
-            name: "CPlaydate", 
+            name: "CPlaydate",
             cSettings: [
                 .unsafeFlags([
                     "-DTARGET_EXTENSION",
@@ -25,6 +25,12 @@ let package = Package(
                     "-I", "\(gccIncludePrefix)/../../../../arm-none-eabi/include",
                     "-I", "\(playdateSDKPath)/C_API"
                 ])
+            ]
+        ),
+        .target(
+            name: "SwiftUnicodeDataTables",
+            cSettings: [
+                .define("SWIFT_STDLIB_ENABLE_UNICODE_DATA")
             ]
         ),
         .plugin(
