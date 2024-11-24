@@ -2,6 +2,10 @@
 @_exported
 public import CPlaydate
 
+@_documentation(visibility: private)
+@_exported
+import SwiftUnicodeDataTables
+
 // MARK: - Playdate
 
 public enum Playdate {
