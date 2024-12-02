@@ -11,18 +11,24 @@ enum BuildDestination {
 // MARK: - ModuleType
 
 enum ModuleType {
-    case playdateKit
     case product
-    case productDependency
+    case dependency
 }
 
 // MARK: - ModuleBuildRequest
 
 struct ModuleBuildRequest {
     let name: String
+    let language: Language
     let type: ModuleType
-    let relativePath: Path
+    let relativeURL: URL
     let sourcefiles: [String]
+    
+    enum Language {
+        case swift
+        case c
+        case cpp
+    }
 
     func moduleName(for dest: BuildDestination) -> String { "\(name.lowercased())_\(dest)" }
 
@@ -31,7 +37,7 @@ struct ModuleBuildRequest {
         case .product: "o"
         default: "swiftmodule"
         }
-        return relativePath.appending(["\(moduleName(for: dest)).\(suffix)"]).string
+        return relativeURL.appending(path: "\(moduleName(for: dest)).\(suffix)").path(percentEncoded: false)
     }
 }
 
@@ -44,7 +50,15 @@ struct ModuleBuildRequest {
     func performCommand(context: PluginContext, arguments: [String]) async throws {
         var arguments = ArgumentExtractor(arguments)
         let verbose = arguments.extractFlag(named: "verbose") > 0
-        let disableSwiftUnicodeDataTables = arguments.extractFlag(named: "disableSwiftUnicodeDataTables") > 0
+        let clean = arguments.extractFlag(named: "clean") > 0
+        let disableSwiftUnicodeDataTables = true//arguments.extractFlag(named: "disableSwiftUnicodeDataTables") > 0
+        
+        if clean {
+            let items = try FileManager.default.contentsOfDirectory(atPath: context.pluginWorkDirectoryURL.path(percentEncoded: false))
+            for item in items {
+                try FileManager.default.removeItem(atPath: context.pluginWorkDirectoryURL.appendingPathComponent(item).path(percentEncoded: false))
+            }
+        }
         
         func findProductModule() throws -> any SourceModuleTarget {
             // Find the product for the provided argument
@@ -61,6 +75,7 @@ struct ModuleBuildRequest {
                 }
             }
             // Find the first product most liekly to be a Playdate game
+            // TODO: Scan deps recursively in case PlaydateKit is part of an engine
             if let searchedModule = context.package.products.first(where: {
                 $0.targets.first(where: {
                     $0.dependencies.first(where: {
@@ -84,10 +99,10 @@ struct ModuleBuildRequest {
         
         // MARK: - Paths
 
-        let swiftToolchain = try swiftToolchain()
+        let swiftToolchain = try getSwiftToolchain()
         print("found Swift toolchain: \(swiftToolchain.id)")
 
-        let playdateSDK = try playdateSDK()
+        let playdateSDK = try getPlaydateSDK()
         let playdateSDKVersion = (try? String(
             contentsOf: URL(filePath: playdateSDK).appending(path: "VERSION.txt"),
             encoding: .utf8
@@ -96,36 +111,78 @@ struct ModuleBuildRequest {
 
         let productName = productModule.name
 
-        let moduleCachePath = context.pluginWorkDirectory.appending(["module-cache"])
-        let modulesPath = context.pluginWorkDirectory.appending(["Modules"])
+        let moduleCacheURL = context.pluginWorkDirectoryURL.appending(path: "module-cache")
+        let modulesURL = context.pluginWorkDirectoryURL.appending(path: "Modules")
 
-        let sourcePath = context.pluginWorkDirectory.appending(["\(productName)-Source"])
+        let sourceURL = context.pluginWorkDirectoryURL.appending(path: "\(productName)-Source")
         let productPath: String = if let targetBuildDir = ProcessInfo.processInfo.environment["TARGET_BUILD_DIR"] {
             // Run from Xcode
             targetBuildDir + "/\(productName).pdx"
         } else {
-            context.pluginWorkDirectory.appending(["\(productName).pdx"]).string
+            context.pluginWorkDirectoryURL.appending(path: "\(productName).pdx").path(percentEncoded: false)
         }
 
         // MARK: - Source files
 
         let playdateKitPackage = context.package.dependencies.first(where: { $0.package.id == "playdatekit" })!
         let playdateKitSource = playdateKitPackage.package.sourceModules.first(where: { $0.name == "PlaydateKit" })!
-        let playdateKitSwiftFiles = playdateKitSource.sourceFiles(withSuffix: "swift").map(\.path.string)
-        let cPlaydateInclude = playdateKitPackage.package.sourceModules
-            .first(where: { $0.name == "CPlaydate" })!.directory.appending("include")
+        let playdateKitSwiftFiles = playdateKitSource.sourceFiles(withSuffix: "swift").map({$0.url.path(percentEncoded: false)})
+        let cPlaydateInclude = URL(filePath:
+            playdateKitPackage.package.sourceModules
+            .first(where: { $0.name == "CPlaydate" })!
+            .directory.string
+        ).appending(path: "include")
 
         let productSource = productModule
-        let productSwiftFiles = productSource.sourceFiles(withSuffix: "swift").map(\.path.string)
+        let productSwiftFiles = productSource.sourceFiles(withSuffix: "swift").map({$0.url.path(percentEncoded: false)})
 
-        let playdateKit = ModuleBuildRequest(name: "playdatekit", type: .playdateKit, relativePath: modulesPath, sourcefiles: playdateKitSwiftFiles)
-        let product = ModuleBuildRequest(name: productName, type: .product, relativePath: context.pluginWorkDirectory, sourcefiles: productSwiftFiles)
-        let productDependencies = context.package.dependencies.compactMap { dep -> ModuleBuildRequest? in
-            guard dep.package.id != "playdatekit" else { return nil }
-            let sourceModule = dep.package.sourceModules.first!
-            let sourceFiles = sourceModule.sourceFiles(withSuffix: "swift").map(\.path.string)
-            return ModuleBuildRequest(name: sourceModule.name, type: .productDependency, relativePath: modulesPath, sourcefiles: sourceFiles)
+        let playdateKit = ModuleBuildRequest(name: "playdatekit", language: .swift, type: .dependency, relativeURL: modulesURL, sourcefiles: playdateKitSwiftFiles)
+        let product = ModuleBuildRequest(name: productName, language: .swift, type: .product, relativeURL: context.pluginWorkDirectoryURL, sourcefiles: productSwiftFiles)
+//        let dependencies = productModule.dependencies.m context.package.dependencies.compactMap { dep -> ModuleBuildRequest? in
+//            guard dep.package.id != "playdatekit" else { return nil }
+//            let sourceModule = dep.package.sourceModules.first!
+//            let sourceFiles = sourceModule.sourceFiles(withSuffix: "swift").map(\.path.string)
+//            return ModuleBuildRequest(name: sourceModule.name, type: .dependency, relativePath: modulesPath, sourcefiles: sourceFiles)
+//        }
+        
+        var dependencies: [ModuleBuildRequest] = []
+        
+        func appendBuildModuleFrom(_ sourceModule: SourceModuleTarget) {
+            var language: ModuleBuildRequest.Language = .swift
+            let sourceFileList: FileList = {
+                let cSourceFiles = sourceModule.sourceFiles(withSuffix: "c")
+                if cSourceFiles.isEmpty == false {
+                    language = .c
+                    return cSourceFiles
+                }
+                let cppSourceFiles = sourceModule.sourceFiles(withSuffix: "cpp")
+                if cppSourceFiles.isEmpty == false {
+                    language = .cpp
+                    return cppSourceFiles
+                }
+                return sourceModule.sourceFiles(withSuffix: "swift")
+            }()
+            guard sourceFileList.isEmpty == false else { return }
+            let sourceFiles = sourceFileList.map({$0.url.path(percentEncoded: false)})
+            dependencies.append(
+                ModuleBuildRequest(
+                    name: sourceModule.name,
+                    language: language,
+                    type: .dependency, 
+                    relativeURL: modulesURL,
+                    sourcefiles: sourceFiles
+                )
+            )
         }
+        for dependency in productModule.recursiveTargetDependencies {
+            if let sourceModule = dependency.sourceModule {
+                appendBuildModuleFrom(sourceModule)
+            }
+        }
+        
+        let productDependencies = dependencies
+        
+        print("Products:", productDependencies.map(\.name))
 
         // MARK: - Flags
 
@@ -149,10 +206,10 @@ struct ModuleBuildRequest {
             "-Xfrontend", "-function-sections",
             "-swift-version", "6",
             "-Xcc", "-DTARGET_EXTENSION",
-            "-module-cache-path", moduleCachePath.string,
+            "-module-cache-path", moduleCacheURL.path(percentEncoded: false),
             "-I", "\(playdateSDK)/C_API",
-            "-I", modulesPath.string,
-            "-I", cPlaydateInclude.string
+            "-I", modulesURL.path(percentEncoded: false),
+            "-I", cPlaydateInclude.path(percentEncoded: false)
         ]
 
         let cFlagsDevice = mcFlags + ["-falign-functions=16", "-fshort-enums"]
@@ -223,18 +280,6 @@ struct ModuleBuildRequest {
             process.waitUntilExit()
             guard process.terminationStatus == 0 else { throw Error.clangFailed(exitCode: process.terminationStatus) }
         }
-        
-        @Sendable func ar(workingDir: String, args arguments: [String]) throws {
-            let ar = try context.tool(named: "ar")
-            let process = Process()
-            process.executableURL = URL(filePath: ar.url.path(percentEncoded: false))
-            process.currentDirectoryURL = URL(fileURLWithPath: workingDir)
-            process.arguments = arguments
-            if verbose { process.print() }
-            try process.run()
-            process.waitUntilExit()
-            guard process.terminationStatus == 0 else { throw Error.arFailed(exitCode: process.terminationStatus) }
-        }
 
         func pdc(_ arguments: [String]) throws {
             let process = Process()
@@ -261,13 +306,13 @@ struct ModuleBuildRequest {
             "-o", setup
         ])
 
-        if FileManager.default.fileExists(atPath: sourcePath.string) {
+        if FileManager.default.fileExists(atPath: sourceURL.path(percentEncoded: false)) {
             try FileManager.default.removeItem(
-                atPath: sourcePath.string
+                atPath: sourceURL.path(percentEncoded: false)
             )
         }
         try FileManager.default.createDirectory(
-            atPath: sourcePath.string,
+            atPath: sourceURL.path(percentEncoded: false),
             withIntermediateDirectories: true
         )
 
@@ -277,13 +322,15 @@ struct ModuleBuildRequest {
 
         // Scan package and dependencies for resources
         func appendResources(for module: any SourceModuleTarget) {
-            let moduleResources = module.sourceFiles.filter { $0.type == .unknown }.map(\.path)
+            let moduleResources = module.sourceFiles.filter { $0.type == .unknown }.map({$0.url.path(percentEncoded: false)})
             for resource in moduleResources {
-                let relativePrefix = module.directory.string + "/Resources/"
+                let relativePrefix = URL(filePath: module.directory.string)
+                    .appending(path: "Resources")
+                    .path(percentEncoded: false)
                 // Only copy resource from the Package's "Resources" directory
-                guard resource.string.hasPrefix(relativePrefix) else { continue }
-                let relativePath = resource.string.replacingOccurrences(of: relativePrefix, with: "")
-                resourcePaths.append((resource.string, relativePath))
+                guard resource.hasPrefix(relativePrefix) else { continue }
+                let relativePath = resource.replacingOccurrences(of: relativePrefix, with: "")
+                resourcePaths.append((resource, relativePath))
             }
         }
 
@@ -304,19 +351,19 @@ struct ModuleBuildRequest {
 
         // Copy resources
         for resource in resourcePaths {
-            let dest = sourcePath.appending([resource.relativePath])
-            let destDirectory = dest.removingLastComponent()
+            let dest = sourceURL.appending(path: resource.relativePath)
+            let destDirectory = dest.deletingLastPathComponent()
 
-            if FileManager.default.fileExists(atPath: destDirectory.string, isDirectory: nil) == false {
-                let relativeDestDirectory = Path(resource.relativePath).removingLastComponent()
-                print("creating directory \(relativeDestDirectory.string)/")
-                try FileManager.default.createDirectory(atPath: destDirectory.string, withIntermediateDirectories: true)
+            if FileManager.default.fileExists(atPath: destDirectory.path(percentEncoded: false), isDirectory: nil) == false {
+                let relativeDestDirectory = URL(fileURLWithPath: resource.relativePath).deletingLastPathComponent()
+                print("creating directory \(relativeDestDirectory.path(percentEncoded: false))/")
+                try FileManager.default.createDirectory(atPath: destDirectory.path(percentEncoded: false), withIntermediateDirectories: true)
             }
 
             // If the resource is pdxinfo, always place it in the pdx root
-            var destination = dest.string
+            var destination = dest.path(percentEncoded: false)
             if resource.path.hasSuffix("/pdxinfo") {
-                destination = sourcePath.appending(["pdxinfo"]).string
+                destination = sourceURL.appending(path: "pdxinfo").path(percentEncoded: false)
             }
 
             print("copying \(resource.relativePath)")
@@ -336,11 +383,6 @@ struct ModuleBuildRequest {
             try await Task {
                 print("building \(module.moduleName(for: .device))")
                 switch module.type {
-                case .playdateKit:
-                    // playdatekit_device.swiftmodule
-                    try swiftc(swiftFlags + swiftFlagsDevice + module.sourcefiles + [
-                        "-module-name", module.moduleName(for: .device), "-emit-module", "-emit-module-path", module.modulePath(for: .device)
-                    ])
                 case .product:
                     // $(productName)_device.o
                     let linkedModules = productDependencies.map { ["-module-alias", "\($0.name)=\($0.moduleName(for: .device))"] }.flatMap { $0 }
@@ -356,12 +398,19 @@ struct ModuleBuildRequest {
                     try cc(ccObjects + mcFlags + [
                         "-T\(playdateSDK)/C_API/buildsupport/link_map.ld",
                         "-Wl,-Map=\(context.pluginWorkDirectoryURL.appending(path: "pdex.map").path(percentEncoded: false)),--cref,--gc-sections,--no-warn-mismatch,--emit-relocs",
-                        "-o", sourcePath.appending(["pdex.elf"]).string,
+                        "-o", sourceURL.appending(path: "pdex.elf").path(percentEncoded: false),
                     ])
-                case .productDependency:
-                    try swiftc(swiftFlags + swiftFlagsDevice + module.sourcefiles + [
-                        "-module-name", module.moduleName(for: .device), "-emit-module", "-emit-module-path", module.modulePath(for: .device)
-                    ])
+                case .dependency:
+                    switch module.language {
+                    case .swift:
+                        try swiftc(swiftFlags + swiftFlagsDevice + module.sourcefiles + [
+                            "-module-name", module.moduleName(for: .device), "-emit-module", "-emit-module-path", module.modulePath(for: .device)
+                        ])
+                    case .c, .cpp:
+                        try clang([
+                            
+                        ])
+                    }
                 }
             }.value
         }
@@ -370,10 +419,6 @@ struct ModuleBuildRequest {
             print("building \(module.moduleName(for: .simulator))")
             try await Task {
                 switch module.type {
-                case .playdateKit:
-                    try swiftc(swiftFlags + swiftFlagsSimulator + module.sourcefiles + [
-                        "-module-name", module.moduleName(for: .simulator), "-emit-module", "-emit-module-path", module.modulePath(for: .simulator)
-                    ])
                 case .product:
                     // $(productName)_simulator.o
                     let linkedModules = productDependencies.map { ["-module-alias", "\($0.name)=\($0.moduleName(for: .simulator))"] }.flatMap { $0 }
@@ -388,10 +433,10 @@ struct ModuleBuildRequest {
                         "-DTARGET_SIMULATOR=1", "-DTARGET_EXTENSION=1",
                         "-I", ".",
                         "-I", "\(playdateSDK)/C_API",
-                        "-o", sourcePath.appending(["pdex.dylib"]).string,
+                        "-o", sourceURL.appending(path: "pdex.dylib").path(percentEncoded: false),
                         "\(playdateSDK)/C_API/buildsupport/setup.c",
                     ])
-                case .productDependency:
+                case .dependency:
                     try swiftc(swiftFlags + swiftFlagsSimulator + module.sourcefiles + [
                         "-module-name", module.moduleName(for: .simulator), "-emit-module", "-emit-module-path", module.modulePath(for: .simulator)
                     ])
@@ -399,7 +444,7 @@ struct ModuleBuildRequest {
             }.value
         }
 
-        try await build(module: playdateKit)
+//        try await build(module: playdateKit)
         for dep in productDependencies {
             try await build(module: dep)
         }
@@ -407,10 +452,11 @@ struct ModuleBuildRequest {
 
         print("\nrunning pdc")
         try pdc([
-            "--quiet", "--version",
+            sourceURL.path(percentEncoded: false),
+            productPath,
+            "--version",
             "-sdkpath", playdateSDK,
-            sourcePath.string,
-            productPath
+            "--quiet",
         ])
         
         print("\ncreated \(productName).pdx at:")
@@ -418,7 +464,7 @@ struct ModuleBuildRequest {
         print("\nbuild succeeded.")
     }
 
-    func swiftToolchain() throws -> (id: String, path: String) {
+    func getSwiftToolchain() throws -> (id: String, path: String) {
         struct Info: Decodable { let CFBundleIdentifier: String }
         
         // Explicit toolchain request
@@ -465,11 +511,12 @@ struct ModuleBuildRequest {
         throw Error.swiftToolchainNotFound
     }
 
-    func playdateSDK() throws -> String {
+    func getPlaydateSDK() throws -> String {
         if let sdk = ProcessInfo.processInfo.environment["PLAYDATE_SDK_PATH"],
            FileManager.default.fileExists(atPath: sdk) {
             return sdk
-        } else if FileManager.default.fileExists(atPath: "\(home)Developer/PlaydateSDK/") {
+        }
+        if FileManager.default.fileExists(atPath: "\(home)Developer/PlaydateSDK/") {
             return "\(home)Developer/PlaydateSDK/"
         }
         throw Error.playdateSDKNotFound
