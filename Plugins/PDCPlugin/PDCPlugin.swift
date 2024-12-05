@@ -369,9 +369,17 @@ struct ModuleBuildRequest {
         func appendResources(for module: any SourceModuleTarget) {
             let moduleResources = module.sourceFiles.filter { $0.type == .unknown }.map({$0.url.path(percentEncoded: false)})
             for resource in moduleResources {
-                let relativePrefix = URL(filePath: module.directory.string)
-                    .appending(path: "Resources")
-                    .path(percentEncoded: false)
+                // `SourceModuleTarget` has no `directoryURL` as of Swift 6 so we
+                // need to cast to each module type to get the directoryURL
+                let moduleURL = switch module {
+                case let module as SwiftSourceModuleTarget:
+                    module.directoryURL
+                case let module as ClangSourceModuleTarget:
+                    module.directoryURL
+                default:
+                    fatalError("Unknown module type \(type(of: module))")
+                }
+                let relativePrefix = moduleURL.appending(path: "Resources").path(percentEncoded: false)
                 // Only copy resource from the Package's "Resources" directory
                 guard resource.hasPrefix(relativePrefix) else { continue }
                 let relativePath = resource.replacingOccurrences(of: relativePrefix, with: "")
