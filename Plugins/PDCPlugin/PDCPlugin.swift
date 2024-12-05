@@ -213,23 +213,18 @@ struct ModuleBuildRequest {
             "-I", modulesURL.path(percentEncoded: false),
         ]
         
-        func getModuleAliases(for destination: BuildDestination) -> [String] {
-            var aliases: [String] = []
+        func getSwiftModuleAliases(for destination: BuildDestination) -> [String] {
+            var moduleAliases: [String] = []
             for module in productDependencies {
-                switch module.type {
-                case .product:
-                    fatalError()
-                case .swift:
-                    aliases.append("-module-alias")
-                    aliases.append("\(module.name)=\(module.moduleName(for: destination))")
-                case .clang(_, _):
-                    break
+                if case .swift = module.type {
+                    moduleAliases.append("-module-alias")
+                    moduleAliases.append("\(module.name)=\(module.moduleName(for: destination))")
                 }
             }
-            return aliases
+            return moduleAliases
         }
         
-        func getIncludes(for destination: BuildDestination) -> [String] {
+        func getCIncludes(for destination: BuildDestination) -> [String] {
             var searchPaths: [String] = []
             for module in productDependencies {
                 if case .clang(let publicHeaders, _) = module.type {
@@ -242,18 +237,30 @@ struct ModuleBuildRequest {
             return searchPaths
         }
         
+        @Sendable func getLinkedLibraries(for destination: BuildDestination) -> [String] {
+            var linkedLibraries: [String] = []
+            for module in productDependencies {
+                if case .clang(let publicHeaders, _) = module.type {
+                    for path in publicHeaders {
+                        linkedLibraries.append("-L\(module.modulePath(for: destination))")
+                    }
+                }
+            }
+            return linkedLibraries
+        }
+        
         let cFlagsDevice = mcFlags + ["-falign-functions=16", "-fshort-enums"]
 
         let swiftFlagsDevice = cFlagsDevice.flatMap { ["-Xcc", $0] } + [
             "-target", "armv7em-none-none-eabi",
             "-Xfrontend", "-experimental-platform-c-calling-convention=arm_aapcs_vfp",
-        ] + getModuleAliases(for: .device) + getIncludes(for: .device)
+        ] + getSwiftModuleAliases(for: .device) + getCIncludes(for: .device)
 
         let cFlagsSimulator: [String] = []
 
         let swiftFlagsSimulator = cFlagsSimulator.flatMap { ["-Xcc", $0] } + [
             // No manual flags
-        ] + getModuleAliases(for: .simulator) + getIncludes(for: .simulator)
+        ] + getSwiftModuleAliases(for: .simulator) + getCIncludes(for: .simulator)
 
         print("Flags:", swiftFlagsSimulator)
         // MARK: - CLI
@@ -451,7 +458,7 @@ struct ModuleBuildRequest {
                         "-T\(playdateSDK)/C_API/buildsupport/link_map.ld",
                         "-Wl,-Map=\(context.pluginWorkDirectoryURL.appending(path: "pdex.map").path(percentEncoded: false)),--cref,--gc-sections,--no-warn-mismatch,--emit-relocs",
                         "-o", sourceURL.appending(path: "pdex.elf").path(percentEncoded: false),
-                    ])
+                    ] + getLinkedLibraries(for: .device))
                 case .swift:
                     try swiftc(swiftFlags + swiftFlagsSimulator + module.sourcefiles + [
                         "-module-name", module.moduleName(for: .simulator), "-emit-module", "-emit-module-path", module.modulePath(for: .simulator)
@@ -505,7 +512,7 @@ struct ModuleBuildRequest {
                         "-I", "\(playdateSDK)/C_API",
                         "-o", sourceURL.appending(path: "pdex.dylib").path(percentEncoded: false),
                         "\(playdateSDK)/C_API/buildsupport/setup.c",
-                    ])
+                    ] + getLinkedLibraries(for: .simulator))
                 case .swift:
                     try swiftc(swiftFlags + swiftFlagsSimulator + module.sourcefiles + [
                         "-module-name", module.moduleName(for: .simulator), "-emit-module", "-emit-module-path", module.modulePath(for: .simulator)
