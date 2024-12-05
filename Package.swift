@@ -28,19 +28,18 @@ let package = Package(
             ]
         ),
         .target(
-            name: "SwiftUnicodeDataTables",
-            cSettings: [
-                .define("SWIFT_STDLIB_ENABLE_UNICODE_DATA")
-            ]
+            name: "SwiftUnicodeDataTables"
         ),
         .plugin(
             name: "PDCPlugin",
-            capability: .command(intent: 
+            capability: .command(intent:
                     .custom(verb: "pdc", description: "Runs the Playdate compiler")
             )
         ),
     ],
-    swiftLanguageModes: [.v6]
+    swiftLanguageModes: [.v6],
+    cLanguageStandard: .c11,
+    cxxLanguageStandard: .cxx11
 )
 
 
