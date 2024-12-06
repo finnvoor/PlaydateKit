@@ -67,7 +67,6 @@ struct ModuleBuildRequest {
         var arguments = ArgumentExtractor(arguments)
         let verbose = arguments.extractFlag(named: "verbose") > 0
         let clean = arguments.extractFlag(named: "clean") > 0
-        let disableSwiftUnicodeDataTables = true//arguments.extractFlag(named: "disableSwiftUnicodeDataTables") > 0
         
         if clean {
             let items = try FileManager.default.contentsOfDirectory(atPath: context.pluginWorkDirectoryURL.path(percentEncoded: false))
