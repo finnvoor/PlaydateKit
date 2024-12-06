@@ -500,7 +500,7 @@ struct ModuleBuildRequest {
         }
 
         @Sendable func buildDeviceModule(_ module: ModuleBuildRequest) async throws {
-//            try await Task {
+            try await Task {
                 switch module.type {
                 case .product:
                     print("building \(module.moduleName(for: .device)) (pdex.elf)")
@@ -556,12 +556,11 @@ struct ModuleBuildRequest {
                     try ar(["rcs", module.modulePath(for: .device)] + objectFiles)
                     try ranlib([module.modulePath(for: .device)])
                 }
-//            }.value
+            }.value
         }
         
         @Sendable func buildSimulatorModule(_ module: ModuleBuildRequest) async throws {
-            
-//            try await Task {
+            try await Task {
                 switch module.type {
                 case .product:
                     print("building \(module.moduleName(for: .simulator)) (pdex.dylib)")
@@ -618,7 +617,7 @@ struct ModuleBuildRequest {
                     }
                     try ar(["rcs", module.modulePath(for: .simulator)] + objectFiles)
                 }
-//            }.value
+            }.value
         }
 
         for dep in productDependencies {
