@@ -28,7 +28,10 @@ let package = Package(
             ]
         ),
         .target(
-            name: "SwiftUnicodeDataTables"
+            name: "SwiftUnicodeDataTables",
+            cxxSettings: [
+                .define("SWIFT_STDLIB_ENABLE_UNICODE_DATA")
+            ]
         ),
         .plugin(
             name: "PDCPlugin",
@@ -38,7 +41,6 @@ let package = Package(
         ),
     ],
     swiftLanguageModes: [.v6],
-    cLanguageStandard: .c11,
     cxxLanguageStandard: .cxx11
 )
 

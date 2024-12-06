@@ -24,11 +24,15 @@ struct ModuleBuildRequest {
     let relativeURL: URL
     let sourcefiles: [String]
 
-    func moduleName(for dest: BuildDestination) -> String { 
-        return "\(name.lowercased())_\(dest)" 
+    func moduleName(for dest: BuildDestination) -> String {
+        if case .clang(_,_) = type {
+            return "\(name)_\(dest)"
+        }else{
+            return "\(name.lowercased())_\(dest)"
+        }
     }
-
-    func modulePath(for dest: BuildDestination) -> String {
+    
+    func moduleFilename(for dest: BuildDestination) -> String {
         let suffix = switch type {
         case .product:
             "o"
@@ -37,7 +41,15 @@ struct ModuleBuildRequest {
         case .clang(_, _):
             "a"
         }
-        return relativeURL.appending(path: "\(moduleName(for: dest)).\(suffix)").path(percentEncoded: false)
+        if case .clang(_,_) = type {
+            return "lib\(moduleName(for: dest)).\(suffix)"
+        }else{
+            return "\(moduleName(for: dest)).\(suffix)"
+        }
+    }
+
+    func modulePath(for dest: BuildDestination) -> String {
+        return relativeURL.appending(path: moduleFilename(for: dest)).path(percentEncoded: false)
     }
     
     func moduleObjectsURL(for dest: BuildDestination) -> URL {
@@ -147,6 +159,15 @@ struct ModuleBuildRequest {
                         }
                     }
                 }
+                var headerSearchPaths: [String] = sourceModule.headerSearchPaths
+                for headersURL in [sourceModule.directoryURL.appending(path: "src")] {
+                    var isDirectory: ObjCBool = false
+                    if FileManager.default.fileExists(atPath: headersURL.path(percentEncoded: false), isDirectory: &isDirectory) {
+                        if isDirectory.boolValue == true {
+                            headerSearchPaths.append(headersURL.path(percentEncoded: false))
+                        }
+                    }
+                }
                 var sourceFiles: [String] = sourceModule.sourceFiles(withSuffix: "c").map({
                     $0.url.path(percentEncoded: false)
                 })
@@ -156,7 +177,7 @@ struct ModuleBuildRequest {
                 _productDependencies.append(
                     ModuleBuildRequest(
                         name: sourceModule.name,
-                        type: .clang(publicHeaderSearchPaths, sourceModule.headerSearchPaths),
+                        type: .clang(publicHeaderSearchPaths, headerSearchPaths),
                         relativeURL: modulesURL,
                         sourcefiles: sourceFiles
                     )
@@ -198,7 +219,9 @@ struct ModuleBuildRequest {
             "/../../../../arm-none-eabi/include"
         ].map { "/usr/local/playdate/gcc-arm-none-eabi-9-2019-q4-major/lib/gcc/arm-none-eabi/9.2.1" + $0 }
 
-        let cFlags = gccIncludePaths.flatMap { ["-I", $0] }
+        let cFlags = gccIncludePaths.flatMap { ["-I", $0] } + [
+            "-DSWIFT_STDLIB_ENABLE_UNICODE_DATA=1"
+        ]
 
         let swiftFlags = cFlags.flatMap { ["-Xcc", $0] } + [
             "-O",
@@ -241,12 +264,36 @@ struct ModuleBuildRequest {
             var linkedLibraries: [String] = []
             for module in productDependencies {
                 if case .clang(let publicHeaders, _) = module.type {
+                    guard module.sourcefiles.isEmpty == false else {continue}
                     for path in publicHeaders {
-                        linkedLibraries.append("-L\(module.modulePath(for: destination))")
+                        linkedLibraries.append("-l\(module.moduleName(for: destination))")
                     }
                 }
             }
             return linkedLibraries
+        }
+        
+        @Sendable func getLinkedLibraryObjects(for destination: BuildDestination) -> [String] {
+            var objectFiles: [String] = []
+            for module in productDependencies {
+                if case .clang(let publicHeaders, _) = module.type {
+                    guard module.sourcefiles.isEmpty == false else {continue}
+                    for path in publicHeaders {
+                        let url = modulesURL.appending(path: module.moduleName(for: destination))
+                        do {
+                            let files = try FileManager.default.contentsOfDirectory(at: url, includingPropertiesForKeys: nil)
+                            for file in files {
+                                if file.pathExtension == "o" {
+                                    objectFiles.append(file.path(percentEncoded: false))
+                                }
+                            }
+                        }catch{
+                            continue
+                        }
+                    }
+                }
+            }
+            return objectFiles
         }
         
         let cFlagsDevice = mcFlags + ["-falign-functions=16", "-fshort-enums"]
@@ -262,7 +309,7 @@ struct ModuleBuildRequest {
             // No manual flags
         ] + getSwiftModuleAliases(for: .simulator) + getCIncludes(for: .simulator)
 
-        print("Flags:", swiftFlagsSimulator)
+        print("Flags:", getLinkedLibraries(for: .simulator))
         // MARK: - CLI
 
         @Sendable func cc(_ arguments: [String]) throws {
@@ -321,6 +368,20 @@ struct ModuleBuildRequest {
         
         @Sendable func ar(workingDir: String? = nil, _ arguments: [String]) throws {
             let ar = try context.tool(named: "ar")
+            let process = Process()
+            process.executableURL = URL(filePath: ar.url.path(percentEncoded: false))
+            if let workingDir {
+                process.currentDirectoryURL = URL(fileURLWithPath: workingDir)
+            }
+            process.arguments = arguments
+            if verbose { process.print() }
+            try process.run()
+            process.waitUntilExit()
+            guard process.terminationStatus == 0 else { throw Error.arFailed(exitCode: process.terminationStatus) }
+        }
+        
+        @Sendable func ranlib(workingDir: String? = nil, _ arguments: [String]) throws {
+            let ar = try context.tool(named: "ranlib")
             let process = Process()
             process.executableURL = URL(filePath: ar.url.path(percentEncoded: false))
             if let workingDir {
@@ -440,30 +501,30 @@ struct ModuleBuildRequest {
         }
 
         @Sendable func buildDeviceModule(_ module: ModuleBuildRequest) async throws {
-            try await Task {
-                print("building \(module.moduleName(for: .device))")
+//            try await Task {
                 switch module.type {
                 case .product:
+                    print("building \(module.moduleName(for: .device)) (pdex.elf)")
                     // $(productName)_device.o
                     try swiftc(swiftFlags + swiftFlagsDevice + module.sourcefiles + [
                         "-c", "-o", module.modulePath(for: .device)
                     ])
-                    
-                    print("building pdex.elf")
-                    var ccObjects: [String] = [
+                    let ccObjects: [String] = [
                         setup,
                         module.modulePath(for: .device)
-                    ]
+                    ] + getLinkedLibraryObjects(for: .device)
                     try cc(ccObjects + mcFlags + [
                         "-T\(playdateSDK)/C_API/buildsupport/link_map.ld",
                         "-Wl,-Map=\(context.pluginWorkDirectoryURL.appending(path: "pdex.map").path(percentEncoded: false)),--cref,--gc-sections,--no-warn-mismatch,--emit-relocs",
                         "-o", sourceURL.appending(path: "pdex.elf").path(percentEncoded: false),
-                    ] + getLinkedLibraries(for: .device))
+                    ])
                 case .swift:
-                    try swiftc(swiftFlags + swiftFlagsSimulator + module.sourcefiles + [
-                        "-module-name", module.moduleName(for: .simulator), "-emit-module", "-emit-module-path", module.modulePath(for: .simulator)
+                    print("building \(module.moduleName(for: .device)) (Swift)")
+                    try swiftc(swiftFlags + swiftFlagsDevice + module.sourcefiles + [
+                        "-module-name", module.moduleName(for: .device), "-emit-module", "-emit-module-path", module.modulePath(for: .device)
                     ])
                 case .clang(let publicHeaderSearchPaths, let headerSearchPaths):
+                    print("building \(module.moduleName(for: .device)) (C/C++)")
                     guard module.sourcefiles.isEmpty == false else {return}
                     let objectsPath = module.moduleObjectsURL(for: .device).path(percentEncoded: false)
                     if FileManager.default.fileExists(atPath: objectsPath) == false {
@@ -471,7 +532,11 @@ struct ModuleBuildRequest {
                     }
                     var objectFiles: [String] = []
                     objectFiles.reserveCapacity(module.sourcefiles.count)
-                    var headerSearchPathFlags: [String] = publicHeaderSearchPaths
+                    var headerSearchPathFlags: [String] = []
+                    for path in publicHeaderSearchPaths {
+                        headerSearchPathFlags.append("-I")
+                        headerSearchPathFlags.append(path)
+                    }
                     for path in headerSearchPaths {
                         headerSearchPathFlags.append("-I")
                         headerSearchPathFlags.append(path)
@@ -480,29 +545,31 @@ struct ModuleBuildRequest {
                         let sourceFileURL = URL(fileURLWithPath: sourceFile)
                         let objectFileURL = module.moduleObjectsURL(for: .device).appending(path: sourceFileURL.deletingPathExtension().appendingPathExtension("o").lastPathComponent)
                         let objectFilePath = objectFileURL.path(percentEncoded: false)
-                        try clang(headerSearchPathFlags + [
+                        try cc(mcFlags + cFlags + headerSearchPathFlags + [
+                            "-fno-exceptions",
                             "-c",
+                            sourceFileURL.path(percentEncoded: false),
                             "-o",
                             objectFilePath,
-                            sourceFileURL.path(percentEncoded: false)
                         ])
                         objectFiles.append(objectFilePath)
                     }
-                    try ar(["cr", module.modulePath(for: .device)] + objectFiles)
+                    try ar(["rcs", module.modulePath(for: .device)] + objectFiles)
+                    try ranlib([module.modulePath(for: .device)])
                 }
-            }.value
+//            }.value
         }
         
         @Sendable func buildSimulatorModule(_ module: ModuleBuildRequest) async throws {
-            print("building \(module.moduleName(for: .simulator))")
-            try await Task {
+            
+//            try await Task {
                 switch module.type {
                 case .product:
+                    print("building \(module.moduleName(for: .simulator)) (pdex.dylib)")
                     // $(productName)_simulator.o
                     try swiftc(swiftFlags + swiftFlagsSimulator + module.sourcefiles + [
                         "-c", "-o", module.modulePath(for: .simulator)
                     ])
-                    print("building pdex.dylib")
                     try clang([
                         "-nostdlib", "-dead_strip",
                         "-Wl,-exported_symbol,_eventHandlerShim", "-Wl,-exported_symbol,_eventHandler",
@@ -510,14 +577,18 @@ struct ModuleBuildRequest {
                         "-DTARGET_SIMULATOR=1", "-DTARGET_EXTENSION=1",
                         "-I", ".",
                         "-I", "\(playdateSDK)/C_API",
+                        "-L\(modulesURL.path(percentEncoded: false))",
+                    ] + getLinkedLibraries(for: .simulator) + [
                         "-o", sourceURL.appending(path: "pdex.dylib").path(percentEncoded: false),
                         "\(playdateSDK)/C_API/buildsupport/setup.c",
-                    ] + getLinkedLibraries(for: .simulator))
+                    ])
                 case .swift:
+                    print("building \(module.moduleName(for: .simulator)) (Swift)")
                     try swiftc(swiftFlags + swiftFlagsSimulator + module.sourcefiles + [
                         "-module-name", module.moduleName(for: .simulator), "-emit-module", "-emit-module-path", module.modulePath(for: .simulator)
                     ])
                 case .clang(let publicHeaderSearchPaths, let headerSearchPaths):
+                    print("building \(module.moduleName(for: .simulator)) (C/C++)")
                     guard module.sourcefiles.isEmpty == false else {return}
                     let objectsPath = module.moduleObjectsURL(for: .simulator).path(percentEncoded: false)
                     if FileManager.default.fileExists(atPath: objectsPath) == false {
@@ -525,7 +596,11 @@ struct ModuleBuildRequest {
                     }
                     var objectFiles: [String] = []
                     objectFiles.reserveCapacity(module.sourcefiles.count)
-                    var headerSearchPathFlags: [String] = publicHeaderSearchPaths
+                    var headerSearchPathFlags: [String] = []
+                    for path in publicHeaderSearchPaths {
+                        headerSearchPathFlags.append("-I")
+                        headerSearchPathFlags.append(path)
+                    }
                     for path in headerSearchPaths {
                         headerSearchPathFlags.append("-I")
                         headerSearchPathFlags.append(path)
@@ -534,7 +609,7 @@ struct ModuleBuildRequest {
                         let sourceFileURL = URL(fileURLWithPath: sourceFile)
                         let objectFileURL = module.moduleObjectsURL(for: .simulator).appending(path: sourceFileURL.deletingPathExtension().appendingPathExtension("o").lastPathComponent)
                         let objectFilePath = objectFileURL.path(percentEncoded: false)
-                        try clang(headerSearchPathFlags + [
+                        try clang(headerSearchPathFlags + cFlags + [
                             "-c",
                             "-o",
                             objectFilePath,
@@ -542,9 +617,9 @@ struct ModuleBuildRequest {
                         ])
                         objectFiles.append(objectFilePath)
                     }
-                    try ar(["cr", module.modulePath(for: .simulator)] + objectFiles)
+                    try ar(["rcs", module.modulePath(for: .simulator)] + objectFiles)
                 }
-            }.value
+//            }.value
         }
 
         for dep in productDependencies {
