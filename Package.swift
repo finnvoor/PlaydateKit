@@ -40,8 +40,7 @@ let package = Package(
             )
         ),
     ],
-    swiftLanguageModes: [.v6],
-    cxxLanguageStandard: .cxx11
+    swiftLanguageModes: [.v6]
 )
 
 
