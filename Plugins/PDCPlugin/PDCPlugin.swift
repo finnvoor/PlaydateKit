@@ -618,6 +618,7 @@ struct ModuleBuildRequest {
         }
         
         func removeDebugSymbols() throws {
+            print("Removing pdex.dylib.dSYM")
             let url = URL(fileURLWithPath: productPath).appending(path: "pdex.dylib.dSYM")
             if FileManager.default.fileExists(atPath: url.path(percentEncoded: false)) {
                 try FileManager.default.removeItem(at: url)
