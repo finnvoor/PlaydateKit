@@ -98,7 +98,7 @@ struct ModuleBuildRequest {
                     }) != nil
                 }) != nil
             })?.sourceModules.first {
-                print("Found product named \(productModule.name).")
+                print("Found product named \(searchedModule.name).")
                 return searchedModule
             }
 
