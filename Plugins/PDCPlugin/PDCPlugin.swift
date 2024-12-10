@@ -619,6 +619,11 @@ struct ModuleBuildRequest {
                 }
             }.value
         }
+        
+        func removeDebugSymbols() throws {
+            let url = URL(fileURLWithPath: productPath).appending(path: "pdex.dylib.dSYM")
+            try FileManager.default.removeItem(at: url)
+        }
 
         for dep in productDependencies {
             try await build(module: dep)
@@ -633,6 +638,7 @@ struct ModuleBuildRequest {
             "-sdkpath", playdateSDK,
             "--quiet",
         ])
+        try removeDebugSymbols()
         
         print("\ncreated \(productName).pdx at:")
         print(productPath)
