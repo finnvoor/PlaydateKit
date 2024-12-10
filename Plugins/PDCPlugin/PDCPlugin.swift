@@ -631,11 +631,11 @@ struct ModuleBuildRequest {
 
         print("\nrunning pdc")
         try pdc([
-            "--quiet",
-            "--version",
             sourceURL.path(percentEncoded: false),
             productPath,
+            "--version",
             "-sdkpath", playdateSDK,
+            "--quiet",
         ])
         try removeDebugSymbols()
         
