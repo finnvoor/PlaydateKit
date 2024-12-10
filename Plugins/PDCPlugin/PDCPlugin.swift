@@ -642,9 +642,9 @@ struct ModuleBuildRequest {
         ])
         try removeDebugSymbols()
         
-        print("\ncreated \(productName).pdx at:")
+        print("created \(productName).pdx at:")
         print(productPath)
-        print("\nbuild succeeded.")
+        print("\nbuild succeeded.\n")
     }
 
     func getSwiftToolchain() throws -> (id: String, path: String) {
