@@ -476,7 +476,7 @@ struct ModuleBuildRequest {
 
             if FileManager.default.fileExists(atPath: destDirectory.path(percentEncoded: false), isDirectory: nil) == false {
                 let relativeDestDirectory = URL(fileURLWithPath: resource.relativePath).deletingLastPathComponent()
-                print("creating directory \(relativeDestDirectory.path(percentEncoded: false))/")
+                print("creating directory \(relativeDestDirectory.path(percentEncoded: false))")
                 try FileManager.default.createDirectory(atPath: destDirectory.path(percentEncoded: false), withIntermediateDirectories: true)
             }
 
