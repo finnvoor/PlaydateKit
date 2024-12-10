@@ -11,8 +11,8 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "PlaydateKit", 
-            dependencies: ["CPlaydate", "SwiftUnicodeDataTables"], 
+            name: "PlaydateKit",
+            dependencies: ["CPlaydate", "SwiftUnicodeDataTables"],
             swiftSettings: swiftSettings
         ),
         .target(
@@ -36,18 +36,18 @@ let package = Package(
         .plugin(
             name: "PDCPlugin",
             capability: .command(intent:
-                    .custom(verb: "pdc", description: "Runs the Playdate compiler")
+                .custom(verb: "pdc", description: "Runs the Playdate compiler")
             )
         ),
     ],
     swiftLanguageModes: [.v6]
 )
 
-
 // MARK: - Helper Variables
+
 // note: These must be computed variables when beneath the `let package =` declaration.
 
-var swiftSettings: [SwiftSetting] {[
+var swiftSettings: [SwiftSetting] { [
     .enableExperimentalFeature("Embedded"),
     .unsafeFlags([
         "-whole-module-optimization",
@@ -61,10 +61,11 @@ var swiftSettings: [SwiftSetting] {[
         "-Xcc", "-I", "-Xcc", "\(gccIncludePrefix)/../../../../arm-none-eabi/include",
         "-I", "\(playdateSDKPath)/C_API"
     ]),
-]}
+] }
 var gccIncludePrefix: String {
     "/usr/local/playdate/gcc-arm-none-eabi-9-2019-q4-major/lib/gcc/arm-none-eabi/9.2.1"
 }
+
 var playdateSDKPath: String {
     if let path = Context.environment["PLAYDATE_SDK_PATH"] {
         return path

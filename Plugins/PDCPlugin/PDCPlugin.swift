@@ -25,35 +25,35 @@ struct ModuleBuildRequest {
     let sourcefiles: [String]
 
     func moduleName(for dest: BuildDestination) -> String {
-        if case .clang(_,_) = type {
-            return "\(name)_\(dest)"
-        }else{
-            return "\(name.lowercased())_\(dest)"
+        if case .clang = type {
+            "\(name)_\(dest)"
+        } else {
+            "\(name.lowercased())_\(dest)"
         }
     }
-    
+
     func moduleFilename(for dest: BuildDestination) -> String {
         let suffix = switch type {
         case .product:
             "o"
         case .swift:
             "swiftmodule"
-        case .clang(_, _):
+        case .clang:
             "a"
         }
-        if case .clang(_,_) = type {
+        if case .clang = type {
             return "lib\(moduleName(for: dest)).\(suffix)"
-        }else{
+        } else {
             return "\(moduleName(for: dest)).\(suffix)"
         }
     }
 
     func modulePath(for dest: BuildDestination) -> String {
-        return relativeURL.appending(path: moduleFilename(for: dest)).path(percentEncoded: false)
+        relativeURL.appending(path: moduleFilename(for: dest)).path(percentEncoded: false)
     }
-    
+
     func moduleObjectsURL(for dest: BuildDestination) -> URL {
-        return relativeURL.appending(path: "\(moduleName(for: dest))")
+        relativeURL.appending(path: "\(moduleName(for: dest))")
     }
 }
 
@@ -67,48 +67,47 @@ struct ModuleBuildRequest {
         var arguments = ArgumentExtractor(arguments)
         let verbose = arguments.extractFlag(named: "verbose") > 0
         let clean = arguments.extractFlag(named: "clean") > 0
-        
+
         if clean {
             let items = try FileManager.default.contentsOfDirectory(atPath: context.pluginWorkDirectoryURL.path(percentEncoded: false))
             for item in items {
                 try FileManager.default.removeItem(atPath: context.pluginWorkDirectoryURL.appendingPathComponent(item).path(percentEncoded: false))
             }
         }
-        
+
         func findProductModule() throws -> any SourceModuleTarget {
             // Find the product for the provided argument
             if let productNameArg = arguments.extractOption(named: "product").first {
                 if let argModule = context.package.products.first(where: {
-                    return $0.name == productNameArg
+                    $0.name == productNameArg
                 })?.sourceModules.first {
                     print("Found product named \(argModule.name).")
                     return argModule
-                }else{
+                } else {
                     // If the provided product was not found, error out
                     print("Failed to locate product named \(productNameArg).")
                     throw Error.productNotFound
                 }
             }
-            
+
             // Find the first product that has PlaydateKit as a dependency
             if let searchedModule = context.package.products.first(where: {
                 $0.targets.first(where: {
                     $0.recursiveTargetDependencies.first(where: {
-                        return $0.name.caseInsensitiveCompare("PlaydateKit") == .orderedSame
+                        $0.name.caseInsensitiveCompare("PlaydateKit") == .orderedSame
                     }) != nil
                 }) != nil
             })?.sourceModules.first {
                 print("Found product named \(productModule.name).")
                 return searchedModule
             }
-            
+
             print("Failed to locate a suitable Package product.")
             throw Error.productNotFound
         }
-        
+
         let productModule: any SourceModuleTarget = try findProductModule()
 
-        
         // MARK: - Paths
 
         let swiftToolchain = try getSwiftToolchain()
@@ -140,12 +139,12 @@ struct ModuleBuildRequest {
             name: productName,
             type: .product,
             relativeURL: context.pluginWorkDirectoryURL,
-            sourcefiles: productModule.sourceFiles(withSuffix: "swift").map({
+            sourcefiles: productModule.sourceFiles(withSuffix: "swift").map {
                 $0.url.path(percentEncoded: false)
-            })
+            }
         )
         var _productDependencies: [ModuleBuildRequest] = []
-        
+
         func appendBuildModuleFrom(_ sourceModule: SourceModuleTarget) {
             switch sourceModule {
             case let sourceModule as ClangSourceModuleTarget:
@@ -167,12 +166,12 @@ struct ModuleBuildRequest {
                         }
                     }
                 }
-                var sourceFiles: [String] = sourceModule.sourceFiles(withSuffix: "c").map({
+                var sourceFiles: [String] = sourceModule.sourceFiles(withSuffix: "c").map {
+                    $0.url.path(percentEncoded: false)
+                }
+                sourceFiles.append(contentsOf: sourceModule.sourceFiles(withSuffix: "cpp").map {
                     $0.url.path(percentEncoded: false)
                 })
-                sourceFiles.append(contentsOf: sourceModule.sourceFiles(withSuffix: "cpp").map({
-                    $0.url.path(percentEncoded: false)
-                }))
                 _productDependencies.append(
                     ModuleBuildRequest(
                         name: sourceModule.name,
@@ -187,7 +186,7 @@ struct ModuleBuildRequest {
                         name: sourceModule.name,
                         type: .swift,
                         relativeURL: modulesURL,
-                        sourcefiles: sourceModule.sourceFiles(withSuffix: "swift").map({$0.url.path(percentEncoded: false)})
+                        sourcefiles: sourceModule.sourceFiles(withSuffix: "swift").map { $0.url.path(percentEncoded: false) }
                     )
                 )
             default:
@@ -200,10 +199,10 @@ struct ModuleBuildRequest {
                 appendBuildModuleFrom(sourceModule)
             }
         }
-        
+
         // Immutable for concurrency
         let productDependencies = _productDependencies
-        
+
         // MARK: - Flags
 
         let mcu = "cortex-m7"
@@ -232,7 +231,7 @@ struct ModuleBuildRequest {
             "-I", "\(playdateSDK)/C_API",
             "-I", modulesURL.path(percentEncoded: false),
         ]
-        
+
         func getSwiftModuleAliases(for destination: BuildDestination) -> [String] {
             var moduleAliases: [String] = []
             for module in productDependencies {
@@ -243,11 +242,11 @@ struct ModuleBuildRequest {
             }
             return moduleAliases
         }
-        
-        func getCIncludes(for destination: BuildDestination) -> [String] {
+
+        func getCIncludes(for _: BuildDestination) -> [String] {
             var searchPaths: [String] = []
             for module in productDependencies {
-                if case .clang(let publicHeaders, _) = module.type {
+                if case let .clang(publicHeaders, _) = module.type {
                     for path in publicHeaders {
                         searchPaths.append("-I")
                         searchPaths.append(path)
@@ -256,12 +255,12 @@ struct ModuleBuildRequest {
             }
             return searchPaths
         }
-        
+
         @Sendable func getLinkedLibraries(for destination: BuildDestination) -> [String] {
             var linkedLibraries: [String] = []
             for module in productDependencies {
-                if case .clang(let publicHeaders, _) = module.type {
-                    guard module.sourcefiles.isEmpty == false else {continue}
+                if case let .clang(publicHeaders, _) = module.type {
+                    guard module.sourcefiles.isEmpty == false else { continue }
                     for path in publicHeaders {
                         linkedLibraries.append("-l\(module.moduleName(for: destination))")
                     }
@@ -269,12 +268,12 @@ struct ModuleBuildRequest {
             }
             return linkedLibraries
         }
-        
+
         @Sendable func getLinkedLibraryObjects(for destination: BuildDestination) -> [String] {
             var objectFiles: [String] = []
             for module in productDependencies {
-                if case .clang(let publicHeaders, _) = module.type {
-                    guard module.sourcefiles.isEmpty == false else {continue}
+                if case let .clang(publicHeaders, _) = module.type {
+                    guard module.sourcefiles.isEmpty == false else { continue }
                     for path in publicHeaders {
                         let url = modulesURL.appending(path: module.moduleName(for: destination))
                         do {
@@ -284,7 +283,7 @@ struct ModuleBuildRequest {
                                     objectFiles.append(file.path(percentEncoded: false))
                                 }
                             }
-                        }catch{
+                        } catch {
                             continue
                         }
                     }
@@ -292,7 +291,7 @@ struct ModuleBuildRequest {
             }
             return objectFiles
         }
-        
+
         let cFlagsDevice = mcFlags + ["-falign-functions=16", "-fshort-enums"]
 
         let swiftFlagsDevice = cFlagsDevice.flatMap { ["-Xcc", $0] } + [
@@ -361,7 +360,7 @@ struct ModuleBuildRequest {
             process.waitUntilExit()
             guard process.terminationStatus == 0 else { throw Error.clangFailed(exitCode: process.terminationStatus) }
         }
-        
+
         @Sendable func ar(workingDir: String? = nil, _ arguments: [String]) throws {
             let ar = try context.tool(named: "ar")
             let process = Process()
@@ -375,7 +374,7 @@ struct ModuleBuildRequest {
             process.waitUntilExit()
             guard process.terminationStatus == 0 else { throw Error.arFailed(exitCode: process.terminationStatus) }
         }
-        
+
         @Sendable func ranlib(workingDir: String? = nil, _ arguments: [String]) throws {
             let ar = try context.tool(named: "ranlib")
             let process = Process()
@@ -431,7 +430,7 @@ struct ModuleBuildRequest {
 
         // Scan package and dependencies for resources
         func appendResources(for module: any SourceModuleTarget) {
-            let moduleResources = module.sourceFiles.filter { $0.type == .unknown }.map({$0.url.path(percentEncoded: false)})
+            let moduleResources = module.sourceFiles.filter { $0.type == .unknown }.map { $0.url.path(percentEncoded: false) }
             for resource in moduleResources {
                 // `SourceModuleTarget` has no `directoryURL` as of Swift 6 so we
                 // need to cast to each module type to get the directoryURL
@@ -454,11 +453,11 @@ struct ModuleBuildRequest {
         appendResources(for: productModule)
         for dependency in productModule.dependencies {
             switch dependency {
-            case .product(let product):
+            case let .product(product):
                 for module in product.sourceModules {
                     appendResources(for: module)
                 }
-            case .target(let target):
+            case let .target(target):
                 if let module = target.sourceModule {
                     appendResources(for: module)
                 }
@@ -519,9 +518,9 @@ struct ModuleBuildRequest {
                     try swiftc(swiftFlags + swiftFlagsDevice + module.sourcefiles + [
                         "-module-name", module.moduleName(for: .device), "-emit-module", "-emit-module-path", module.modulePath(for: .device)
                     ])
-                case .clang(let publicHeaderSearchPaths, let headerSearchPaths):
+                case let .clang(publicHeaderSearchPaths, headerSearchPaths):
                     print("building \(module.moduleName(for: .device)) (C/C++)")
-                    guard module.sourcefiles.isEmpty == false else {return}
+                    guard module.sourcefiles.isEmpty == false else { return }
                     let objectsPath = module.moduleObjectsURL(for: .device).path(percentEncoded: false)
                     if FileManager.default.fileExists(atPath: objectsPath) == false {
                         try FileManager.default.createDirectory(atPath: objectsPath, withIntermediateDirectories: true, attributes: nil)
@@ -555,7 +554,7 @@ struct ModuleBuildRequest {
                 }
             }.value
         }
-        
+
         @Sendable func buildSimulatorModule(_ module: ModuleBuildRequest) async throws {
             try await Task {
                 switch module.type {
@@ -582,9 +581,9 @@ struct ModuleBuildRequest {
                     try swiftc(swiftFlags + swiftFlagsSimulator + module.sourcefiles + [
                         "-module-name", module.moduleName(for: .simulator), "-emit-module", "-emit-module-path", module.modulePath(for: .simulator)
                     ])
-                case .clang(let publicHeaderSearchPaths, let headerSearchPaths):
+                case let .clang(publicHeaderSearchPaths, headerSearchPaths):
                     print("building \(module.moduleName(for: .simulator)) (C/C++)")
-                    guard module.sourcefiles.isEmpty == false else {return}
+                    guard module.sourcefiles.isEmpty == false else { return }
                     let objectsPath = module.moduleObjectsURL(for: .simulator).path(percentEncoded: false)
                     if FileManager.default.fileExists(atPath: objectsPath) == false {
                         try FileManager.default.createDirectory(atPath: objectsPath, withIntermediateDirectories: true, attributes: nil)
@@ -616,7 +615,7 @@ struct ModuleBuildRequest {
                 }
             }.value
         }
-        
+
         func removeDebugSymbols() throws {
             print("Removing pdex.dylib.dSYM")
             let url = URL(fileURLWithPath: productPath).appending(path: "pdex.dylib.dSYM")
@@ -639,7 +638,7 @@ struct ModuleBuildRequest {
             "--quiet",
         ])
         try removeDebugSymbols()
-        
+
         print("created \(productName).pdx at:")
         print(productPath)
         print("\nbuild succeeded.\n")
@@ -647,20 +646,20 @@ struct ModuleBuildRequest {
 
     func getSwiftToolchain() throws -> (id: String, path: String) {
         struct Info: Decodable { let CFBundleIdentifier: String }
-        
+
         // Explicit toolchain request
         if let toolchain = ProcessInfo.processInfo.environment["TOOLCHAINS"] {
             if let toolchainPath = ProcessInfo.processInfo.environment["TOOLCHAIN_PATH"] {
                 return (toolchain, toolchainPath)
             }
         }
-        
+
         // Find the toolchain based on DYLD_LIBRARY_PATH
         if let dyldLibraryPath = ProcessInfo.processInfo.environment["DYLD_LIBRARY_PATH"] {
             if dyldLibraryPath.contains(".xctoolchain") {
                 let toolchainPath = dyldLibraryPath
                     .components(separatedBy: ":")
-                    .filter({$0.contains(".xctoolchain")})[0]
+                    .filter { $0.contains(".xctoolchain") }[0]
                     .components(separatedBy: ".xctoolchain")[0] + ".xctoolchain"
                 if FileManager.default.fileExists(atPath: "\(toolchainPath)/usr/bin/swift") {
                     if let data = try? Data(contentsOf: URL(filePath: "\(home)\(toolchainPath)/Info.plist")),
@@ -687,7 +686,7 @@ struct ModuleBuildRequest {
                 }
             }
         }
-        
+
         // Failed to find a toolchain
         throw Error.swiftToolchainNotFound
     }
