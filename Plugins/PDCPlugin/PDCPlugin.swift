@@ -204,8 +204,6 @@ struct ModuleBuildRequest {
         // Immutable for concurrency
         let productDependencies = _productDependencies
         
-        print("Products:", productDependencies.map(\.name))
-
         // MARK: - Flags
 
         let mcu = "cortex-m7"
@@ -308,7 +306,6 @@ struct ModuleBuildRequest {
             // No manual flags
         ] + getSwiftModuleAliases(for: .simulator) + getCIncludes(for: .simulator)
 
-        print("Flags:", getLinkedLibraries(for: .simulator))
         // MARK: - CLI
 
         @Sendable func cc(_ arguments: [String]) throws {
