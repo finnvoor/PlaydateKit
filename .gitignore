@@ -6,6 +6,7 @@ xcuserdata/
 DerivedData/
 .swiftpm/configuration/registries.json
 .swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
+Package.resolved
 .netrc
 **/Source/pdex.dylib
 **/Source/pdex.elf

@@ -1,18 +1,22 @@
 // swift-tools-version: 6.0
 
 import PackageDescription
+import CompilerPluginSupport
 
 let package = Package(
     name: "PlaydateKit",
     platforms: [.macOS(.v14)],
     products: [
         .library(name: "PlaydateKit", targets: ["PlaydateKit"]),
-        .plugin(name: "PDCPlugin", targets: ["PDCPlugin"])
+        .plugin(name: "PDCPlugin", targets: ["PDCPlugin"]),
+    ],
+    dependencies: [
+        .package(url: "https://github.com/apple/swift-syntax", from: "600.0.0"),
     ],
     targets: [
         .target(
-            name: "PlaydateKit",
-            dependencies: ["CPlaydate", "SwiftUnicodeDataTables"],
+            name: "PlaydateKit", 
+            dependencies: ["CPlaydate", "SwiftUnicodeDataTables", "PlaydateKitMacros"],
             swiftSettings: swiftSettings
         ),
         .target(
@@ -33,6 +37,15 @@ let package = Package(
                 .define("SWIFT_STDLIB_ENABLE_UNICODE_DATA")
             ]
         ),
+        
+        .macro(
+            name: "PlaydateKitMacros",
+            dependencies: [
+                .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
+                .product(name: "SwiftCompilerPlugin", package: "swift-syntax"),
+            ]
+        ),
+        
         .plugin(
             name: "PDCPlugin",
             capability: .command(intent:

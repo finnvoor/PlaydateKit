@@ -2,6 +2,10 @@
 @_exported
 public import CPlaydate
 
+@attached(member, names: named(shared))
+@attached(peer, names: named(_eventHandler))
+public macro PlaydateMain() = #externalMacro(module: "PlaydateKitMacros", type: "PlaydateMainMacro")
+
 // MARK: - Playdate
 
 public enum Playdate {

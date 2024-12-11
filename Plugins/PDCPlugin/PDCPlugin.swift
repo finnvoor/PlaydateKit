@@ -260,10 +260,8 @@ struct ModuleBuildRequest {
             var linkedLibraries: [String] = []
             for module in productDependencies {
                 if case let .clang(publicHeaders, _) = module.type {
-                    guard module.sourcefiles.isEmpty == false else { continue }
-                    for path in publicHeaders {
-                        linkedLibraries.append("-l\(module.moduleName(for: destination))")
-                    }
+                    guard module.sourcefiles.isEmpty == false else {continue}
+                    linkedLibraries.append("-l\(module.moduleName(for: destination))")
                 }
             }
             return linkedLibraries
@@ -273,19 +271,17 @@ struct ModuleBuildRequest {
             var objectFiles: [String] = []
             for module in productDependencies {
                 if case let .clang(publicHeaders, _) = module.type {
-                    guard module.sourcefiles.isEmpty == false else { continue }
-                    for path in publicHeaders {
-                        let url = modulesURL.appending(path: module.moduleName(for: destination))
-                        do {
-                            let files = try FileManager.default.contentsOfDirectory(at: url, includingPropertiesForKeys: nil)
-                            for file in files {
-                                if file.pathExtension == "o" {
-                                    objectFiles.append(file.path(percentEncoded: false))
-                                }
+                    guard module.sourcefiles.isEmpty == false else {continue}
+                    let url = modulesURL.appending(path: module.moduleName(for: destination))
+                    do {
+                        let files = try FileManager.default.contentsOfDirectory(at: url, includingPropertiesForKeys: nil)
+                        for file in files {
+                            if file.pathExtension == "o" {
+                                objectFiles.append(file.path(percentEncoded: false))
                             }
-                        } catch {
-                            continue
                         }
+                    }catch{
+                        continue
                     }
                 }
             }
