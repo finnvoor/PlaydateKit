@@ -231,6 +231,7 @@ public enum Graphics {
     public typealias SolidColor = LCDSolidColor
     
     public typealias TextWrap = PDTextWrappingMode
+    public typealias TextAlignment = PDTextAlignment
 
     public class BitmapTable {
         // MARK: Lifecycle

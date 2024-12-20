@@ -42,6 +42,8 @@ Tags:
   EnumExtensibility: open
 - Name: PDTextWrappingMode
   EnumExtensibility: open
+- Name: PDTextAlignment
+  EnumExtensibility: open
 Enumerators:
 - Name: kButtonLeft
   SwiftName: left
@@ -241,3 +243,9 @@ Enumerators:
   SwiftName: character
 - Name: kWrapWord
   SwiftName: word
+- Name: kAlignTextLeft
+SwiftName: left
+- Name: kAlignTextCenter
+SwiftName: center
+- Name: kAlignTextRight
+SwiftName: right
