@@ -598,6 +598,28 @@ public enum Graphics {
             CInt(point.y)
         ))
     }
+    
+    /// Draws the text in the given rectangle using the provided options. If no font has
+    /// been set with setFont, the default system font Asheville Sans 14 Light is used.
+    public static func drawTextInRect(
+        _ text: String,
+        in rect: Rect,
+        wrap: TextWrap = .clip,
+        aligned: TextAlignment = .left
+    ) {
+        graphics.drawTextInRect.unsafelyUnwrapped(
+            text,
+            text.utf8.count,
+            .kUTF8Encoding,
+            CInt(rect.x),
+            CInt(rect.y),
+            CInt(rect.width),
+            CInt(rect.height),
+            wrap,
+            aligned
+        )
+    }
+        
 
     /// Draws an ellipse inside the rectangle `rect` of width `lineWidth` (inset from the rectangle bounds).
     /// If `startAngle` != `endAngle`, this draws an arc between the given angles.
