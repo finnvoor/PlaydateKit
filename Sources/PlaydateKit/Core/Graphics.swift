@@ -229,6 +229,8 @@ public enum Graphics {
     public typealias StringEncoding = PDStringEncoding
     public typealias PolygonFillRule = LCDPolygonFillRule
     public typealias SolidColor = LCDSolidColor
+    
+    public typealias TextWrap = PDTextWrappingMode
 
     public class BitmapTable {
         // MARK: Lifecycle
