@@ -244,8 +244,8 @@ Enumerators:
 - Name: kWrapWord
   SwiftName: word
 - Name: kAlignTextLeft
-SwiftName: left
+  SwiftName: left
 - Name: kAlignTextCenter
-SwiftName: center
+  SwiftName: center
 - Name: kAlignTextRight
-SwiftName: right
+  SwiftName: right
