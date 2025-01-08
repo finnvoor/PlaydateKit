@@ -75,7 +75,7 @@ public enum Easing {
             case .outExpo:
                 return x == 1 ? 1 : 1 - powf(2, -10 * x)
             case .inOutExpo:
-                return x == 0 ? 0 : x == 1 ? 1 : x < 0.5 ? powf(2, 20 * x - 10) / 2 : 2 - powf(2, -20 * x + 10) / 2
+                return x == 0 ? 0 : x == 1 ? 1 : x < 0.5 ? powf(2, 20 * x - 10) / 2 : (2 - powf(2, -20 * x + 10)) / 2
             case .inCirc:
                 return 1 - sqrtf(1 - powf(x, 2))
             case .outCirc:
