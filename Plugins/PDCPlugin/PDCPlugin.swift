@@ -100,7 +100,7 @@ struct ModuleBuildRequest {
             throw Tools.Error.armNoneEabiGCCNotFound
         }
 
-        let cFlags = gccIncludePaths.flatMap { ["-I", $0] }
+        let cFlags = gccIncludePaths.flatMap { ["-I", URL(fileURLWithPath: $0).standardized.path] }
 
         let swiftFlags = cFlags.flatMap { ["-Xcc", $0] } + [
             "-O",
@@ -213,19 +213,18 @@ struct ModuleBuildRequest {
                     print("building pdex.dylib")
 
                     #if os(Linux)
-                    let linkerFlags = ["-Wl,--undefined=_eventHandlerShim", "-Wl,--undefined=_eventHandler"]
-                    #else
-                    let linkerFlags = ["-Wl,-exported_symbol,_eventHandlerShim", "-Wl,-exported_symbol,_eventHandler"]
-                    #endif
+                    let linkerFlags = ["-Wl,--undefined=_eventHandlerShim", "-Wl,--undefined=_eventHandler", "-shared", "-o", sourcePath.appending(["pdex.so"]).string]
+                     #else
+                    let linkerFlags = ["-Wl,-exported_symbol,_eventHandlerShim", "-Wl,-exported_symbol,_eventHandler", "-dynamiclib", "-rdynamic", "-o", sourcePath.appending(["pdex.dylib"]).string]
+                     #endif
 
                     try tools.clang([
                         "-nostdlib", "-dead_strip"
                     ] + linkerFlags + [
-                        module.modulePath(for: .simulator), "-dynamiclib", "-rdynamic", "-lc", "-lm",
+                        module.modulePath(for: .simulator), "-lc", "-lm",
                         "-DTARGET_SIMULATOR=1", "-DTARGET_EXTENSION=1",
                         "-I", ".",
                         "-I", "\(playdateSDK)/C_API",
-                        "-o", sourcePath.appending(["pdex.dylib"]).string,
                         "\(playdateSDK)/C_API/buildsupport/setup.c"
                     ])
                 case .productDependency:
