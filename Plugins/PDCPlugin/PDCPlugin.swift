@@ -61,8 +61,6 @@ struct ModuleBuildRequest {
 
 @main struct PDCPlugin: CommandPlugin {
     let home = FileManager.default.homeDirectoryForCurrentUser.path()
-    let arm_none_eabi_gcc = "/usr/local/playdate/gcc-arm-none-eabi-9-2019-q4-major/bin/arm-none-eabi-gcc"
-
     func performCommand(context: PluginContext, arguments: [String]) async throws {
         var arguments = ArgumentExtractor(arguments)
         let verbose = arguments.extractFlag(named: "verbose") > 0
@@ -110,8 +108,10 @@ struct ModuleBuildRequest {
 
         // MARK: - Paths
 
+#if !os(Linux)
         let swiftToolchain = try getSwiftToolchain()
-        print("found Swift toolchain: \(swiftToolchain.id)")
+        print("found Swift toolchain: \(swiftToolchain)")
+#endif
 
         let playdateSDK = try getPlaydateSDK()
         let playdateSDKVersion = (try? String(
@@ -213,11 +213,17 @@ struct ModuleBuildRequest {
             "/include",
             "/include-fixed",
             "/../../../../arm-none-eabi/include"
-        ].map { "/usr/local/playdate/gcc-arm-none-eabi-9-2019-q4-major/lib/gcc/arm-none-eabi/9.2.1" + $0 }
+        ].map { (ProcessInfo.processInfo.environment["ARM_TOOLCHAIN_PATH"] ?? "/usr/local/playdate/gcc-arm-none-eabi-9-2019-q4-major/lib/gcc/arm-none-eabi/9.2.1") + $0 }
 
-        let cFlags = gccIncludePaths.flatMap { ["-I", $0] } + [
-            "-DSWIFT_STDLIB_ENABLE_UNICODE_DATA=1"
-        ]
+        guard FileManager.default.fileExists(atPath: gccIncludePaths.first!) else {
+            Diagnostics.error("Arm embedded toolchain not found. Ensure it is installed through the Playdate SDK (macOS) or manually and set in the ARM_TOOLCHAIN_PATH environment variable.")
+            throw Error.armNoneEabiGCCNotFound
+        }
+
+        let cFlags = gccIncludePaths
+            .flatMap { ["-I", URL(fileURLWithPath: $0).standardized.path] } + [
+                "-DSWIFT_STDLIB_ENABLE_UNICODE_DATA=1"
+            ]
 
         let swiftFlags = cFlags.flatMap { ["-Xcc", $0] } + [
             "-O",
@@ -307,9 +313,47 @@ struct ModuleBuildRequest {
 
         // MARK: - CLI
 
+        @Sendable func ccURL() throws -> URL {
+            guard let url = [
+                "/usr/local/playdate/gcc-arm-none-eabi-9-2019-q4-major/bin/arm-none-eabi-gcc",
+                try? context.tool(named: "arm-none-eabi-gcc").path.string
+            ].compactMap({ $0 }).filter({
+                FileManager.default.fileExists(atPath: $0)
+            }).map({ URL(filePath: $0) }).first else {
+                Diagnostics.warning("arm-none-eabi-gcc not found. Ensure it is installed and in the PATH.")
+                throw Error.armNoneEabiGCCNotFound
+            }
+            return url
+        }
+
+        @Sendable func clangURL() throws -> URL {
+            guard let url = [
+                try? context.tool(named: "clang").path.string
+            ].compactMap({ $0 }).filter({
+                FileManager.default.fileExists(atPath: $0)
+            }).map({ URL(filePath: $0) }).first else {
+                Diagnostics.warning("clang not found. Ensure it is installed and in the PATH.")
+                throw Error.clangNotFound
+            }
+            return url
+        }
+
+        @Sendable func pdcURL() throws -> URL {
+            guard let url = try [
+                "\(getPlaydateSDK())/bin/pdc",
+                try? context.tool(named: "pdc").path.string
+            ].compactMap({ $0 }).filter({
+                FileManager.default.fileExists(atPath: $0)
+            }).map({ URL(filePath: $0) }).first else {
+                Diagnostics.warning("pdc not found. Ensure the Playdate SDK is installed and the pdc tool is available.")
+                throw Error.pdcNotFound
+            }
+            return url
+        }
+
         @Sendable func cc(_ arguments: [String]) throws {
             let process = Process()
-            process.executableURL = URL(filePath: arm_none_eabi_gcc)
+            process.executableURL = try ccURL()
             process.arguments = ["-g3"] + arguments
             if verbose { process.print() }
             try process.run()
@@ -318,18 +362,29 @@ struct ModuleBuildRequest {
         }
 
         @Sendable func swiftc(_ arguments: [String]) throws {
-            let xcrun = try context.tool(named: "xcrun")
-            let process = Process()
-            process.executableURL = xcrun.url
-            process.arguments = ["-f", "swiftc", "--toolchain", swiftToolchain.id]
-            let pipe = Pipe()
-            process.standardOutput = pipe
-            if verbose { process.print() }
-            try process.run()
-            process.waitUntilExit()
-            guard process.terminationStatus == 0 else { throw Error.xcrunFailed(exitCode: process.terminationStatus) }
-            let swiftc = try String(decoding: pipe.fileHandleForReading.readToEnd() ?? Data(), as: UTF8.self)
-                .trimmingCharacters(in: .newlines)
+            let swiftc: String
+            if let xcrun = try? context.tool(named: "xcrun") {
+                let process = Process()
+                process.executableURL = xcrun.url
+#if !os(Linux)
+                process.arguments = ["-f", "swiftc", "--toolchain", swiftToolchain.id]
+#endif
+                let pipe = Pipe()
+                process.standardOutput = pipe
+                if verbose { process.print() }
+                try process.run()
+                process.waitUntilExit()
+                guard process.terminationStatus == 0 else { throw Error.xcrunFailed(exitCode: process.terminationStatus) }
+                swiftc = try String(decoding: pipe.fileHandleForReading.readToEnd() ?? Data(), as: UTF8.self)
+                    .trimmingCharacters(in: .newlines)
+            } else {
+                do {
+                    swiftc = try context.tool(named: "swiftc").path.string
+                } catch {
+                    Diagnostics.warning("swiftc not found. Ensure a Swift Toolchain is installed and available.")
+                    throw Error.swiftToolchainNotFound
+                }
+            }
             let process2 = Process()
             process2.executableURL = URL(filePath: swiftc)
             process2.arguments = ["-g"] + arguments
@@ -340,8 +395,6 @@ struct ModuleBuildRequest {
         }
 
         @Sendable func clang(_ arguments: [String]) throws {
-            // Use clang from the Swift Toolchain
-            let clangPath = swiftToolchain.path + "/usr/bin/clang"
             let process = Process()
             var environment = ProcessInfo.processInfo.environment
 
@@ -353,7 +406,7 @@ struct ModuleBuildRequest {
             environment["IPHONEOS_DEPLOYMENT_TARGET"] = nil
 
             process.environment = environment
-            process.executableURL = URL(filePath: clangPath)
+            process.executableURL = try clangURL()
             process.arguments = ["-g"] + arguments
             if verbose { process.print() }
             try process.run()
@@ -391,13 +444,14 @@ struct ModuleBuildRequest {
 
         func pdc(_ arguments: [String]) throws {
             let process = Process()
-            process.executableURL = URL(filePath: "\(playdateSDK)/bin/pdc")
+            process.executableURL = try pdcURL()
             process.arguments = arguments
             if verbose { process.print() }
             try process.run()
             process.waitUntilExit()
             guard process.terminationStatus == 0 else { throw Error.pdcFailed(exitCode: process.terminationStatus) }
         }
+
 
         // MARK: - Build
 
@@ -559,21 +613,41 @@ struct ModuleBuildRequest {
             try await Task {
                 switch module.type {
                 case .product:
+#if os(Linux)
+                    print("building \(module.moduleName(for: .simulator)) (pdex.so)")
+#else 
                     print("building \(module.moduleName(for: .simulator)) (pdex.dylib)")
+#endif
                     // $(productName)_simulator.o
                     try swiftc(swiftFlags + swiftFlagsSimulator + module.sourcefiles + [
                         "-c", "-o", module.modulePath(for: .simulator)
                     ])
-                    try clang([
+#if os(Linux)
+                    let linkerFlags = [
+                        "-Wl,--undefined=_eventHandlerShim",
+                        "-Wl,--undefined=_eventHandler",
+                        "-shared",
+                        "-o",
+                        sourceURL.appending(path: "pdex.so").path(percentEncoded: false)
+                    ]
+#else
+                    let linkerFlags = [
+                        "-Wl,-exported_symbol,_eventHandlerShim",
+                        "-Wl,-exported_symbol,_eventHandler",
+                        "-dynamiclib",
+                        "-rdynamic",
+                        "-o",
+                        sourceURL.appending(path: "pdex.dylib").path(percentEncoded: false)
+                    ]
+#endif
+                    try clang(linkerFlags + [
                         "-nostdlib", "-dead_strip",
-                        "-Wl,-exported_symbol,_eventHandlerShim", "-Wl,-exported_symbol,_eventHandler",
-                        module.modulePath(for: .simulator), "-dynamiclib", "-rdynamic", "-lm",
+                        module.modulePath(for: .simulator), "-lc", "-lm",
                         "-DTARGET_SIMULATOR=1", "-DTARGET_EXTENSION=1",
                         "-I", ".",
                         "-I", "\(playdateSDK)/C_API",
                         "-L\(modulesURL.path(percentEncoded: false))",
                     ] + getLinkedLibraries(for: .simulator) + [
-                        "-o", sourceURL.appending(path: "pdex.dylib").path(percentEncoded: false),
                         "\(playdateSDK)/C_API/buildsupport/setup.c",
                     ])
                 case .swift:
@@ -710,6 +784,9 @@ extension PDCPlugin {
         case productNotFound
         case swiftToolchainNotFound
         case playdateSDKNotFound
+        case armNoneEabiGCCNotFound
+        case clangNotFound
+        case pdcNotFound
         case ccFailed(exitCode: Int32)
         case xcrunFailed(exitCode: Int32)
         case swiftcFailed(exitCode: Int32)
