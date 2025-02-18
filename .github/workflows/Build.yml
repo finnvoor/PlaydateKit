@@ -29,7 +29,7 @@ jobs:
         name: Install latest Swift version
         run: |
           curl -L -sS --show-error --fail ${{ steps.swift-version.outputs.url }} -o swift.pkg
-          sudo installer -store -pkg swift.pkg -target /
+          sudo installer -pkg swift.pkg -target /
       - name: Get latest Playdate SDK version
         id: playdate-version
         run: |
@@ -49,7 +49,7 @@ jobs:
         run: |
           curl -L -sS --show-error --fail ${{ steps.playdate-version.outputs.url }} -o PlaydateSDK-latest.zip
           unzip PlaydateSDK-latest.zip
-          sudo installer -store -pkg "PlaydateSDK.pkg" -target /
+          sudo installer -pkg "PlaydateSDK.pkg" -target /
       - name: Select Xcode
         run: |
           sudo xcode-select -s '/Applications/Xcode_16.2.app'
