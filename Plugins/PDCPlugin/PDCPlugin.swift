@@ -328,6 +328,7 @@ struct ModuleBuildRequest {
 
         @Sendable func clangURL() throws -> URL {
             guard let url = [
+                swiftToolchain.path + "/usr/bin/clang",
                 try? context.tool(named: "clang").path.string
             ].compactMap({ $0 }).filter({
                 FileManager.default.fileExists(atPath: $0)
