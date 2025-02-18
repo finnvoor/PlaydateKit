@@ -106,35 +106,6 @@ class Ball: Sprite.Sprite {
 
     var velocity = Vector(x: 4, y: 5)
 
-    static func computeNewVelocity(collisionPoint: Float, speed: Float, direction: Bool) -> Vector {
-        // Maximum and minimum angle from vertical
-        let maxAngleDegrees = 20
-
-        let bounceDegrees = Float(180 - 2 * maxAngleDegrees) * collisionPoint + Float(maxAngleDegrees)
-
-        let bounceRadians = bounceDegrees * Float.pi / 180
-
-        let unitVectorX = sinf(bounceRadians)
-        let unitVectorY = cosf(bounceRadians)
-
-        let flip: Float = direction ? -1 : 1
-
-        let velocityX = speed * unitVectorX * flip
-        let velocityY = speed * unitVectorY
-
-        return Vector(x: velocityX, y: velocityY)
-    }
-
-    func reset() {
-        position = Point(x: Display.width / 2, y: 10)
-        velocity.x *= Bool.random() ? 1 : -1
-        velocity.y = abs(velocity.y)
-    }
-
-    func speed() -> Float {
-        sqrtf(velocity.x * velocity.x + velocity.y * velocity.y)
-    }
-
     override func update() {
         let collisionInfo = moveWithCollisions(
             goal: position + velocity
@@ -169,6 +140,35 @@ class Ball: Sprite.Sprite {
 
     override func draw(bounds: Rect, drawRect _: Rect) {
         Graphics.fillEllipse(in: bounds)
+    }
+
+    static func computeNewVelocity(collisionPoint: Float, speed: Float, direction: Bool) -> Vector {
+        // Maximum and minimum angle from vertical
+        let maxAngleDegrees = 20
+
+        let bounceDegrees = Float(180 - 2 * maxAngleDegrees) * collisionPoint + Float(maxAngleDegrees)
+
+        let bounceRadians = bounceDegrees * Float.pi / 180
+
+        let unitVectorX = sinf(bounceRadians)
+        let unitVectorY = cosf(bounceRadians)
+
+        let flip: Float = direction ? -1 : 1
+
+        let velocityX = speed * unitVectorX * flip
+        let velocityY = speed * unitVectorY
+
+        return Vector(x: velocityX, y: velocityY)
+    }
+
+    func reset() {
+        position = Point(x: Display.width / 2, y: 10)
+        velocity.x *= Bool.random() ? 1 : -1
+        velocity.y = abs(velocity.y)
+    }
+
+    func speed() -> Float {
+        sqrtf(velocity.x * velocity.x + velocity.y * velocity.y)
     }
 
     // MARK: Private

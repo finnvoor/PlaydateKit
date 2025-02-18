@@ -24,7 +24,7 @@ public struct Polygon: Equatable {
     }
 }
 
-// MARK: - AffineTransformable + AffineTransformable
+// MARK: - [Point] + AffineTransformable
 
 extension [Point]: AffineTransformable {
     public mutating func transform(by transform: AffineTransform) {

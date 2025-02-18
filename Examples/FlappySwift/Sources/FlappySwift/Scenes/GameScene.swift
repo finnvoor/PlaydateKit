@@ -415,10 +415,6 @@ final class Score: Sprite.Sprite {
         didSet { markDirty() }
     }
 
-    static func += (lhs: Score, rhs: Int) {
-        lhs.score += rhs
-    }
-
     override func draw(bounds: Rect, drawRect _: Rect) {
         Graphics.setFont(font)
         Graphics.fillRect(bounds, color: .white)
@@ -432,6 +428,10 @@ final class Score: Sprite.Sprite {
                 y: bounds.center.y - (Float(font.height) / 2)
             )
         )
+    }
+
+    static func += (lhs: Score, rhs: Int) {
+        lhs.score += rhs
     }
 
     // MARK: Private

@@ -61,6 +61,7 @@ struct ModuleBuildRequest {
 
 @main struct PDCPlugin: CommandPlugin {
     let home = FileManager.default.homeDirectoryForCurrentUser.path()
+
     func performCommand(context: PluginContext, arguments: [String]) async throws {
         var arguments = ArgumentExtractor(arguments)
         let verbose = arguments.extractFlag(named: "verbose") > 0
@@ -108,10 +109,10 @@ struct ModuleBuildRequest {
 
         // MARK: - Paths
 
-#if !os(Linux)
+        #if !os(Linux)
         let swiftToolchain = try getSwiftToolchain()
         print("found Swift toolchain: \(swiftToolchain)")
-#endif
+        #endif
 
         let playdateSDK = try getPlaydateSDK()
         let playdateSDKVersion = (try? String(
@@ -317,7 +318,7 @@ struct ModuleBuildRequest {
             guard let url = [
                 "/usr/local/playdate/gcc-arm-none-eabi-9-2019-q4-major/bin/arm-none-eabi-gcc",
                 try? context.tool(named: "arm-none-eabi-gcc").path.string
-            ].compactMap({ $0 }).filter({
+            ].compactMap(\.self).filter({
                 FileManager.default.fileExists(atPath: $0)
             }).map({ URL(filePath: $0) }).first else {
                 Diagnostics.warning("arm-none-eabi-gcc not found. Ensure it is installed and in the PATH.")
@@ -330,7 +331,7 @@ struct ModuleBuildRequest {
             guard let url = [
                 swiftToolchain.path + "/usr/bin/clang",
                 try? context.tool(named: "clang").path.string
-            ].compactMap({ $0 }).filter({
+            ].compactMap(\.self).filter({
                 FileManager.default.fileExists(atPath: $0)
             }).map({ URL(filePath: $0) }).first else {
                 Diagnostics.warning("clang not found. Ensure it is installed and in the PATH.")
@@ -343,7 +344,7 @@ struct ModuleBuildRequest {
             guard let url = try [
                 "\(getPlaydateSDK())/bin/pdc",
                 try? context.tool(named: "pdc").path.string
-            ].compactMap({ $0 }).filter({
+            ].compactMap(\.self).filter({
                 FileManager.default.fileExists(atPath: $0)
             }).map({ URL(filePath: $0) }).first else {
                 Diagnostics.warning("pdc not found. Ensure the Playdate SDK is installed and the pdc tool is available.")
@@ -367,9 +368,9 @@ struct ModuleBuildRequest {
             if let xcrun = try? context.tool(named: "xcrun") {
                 let process = Process()
                 process.executableURL = xcrun.url
-#if !os(Linux)
+                #if !os(Linux)
                 process.arguments = ["-f", "swiftc", "--toolchain", swiftToolchain.id]
-#endif
+                #endif
                 let pipe = Pipe()
                 process.standardOutput = pipe
                 if verbose { process.print() }
@@ -452,7 +453,6 @@ struct ModuleBuildRequest {
             process.waitUntilExit()
             guard process.terminationStatus == 0 else { throw Error.pdcFailed(exitCode: process.terminationStatus) }
         }
-
 
         // MARK: - Build
 
@@ -614,16 +614,16 @@ struct ModuleBuildRequest {
             try await Task {
                 switch module.type {
                 case .product:
-#if os(Linux)
+                    #if os(Linux)
                     print("building \(module.moduleName(for: .simulator)) (pdex.so)")
-#else 
+                    #else
                     print("building \(module.moduleName(for: .simulator)) (pdex.dylib)")
-#endif
+                    #endif
                     // $(productName)_simulator.o
                     try swiftc(swiftFlags + swiftFlagsSimulator + module.sourcefiles + [
                         "-c", "-o", module.modulePath(for: .simulator)
                     ])
-#if os(Linux)
+                    #if os(Linux)
                     let linkerFlags = [
                         "-Wl,--undefined=_eventHandlerShim",
                         "-Wl,--undefined=_eventHandler",
@@ -631,7 +631,7 @@ struct ModuleBuildRequest {
                         "-o",
                         sourceURL.appending(path: "pdex.so").path(percentEncoded: false)
                     ]
-#else
+                    #else
                     let linkerFlags = [
                         "-Wl,-exported_symbol,_eventHandlerShim",
                         "-Wl,-exported_symbol,_eventHandler",
@@ -640,7 +640,7 @@ struct ModuleBuildRequest {
                         "-o",
                         sourceURL.appending(path: "pdex.dylib").path(percentEncoded: false)
                     ]
-#endif
+                    #endif
                     try clang(linkerFlags + [
                         "-nostdlib", "-dead_strip",
                         module.modulePath(for: .simulator), "-lc", "-lm",

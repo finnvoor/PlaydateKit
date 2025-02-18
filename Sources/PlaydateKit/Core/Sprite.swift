@@ -479,8 +479,6 @@ public enum Sprite {
         public let info: UnsafeBufferPointer<SpriteQueryInfo>
     }
 
-    // MARK: - Properties
-
     /// Sets the clipping rectangle for all sprites with a Z index within `startZ` and `endZ` inclusive.
     public static func setClipRectsInRange(clipRect: Rect, startZ: Int, endZ: Int) {
         sprite.setClipRectsInRange.unsafelyUnwrapped(clipRect.lcdRect, CInt(startZ), CInt(endZ))

@@ -229,7 +229,7 @@ public enum Graphics {
     public typealias StringEncoding = PDStringEncoding
     public typealias PolygonFillRule = LCDPolygonFillRule
     public typealias SolidColor = LCDSolidColor
-    
+
     public typealias TextWrap = PDTextWrappingMode
     public typealias TextAlignment = PDTextAlignment
 
@@ -598,7 +598,7 @@ public enum Graphics {
             CInt(point.y)
         ))
     }
-    
+
     /// Draws the text in the given rectangle using the provided options. If no font has
     /// been set with setFont, the default system font Asheville Sans 14 Light is used.
     public static func drawTextInRect(
@@ -619,7 +619,6 @@ public enum Graphics {
             aligned
         )
     }
-        
 
     /// Draws an ellipse inside the rectangle `rect` of width `lineWidth` (inset from the rectangle bounds).
     /// If `startAngle` != `endAngle`, this draws an arc between the given angles.
