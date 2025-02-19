@@ -328,10 +328,14 @@ struct ModuleBuildRequest {
         }
 
         @Sendable func clangURL() throws -> URL {
-            guard let url = [
-                swiftToolchain.path + "/usr/bin/clang",
+            #if os(macOS)
+            let swiftToolchainPath: [String?] = [swiftToolchain.path + "/usr/bin/clang"]
+            #else
+            let swiftToolchainPath: [String?] = []
+            #endif
+            guard let url = (swiftToolchainPath + [
                 try? context.tool(named: "clang").path.string
-            ].compactMap(\.self).filter({
+            ]).compactMap(\.self).filter({
                 FileManager.default.fileExists(atPath: $0)
             }).map({ URL(filePath: $0) }).first else {
                 Diagnostics.warning("clang not found. Ensure it is installed and in the PATH.")
