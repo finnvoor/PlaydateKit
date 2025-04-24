@@ -317,7 +317,7 @@ struct ModuleBuildRequest {
         @Sendable func ccURL() throws -> URL {
             guard let url = [
                 "/usr/local/playdate/gcc-arm-none-eabi-9-2019-q4-major/bin/arm-none-eabi-gcc",
-                try? context.tool(named: "arm-none-eabi-gcc").path.string
+                try? context.tool(named: "arm-none-eabi-gcc").url.absoluteString
             ].compactMap(\.self).filter({
                 FileManager.default.fileExists(atPath: $0)
             }).map({ URL(filePath: $0) }).first else {
@@ -334,7 +334,7 @@ struct ModuleBuildRequest {
             let swiftToolchainPath: [String?] = []
             #endif
             guard let url = (swiftToolchainPath + [
-                try? context.tool(named: "clang").path.string
+                try? context.tool(named: "clang").url.absoluteString
             ]).compactMap(\.self).filter({
                 FileManager.default.fileExists(atPath: $0)
             }).map({ URL(filePath: $0) }).first else {
@@ -347,7 +347,7 @@ struct ModuleBuildRequest {
         @Sendable func pdcURL() throws -> URL {
             guard let url = try [
                 "\(getPlaydateSDK())/bin/pdc",
-                try? context.tool(named: "pdc").path.string
+                try? context.tool(named: "pdc").url.absoluteString
             ].compactMap(\.self).filter({
                 FileManager.default.fileExists(atPath: $0)
             }).map({ URL(filePath: $0) }).first else {
@@ -385,7 +385,7 @@ struct ModuleBuildRequest {
                     .trimmingCharacters(in: .newlines)
             } else {
                 do {
-                    swiftc = try context.tool(named: "swiftc").path.string
+                    swiftc = try context.tool(named: "swiftc").url.absoluteString
                 } catch {
                     Diagnostics.warning("swiftc not found. Ensure a Swift Toolchain is installed and available.")
                     throw Error.swiftToolchainNotFound
@@ -635,6 +635,16 @@ struct ModuleBuildRequest {
                         "-o",
                         sourceURL.appending(path: "pdex.so").path(percentEncoded: false)
                     ]
+                    try clang(linkerFlags + [
+                        "-nostdlib", "-dead_strip",
+                        module.modulePath(for: .simulator), "-lc", "-lm",
+                        "-DTARGET_SIMULATOR=1", "-DTARGET_EXTENSION=1",
+                        "-I", ".",
+                        "-I", "\(playdateSDK)/C_API",
+                        "-L\(modulesURL.path(percentEncoded: false))"
+                    ] + getLinkedLibraries(for: .simulator) + [
+                        "\(playdateSDK)/C_API/buildsupport/setup.c",
+                    ])
                     #else
                     let linkerFlags = [
                         "-Wl,-exported_symbol,_eventHandlerShim",
@@ -644,7 +654,7 @@ struct ModuleBuildRequest {
                         "-o",
                         sourceURL.appending(path: "pdex.dylib").path(percentEncoded: false)
                     ]
-                    #endif
+                    let macOSSDKPath = try getMacOSSDKPath(context: context)
                     try clang(linkerFlags + [
                         "-nostdlib", "-dead_strip",
                         module.modulePath(for: .simulator), "-lc", "-lm",
@@ -652,9 +662,12 @@ struct ModuleBuildRequest {
                         "-I", ".",
                         "-I", "\(playdateSDK)/C_API",
                         "-L\(modulesURL.path(percentEncoded: false))",
+                        "-isysroot", macOSSDKPath,
+                        "-I", "\(macOSSDKPath)/usr/include"
                     ] + getLinkedLibraries(for: .simulator) + [
                         "\(playdateSDK)/C_API/buildsupport/setup.c",
                     ])
+                    #endif
                 case .swift:
                     print("building \(module.moduleName(for: .simulator)) (Swift)")
                     try swiftc(swiftFlags + swiftFlagsSimulator + module.sourcefiles + [
@@ -780,6 +793,37 @@ struct ModuleBuildRequest {
         }
         throw Error.playdateSDKNotFound
     }
+
+    #if os(macOS)
+    func getMacOSSDKPath(context: PluginContext) throws -> String {
+        let xcrun = try context.tool(named: "xcrun")
+        let process = Process()
+        process.executableURL = xcrun.url
+        process.arguments = ["--show-sdk-path"]
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        try process.run()
+        process.waitUntilExit()
+        if process.terminationStatus == 0,
+           let output = try? String(decoding: pipe.fileHandleForReading.readToEnd() ?? Data(), as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines),
+           FileManager.default.fileExists(atPath: output) {
+            return output
+        }
+
+        let commonPaths = [
+            "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk",
+            "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk"
+        ]
+
+        for path in commonPaths {
+            if FileManager.default.fileExists(atPath: path) {
+                return path
+            }
+        }
+
+        throw Error.macOSSDKNotFound
+    }
+    #endif
 }
 
 // MARK: PDCPlugin.Error
@@ -798,6 +842,7 @@ extension PDCPlugin {
         case clangFailed(exitCode: Int32)
         case arFailed(exitCode: Int32)
         case pdcFailed(exitCode: Int32)
+        case macOSSDKNotFound
     }
 }
 
