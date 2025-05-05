@@ -49,6 +49,22 @@ public struct Rect: Equatable {
             y = newValue.y - height / 2
         }
     }
+
+    public var minX: Float {
+        min(x, x + width)
+    }
+
+    public var minY: Float {
+        min(y, y + height)
+    }
+
+    public var maxX: Float {
+        max(x, x + width)
+    }
+
+    public var maxY: Float {
+        max(y, y + height)
+    }
 }
 
 public extension Rect {
