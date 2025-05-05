@@ -51,6 +51,86 @@ public struct Rect: Equatable {
     }
 }
 
+public extension Rect {
+    static func + (lhs: Rect, rhs: Rect) -> Rect {
+        Rect(
+            x: lhs.x + rhs.x,
+            y: lhs.y + rhs.y,
+            width: lhs.width + rhs.width,
+            height: lhs.height + rhs.height
+        )
+    }
+
+    static func += (lhs: inout Rect, rhs: Rect) {
+        lhs = lhs + rhs
+    }
+
+    static func - (lhs: Rect, rhs: Rect) -> Rect {
+        Rect(
+            x: lhs.x - rhs.x,
+            y: lhs.y - rhs.y,
+            width: lhs.width - rhs.width,
+            height: lhs.height - rhs.height
+        )
+    }
+
+    static func -= (lhs: inout Rect, rhs: Rect) {
+        lhs = lhs - rhs
+    }
+
+    static func * (lhs: Rect, rhs: Rect) -> Rect {
+        Rect(
+            x: lhs.x * rhs.x,
+            y: lhs.y * rhs.y,
+            width: lhs.width * rhs.width,
+            height: lhs.height * rhs.height
+        )
+    }
+
+    static func *= (lhs: inout Rect, rhs: Rect) {
+        lhs = lhs * rhs
+    }
+
+    static func * (lhs: Rect, rhs: Float) -> Rect {
+        Rect(
+            x: lhs.x * rhs,
+            y: lhs.y * rhs,
+            width: lhs.width * rhs,
+            height: lhs.height * rhs
+        )
+    }
+
+    static func *= (lhs: inout Rect, rhs: Float) {
+        lhs = lhs * rhs
+    }
+
+    static func / (lhs: Rect, rhs: Rect) -> Rect {
+        Rect(
+            x: lhs.x / rhs.x,
+            y: lhs.y / rhs.y,
+            width: lhs.width / rhs.width,
+            height: lhs.height / rhs.height
+        )
+    }
+
+    static func /= (lhs: inout Rect, rhs: Rect) {
+        lhs = lhs / rhs
+    }
+
+    static func / (lhs: Rect, rhs: Float) -> Rect {
+        Rect(
+            x: lhs.x / rhs,
+            y: lhs.y / rhs,
+            width: lhs.width / rhs,
+            height: lhs.height / rhs
+        )
+    }
+
+    static func /= (lhs: inout Rect, rhs: Float) {
+        lhs = lhs / rhs
+    }
+}
+
 // MARK: AffineTransformable
 
 extension Rect: AffineTransformable {
