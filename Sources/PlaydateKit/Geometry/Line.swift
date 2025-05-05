@@ -17,6 +17,60 @@ public struct Line: Equatable {
     public var start, end: Point
 }
 
+public extension Line {
+    static func + (lhs: Line, rhs: Line) -> Line {
+        Line(start: lhs.start + rhs.start, end: lhs.end + rhs.end)
+    }
+
+    static func += (lhs: inout Line, rhs: Line) {
+        lhs = lhs + rhs
+    }
+
+    static func - (lhs: Line, rhs: Line) -> Line {
+        Line(start: lhs.start - rhs.start, end: lhs.end - rhs.end)
+    }
+
+    static func -= (lhs: inout Line, rhs: Line) {
+        lhs = lhs - rhs
+    }
+
+    static func * (lhs: Line, rhs: Line) -> Line {
+        Line(start: lhs.start * rhs.start, end: lhs.end * rhs.end)
+    }
+
+    static func *= (lhs: inout Line, rhs: Line) {
+        lhs = lhs * rhs
+    }
+
+    static func * (lhs: Line, rhs: Float) -> Line {
+        Line(start: lhs.start * rhs, end: lhs.end * rhs)
+    }
+
+    static func *= (lhs: inout Line, rhs: Float) {
+        lhs = lhs * rhs
+    }
+
+    static func / (lhs: Line, rhs: Line) -> Line {
+        Line(start: lhs.start / rhs.start, end: lhs.end / rhs.end)
+    }
+
+    static func /= (lhs: inout Line, rhs: Line) {
+        lhs = lhs / rhs
+    }
+
+    static func / (lhs: Line, rhs: Float) -> Line {
+        Line(start: lhs.start / rhs, end: lhs.end / rhs)
+    }
+
+    static func /= (lhs: inout Line, rhs: Float) {
+        lhs = lhs / rhs
+    }
+
+    static prefix func - (point: Line) -> Line {
+        Line(start: -point.start, end: -point.end)
+    }
+}
+
 // MARK: AffineTransformable
 
 extension Line: AffineTransformable {
