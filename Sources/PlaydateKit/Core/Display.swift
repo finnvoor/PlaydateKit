@@ -43,6 +43,12 @@ public enum Display {
         Int(display.getWidth.unsafelyUnwrapped())
     }
 
+    /// Returns the center of the display, taking the current scale into account;
+    /// e.g., if the scale is 2, this function returns (60,100) instead of (120,200).
+    public static var center: Point {
+        Point(x: Float(width) / 2, y: Float(height) / 2)
+    }
+
     /// The nominal refresh rate in frames per second. The default is 30 fps, which is a recommended
     /// figure that balances animation smoothness with performance and power considerations. Maximum is 50 fps.
     ///
