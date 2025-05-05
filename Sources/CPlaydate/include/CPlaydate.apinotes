@@ -77,6 +77,10 @@ Enumerators:
   SwiftName: keyReleased
 - Name: kEventLowPower
   SwiftName: lowPower
+- Name: kEventMirrorStarted
+  SwiftName: mirrorStarted
+- Name: kEventMirrorEnded
+  SwiftName: mirrorEnded
 - Name: kPDLanguageEnglish
   SwiftName: english
 - Name: kPDLanguageJapanese

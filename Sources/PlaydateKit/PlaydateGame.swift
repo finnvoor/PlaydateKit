@@ -37,6 +37,8 @@ public extension PlaydateGame {
     func deviceDidUnlock() {}
     func gameWillPause() {}
     func gameWillResume() {}
+    func mirrorStarted() {}
+    func mirrorEnded() {}
 
     func handle(_ event: System.Event) {
         switch event {
@@ -46,6 +48,8 @@ public extension PlaydateGame {
         case .resume: gameWillResume()
         case .terminate: gameWillTerminate()
         case .lowPower: deviceWillSleep()
+        case .mirrorStarted: mirrorStarted()
+        case .mirrorEnded: mirrorEnded()
         default: break
         }
     }

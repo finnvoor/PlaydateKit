@@ -56,16 +56,8 @@ public enum Display {
     /// Since the display refreshes line-by-line, and unchanged lines aren’t sent to the display,
     /// the update cycle will be faster than 30 times a second but at an indeterminate rate.
     public static var refreshRate: Float {
-        get { _refreshRate }
-        set {
-            var refreshRate = newValue
-            if !((0...50) ~= refreshRate) {
-                System.error("refreshRate must be between 0...50")
-                refreshRate = min(max(refreshRate, 0), 50)
-            }
-            _refreshRate = refreshRate
-            display.setRefreshRate.unsafelyUnwrapped(refreshRate)
-        }
+        get { display.getRefreshRate() }
+        set { display.setRefreshRate.unsafelyUnwrapped(refreshRate) }
     }
 
     /// If inverted is true, the frame buffer is drawn inverted—black instead of white, and vice versa.
@@ -116,8 +108,6 @@ public enum Display {
     private nonisolated(unsafe) static var _scale = Scale.oneTimes
 
     private nonisolated(unsafe) static var _inverted = false
-
-    private nonisolated(unsafe) static var _refreshRate: Float = 30
 
     private static var display: playdate_display { Playdate.playdateAPI.display.pointee }
 }
