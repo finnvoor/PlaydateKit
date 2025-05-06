@@ -57,9 +57,9 @@ public extension Sound {
             sequence.stop.unsafelyUnwrapped(pointer)
         }
 
-        public func addTrack() -> Track {
+        @discardableResult public func addTrack() -> Track {
             let trackPointer = sequence.addTrack.unsafelyUnwrapped(pointer).unsafelyUnwrapped
-            let track = Track(pointer: trackPointer)
+            let track = Track(pointer: trackPointer, free: false)
             tracks.append(track)
             return track
         }

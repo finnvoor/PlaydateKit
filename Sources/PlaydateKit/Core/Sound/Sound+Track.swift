@@ -4,16 +4,20 @@ public extension Sound {
     class Track {
         // MARK: Lifecycle
 
-        init(pointer: OpaquePointer) {
+        init(pointer: OpaquePointer, free: Bool = true) {
             self.pointer = pointer
+            self.free = free
         }
 
         public init() {
             pointer = track.newTrack.unsafelyUnwrapped().unsafelyUnwrapped
+            free = true
         }
 
         deinit {
-            track.freeTrack.unsafelyUnwrapped(pointer)
+            if free {
+                track.freeTrack.unsafelyUnwrapped(pointer)
+            }
         }
 
         // MARK: Public
@@ -72,17 +76,18 @@ public extension Sound {
             velocity: Float
         )? {
             let index = track.getIndexForStep.unsafelyUnwrapped(pointer, UInt32(step))
+            var outStep: UInt32 = 0
             var note: MIDINote = 0
             var length: UInt32 = 0
             var velocity: Float = 0
             guard track.getNoteAtIndex.unsafelyUnwrapped(
                 pointer,
                 index,
-                nil,
+                &outStep,
                 &length,
                 &note,
                 &velocity
-            ) == 1 else {
+            ) == 1, outStep == step else {
                 return nil
             }
             return (note, Int(length), velocity)
@@ -95,5 +100,7 @@ public extension Sound {
         // MARK: Internal
 
         let pointer: OpaquePointer
+        
+        private let free: Bool
     }
 }
