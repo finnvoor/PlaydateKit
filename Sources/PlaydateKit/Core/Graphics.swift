@@ -86,9 +86,14 @@ public enum Graphics {
     public class Bitmap {
         // MARK: Lifecycle
 
-        init(pointer: OpaquePointer, free: Bool = true) {
+        init(
+            pointer: OpaquePointer,
+            free: Bool = true,
+            mask: Bitmap? = nil
+        ) {
             self.pointer = pointer
             self.free = free
+            self.mask = mask
         }
 
         /// Allocates and returns a new `Bitmap` from the file at path. If there is no file at `path`, the function throws.
@@ -145,7 +150,7 @@ public enum Graphics {
         /// Returns a new LCDBitmap that is an exact copy of the bitmap.
         public func copy() -> Bitmap {
             let bitmap = graphics.copyBitmap.unsafelyUnwrapped(pointer).unsafelyUnwrapped
-            return Bitmap(pointer: bitmap)
+            return Bitmap(pointer: bitmap, mask: mask)
         }
 
         /// Gets various info about the bitmap including its `width` and `height` and raw pixel `data`.
