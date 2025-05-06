@@ -6,9 +6,6 @@
     <a href="https://www.swift.org/">
         <img src="https://img.shields.io/badge/Swift-6.0-f05237.svg" />
     </a>
-    <a href="https://sdk.play.date">
-        <img src="https://img.shields.io/badge/Playdate_SDK-2.5.0-ffc500.svg" />
-    </a>
     <a href="https://github.com/finnvoor/PlaydateKit/actions/workflows/Build.yml">
         <img src="https://github.com/finnvoor/PlaydateKit/actions/workflows/Build.yml/badge.svg" />
     </a>
@@ -22,25 +19,12 @@ PlaydateKit provides easy to use Swift bindings for the [Playdate](https://play.
 
 PlaydateKit provides (almost) full coverage of the Playdate C API. PlaydateKit adds wrapper types for some values (Sprite, Bitmap, FileHandle, etc) that automatically manage the allocation/deallocation of resources. While I have attempted to closely follow the C API specifications, much of it is untested, so if you run into an unexpected issue or can't do something with the Swift API, please open an issue!
 
-Currently, the following sections of the API are implemented:
-
-- [x] Display
-- [x] File
-- [x] Graphics
-- [x] JSON
-- [ ] Lua
-- [x] Scoreboards
-- [ ] Sound
-  - [x] FilePlayer
-  - [x] SamplePlayer
-  - [x] Synth (partial)
-- [x] Sprite
-- [x] System
-
 ## Usage
+
 For detailed instructions and documentation on how to get started creating a game using PlaydateKit, see [here](https://finnvoor.github.io/PlaydateKit/documentation/playdatekit).
 
 ### Summary
+
 1. Install a recent nightly [Swift](https://www.swift.org/download/#snapshots) toolchain that supports the Embedded experimental feature.
 2. Install the [Playdate SDK](https://play.date/dev/).
 3. Create a new repository using the [PlaydateKitTemplate template](https://github.com/finnvoor/PlaydateKitTemplate).
@@ -70,6 +54,7 @@ final class Game: PlaydateGame {
 ```
 
 ## Contributing
+
 I'm happy to accept contributions on this project, whether it's bug fixes, implementing missing features, or opening an issue. Please try to follow the existing conventions/style in the project.
 
 If you create a game using PlaydateKit and would like it featured here, please open an issue or pull request! If you would like to demake a retro game or create a new one that demonstrates PlaydateKit's capabilities, feel free to add an example game in the `Examples/` directory.

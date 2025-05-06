@@ -23,6 +23,7 @@ public enum Sound {
     static var fileplayer: playdate_sound_fileplayer { sound.fileplayer.pointee }
     static var sampleplayer: playdate_sound_sampleplayer { sound.sampleplayer.pointee }
     static var synth: playdate_sound_synth { sound.synth.pointee }
+    static var instrument: playdate_sound_instrument { sound.instrument.pointee }
     static var sequence: playdate_sound_sequence { sound.sequence.pointee }
     static var track: playdate_sound_track { sound.track.pointee }
 }
