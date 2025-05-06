@@ -1,4 +1,4 @@
-public import CPlaydate
+import CPlaydate
 
 /// Functions related to sprites.
 ///

@@ -1,4 +1,4 @@
-public import CPlaydate
+import CPlaydate
 
 /// Functions pertaining to Playdate’s screen.
 public enum Display {
@@ -57,7 +57,7 @@ public enum Display {
     /// the update cycle will be faster than 30 times a second but at an indeterminate rate.
     public static var refreshRate: Float {
         get { display.getRefreshRate() }
-        set { display.setRefreshRate.unsafelyUnwrapped(refreshRate) }
+        set { display.setRefreshRate.unsafelyUnwrapped(newValue) }
     }
 
     /// If inverted is true, the frame buffer is drawn inverted—black instead of white, and vice versa.
