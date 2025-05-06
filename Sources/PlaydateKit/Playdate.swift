@@ -1,6 +1,6 @@
 @_documentation(visibility: internal)
 @_exported
-public import CPlaydate
+import CPlaydate
 
 // MARK: - Playdate
 

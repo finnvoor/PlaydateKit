@@ -1,4 +1,4 @@
-public import CPlaydate
+import CPlaydate
 
 /// Encoding and decoding of JSON files and strings.
 public enum JSON {
