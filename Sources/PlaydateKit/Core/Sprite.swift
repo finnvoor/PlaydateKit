@@ -34,8 +34,14 @@ public enum Sprite {
             }
         }
 
-        init(pointer: OpaquePointer) {
+        init(
+            pointer: OpaquePointer,
+            image: Graphics.Bitmap?,
+            stencil: Graphics.Bitmap?
+        ) {
             self.pointer = pointer
+            self.image = image
+            self.stencil = stencil
             userdata = Unmanaged.passUnretained(self).toOpaque()
             setUpdateFunction { sprite in
                 let userdata = PlaydateKit.Sprite.getUserdata(sprite.unsafelyUnwrapped).unsafelyUnwrapped
@@ -88,7 +94,7 @@ public enum Sprite {
         public let pointer: OpaquePointer
 
         /// The sprite's stencil bitmap, if set.
-        public var stencil: Graphics.Bitmap? { _stencil }
+        public private(set) var stencil: Graphics.Bitmap?
 
         /// The bitmap currently assigned to the sprite.
         /// > Note: Setting an image will override a Sprite's custom ``draw(bounds:drawRect:)`` function.
@@ -202,7 +208,11 @@ public enum Sprite {
 
         /// Allocates and returns a copy of the sprite.
         public func copy() -> Sprite {
-            Sprite(pointer: sprite.copy.unsafelyUnwrapped(pointer).unsafelyUnwrapped)
+            Sprite(
+                pointer: sprite.copy.unsafelyUnwrapped(pointer).unsafelyUnwrapped,
+                image: image,
+                stencil: stencil
+            )
         }
 
         /// Moves the sprite to `point` and resets its bounds based on the bitmap dimensions and center.
@@ -228,7 +238,7 @@ public enum Sprite {
         /// Specifies a stencil image to be set on the frame buffer before the sprite is drawn.
         /// Pass `nil` to clear the sprite’s stencil.
         public func setStencil(_ stencil: Graphics.Bitmap?) {
-            _stencil = stencil
+            self.stencil = stencil
             if let stencil {
                 sprite.setStencil.unsafelyUnwrapped(pointer, stencil.pointer)
             } else {
@@ -239,14 +249,14 @@ public enum Sprite {
         /// Specifies a stencil image to be set on the frame buffer before the sprite is drawn. If `tile` is set, the stencil will be tiled.
         /// Tiled stencils must have width evenly divisible by 32.
         public func setStencilImage(_ stencil: Graphics.Bitmap, tile: Int) {
-            _stencil = stencil
+            self.stencil = stencil
             sprite.setStencilImage.unsafelyUnwrapped(pointer, stencil.pointer, CInt(tile))
         }
 
         /// Sets the sprite’s stencil to the given pattern.
         public func setStencilPattern(_ pattern: UnsafeMutablePointer<UInt8>) {
             sprite.setStencilPattern.unsafelyUnwrapped(pointer, pattern)
-            _stencil = nil
+            stencil = nil
         }
 
         /// Sets the clipping rectangle for sprite drawing.
@@ -362,13 +372,6 @@ public enum Sprite {
         ) {
             sprite.setUpdateFunction.unsafelyUnwrapped(pointer, updateFunction)
         }
-
-        // MARK: Private
-
-        /// I don't know why previous public private(set) var stencil
-        /// was causing this kind of error https://github.com/finnvoor/PlaydateKit/issues/51
-        /// Separating the public getter from ste private storage, resolved the issue
-        private var _stencil: Graphics.Bitmap?
     }
 
     // MARK: Public
