@@ -38,19 +38,20 @@ public extension Sound {
             synth: Synth,
             rangeStart: MIDINote,
             rangeEnd: MIDINote,
-            transpose: Float
+            transpose: Float = 0
         ) -> Bool {
-            voices.append(synth)
-            return instrument.addVoice.unsafelyUnwrapped(
+            guard instrument.addVoice.unsafelyUnwrapped(
                 pointer,
                 synth.pointer,
                 rangeStart,
                 rangeEnd,
                 transpose
-            ) == 1
+            ) == 1 else { return false }
+            voices.append(synth)
+            return true
         }
 
-        public func playNote(
+        @discardableResult public func playNote(
             frequency: Float,
             velocity: Float = 1,
             length: Float = -1,
@@ -66,7 +67,7 @@ public extension Sound {
             return voices.first { $0.pointer == synthPointer }!
         }
 
-        public func playMIDINote(
+        @discardableResult public func playMIDINote(
             note: MIDINote,
             velocity: Float = 1,
             length: Float = -1,

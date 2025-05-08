@@ -9,6 +9,7 @@ public extension Sound {
         }
 
         deinit {
+            stop() // simulator crashes without this
             sequence.freeSequence.unsafelyUnwrapped(pointer)
         }
 
@@ -24,8 +25,6 @@ public extension Sound {
             get { Int(sequence.getTime.unsafelyUnwrapped(pointer)) }
             set { sequence.setTime.unsafelyUnwrapped(pointer, UInt32(newValue)) }
         }
-
-        //        public var loops: CUnsignedInt
 
         public var tempo: Float {
             get { sequence.getTempo.unsafelyUnwrapped(pointer) }
@@ -55,6 +54,15 @@ public extension Sound {
 
         public func stop() {
             sequence.stop.unsafelyUnwrapped(pointer)
+        }
+        
+        public func setLoops(_ loops: Int = 0, startStep: Int = 0, endStep: Int) {
+            sequence.setLoops.unsafelyUnwrapped(
+                pointer,
+                Int32(startStep),
+                Int32(endStep),
+                Int32(loops)
+            )
         }
 
         @discardableResult public func addTrack() -> Track {

@@ -44,7 +44,7 @@ public enum Display {
     }
 
     /// Returns the center of the display, taking the current scale into account;
-    /// e.g., if the scale is 2, this function returns (60,100) instead of (120,200).
+    /// e.g., if the scale is 2, this function returns (100,60) instead of (200,120).
     public static var center: Point {
         Point(x: Float(width) / 2, y: Float(height) / 2)
     }
