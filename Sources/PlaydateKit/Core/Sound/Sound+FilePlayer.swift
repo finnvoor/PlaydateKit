@@ -3,12 +3,12 @@ import CPlaydate
 public extension Sound {
     /// The fileplayer class is used for streaming audio from a file on disk. This requires less memory than keeping all of the
     /// file’s data in memory (as with the sampleplayer), but can increase overhead at run time.
-    class FilePlayer {
+    class FilePlayer: Source {
         // MARK: Lifecycle
 
         /// Creates a new FilePlayer.
         public init() {
-            pointer = fileplayer.newPlayer.unsafelyUnwrapped().unsafelyUnwrapped
+            super.init(pointer: fileplayer.newPlayer.unsafelyUnwrapped().unsafelyUnwrapped)
         }
 
         deinit {
@@ -20,11 +20,6 @@ public extension Sound {
         }
 
         // MARK: Public
-
-        /// Returns true if player is playing
-        public var isPlaying: Bool {
-            fileplayer.isPlaying.unsafelyUnwrapped(pointer) == 1
-        }
 
         /// Installs a closure that will be called when playback has completed.
         public var finishCallback: (() -> Void)? {
@@ -172,7 +167,5 @@ public extension Sound {
         }
 
         private var _callbackData: UnsafeMutablePointer<CallbackData>?
-
-        private let pointer: OpaquePointer
     }
 }

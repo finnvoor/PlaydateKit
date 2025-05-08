@@ -3,16 +3,16 @@ import CPlaydate
 public extension Sound {
     // MARK: Public
 
-    class Synth {
+    class Synth: Source {
         // MARK: Lifecycle
 
-        init(pointer: OpaquePointer) {
-            self.pointer = pointer
+        override init(pointer: OpaquePointer) {
+            super.init(pointer: pointer)
         }
 
         /// Creates a new synth object to play a waveform or wavetable. See ``Sound/Synth/setWaveform(_:)`` for waveform values.
         public init() {
-            pointer = synth.newSynth.unsafelyUnwrapped().unsafelyUnwrapped
+            super.init(pointer: synth.newSynth.unsafelyUnwrapped().unsafelyUnwrapped)
         }
 
         deinit {
@@ -20,22 +20,6 @@ public extension Sound {
         }
 
         // MARK: Public
-
-        public var volume: (left: Float, right: Float) {
-            get {
-                var left: Float = 0
-                var right: Float = 0
-                synth.getVolume.unsafelyUnwrapped(pointer, &left, &right)
-                return (left, right)
-            }
-            set {
-                synth.setVolume.unsafelyUnwrapped(pointer, newValue.left, newValue.right)
-            }
-        }
-
-        public var isPlaying: Bool {
-            synth.isPlaying.unsafelyUnwrapped(pointer) == 1
-        }
 
         public var parameterCount: Int {
             Int(synth.getParameterCount.unsafelyUnwrapped(pointer))
@@ -88,32 +72,28 @@ public extension Sound {
             frequency: Float,
             volume: Float = 1,
             length: Float = -1,
-            when: Int = 0
+            when: CUnsignedInt = 0
         ) {
-            synth.playNote.unsafelyUnwrapped(pointer, frequency, volume, length, UInt32(when))
+            synth.playNote.unsafelyUnwrapped(pointer, frequency, volume, length, when)
         }
 
         public func playMIDINote(
             note: MIDINote,
             volume: Float = 1,
             length: Float = -1,
-            when: Int = 0
+            when: CUnsignedInt = 0
         ) {
-            synth.playMIDINote.unsafelyUnwrapped(pointer, note, volume, length, UInt32(when))
+            synth.playMIDINote.unsafelyUnwrapped(pointer, note, volume, length, when)
         }
 
         /// Sends a note off event to the synth.
         /// - Parameter when: The scheduled time to send a note off event. Defaults to immediately.
-        public func noteOff(when: Int = 0) {
-            synth.noteOff.unsafelyUnwrapped(pointer, UInt32(when))
+        public func noteOff(when: CUnsignedInt = 0) {
+            synth.noteOff.unsafelyUnwrapped(pointer, when)
         }
 
         public func setParameter(at position: Int, to value: Float) -> Bool {
             synth.setParameter.unsafelyUnwrapped(pointer, Int32(position), value) == 1
         }
-
-        // MARK: Internal
-
-        let pointer: OpaquePointer
     }
 }

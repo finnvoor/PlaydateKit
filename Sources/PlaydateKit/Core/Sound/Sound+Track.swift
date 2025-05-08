@@ -100,7 +100,9 @@ public extension Sound {
         // MARK: Internal
 
         let pointer: OpaquePointer
-        
+
+        // MARK: Private
+
         private let free: Bool
     }
 }
