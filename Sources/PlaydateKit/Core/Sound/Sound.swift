@@ -15,10 +15,39 @@ public enum Sound {
         sound.getCurrentTime.unsafelyUnwrapped()
     }
 
+    public static var defaultChannel: Channel {
+        Channel(pointer: sound.getDefaultChannel().unsafelyUnwrapped, free: false)
+    }
+
+    public static var headphoneState: (headphone: Bool, mic: Bool) {
+        var headphone: CInt = 0
+        var mic: CInt = 0
+        sound.getHeadphoneState.unsafelyUnwrapped(&headphone, &mic, nil)
+        return (headphone != 0, mic != 0)
+    }
+
+    public static func addChannel(_ channel: Channel) -> Bool {
+        sound.addChannel.unsafelyUnwrapped(channel.pointer) == 1
+    }
+
+    public static func removeSource(_ source: Source) -> Bool {
+        sound.removeSource.unsafelyUnwrapped(source.pointer) == 1
+    }
+
+    public static func removeChannel(_ channel: Channel) -> Bool {
+        sound.removeChannel.unsafelyUnwrapped(channel.pointer) == 1
+    }
+
+    public static func setOutputsActive(headphone: Bool, speaker: Bool) {
+        sound.setOutputsActive.unsafelyUnwrapped(headphone ? 1 : 0, speaker ? 1 : 0)
+    }
+
     // MARK: Internal
 
     static var sound: playdate_sound { Playdate.playdateAPI.sound.pointee }
 
+    static var channel: playdate_sound_channel { sound.channel.pointee }
+    static var source: playdate_sound_source { sound.source.pointee }
     static var sample: playdate_sound_sample { sound.sample.pointee }
     static var fileplayer: playdate_sound_fileplayer { sound.fileplayer.pointee }
     static var sampleplayer: playdate_sound_sampleplayer { sound.sampleplayer.pointee }

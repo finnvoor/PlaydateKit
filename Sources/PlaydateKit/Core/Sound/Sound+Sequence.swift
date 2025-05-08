@@ -55,7 +55,7 @@ public extension Sound {
         public func stop() {
             sequence.stop.unsafelyUnwrapped(pointer)
         }
-        
+
         public func setLoops(_ loops: Int = 0, startStep: Int = 0, endStep: Int) {
             sequence.setLoops.unsafelyUnwrapped(
                 pointer,
