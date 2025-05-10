@@ -29,82 +29,30 @@ By the end of this article you'll have the PlaydateKit example running on the Pl
 
 ### Rename Your Game Package
 
-While you can stick with the snazzy "PlaydateKitTemplate" name, you probably want to rename your Swift package to the name of your game.
+While you can stick with the "PlaydateKitTemplate" name, you probably want to rename your Swift package to the name of your game. PlaydateKit comes with a package plugin to ensure all the necessary files are renamed correctly.
 
-1. Open **Package.swift** in your preferred editor.
-2. Find and replace **PlaydateKitTemplate** with the name of your game. This should change the package name, product name and target, and target name. You should end up with a diff that looks like this:
+To rename your game package, run:
 
-```diff
-diff --git a/Package.swift b/Package.swift
-index c6f109c..2aa5985 100644
---- a/Package.swift
-+++ b/Package.swift
-@@ -14,14 +14,14 @@ if let path = Context.environment["PLAYDATE_SDK_PATH"] {
- }
- 
- let package = Package(
--    name: "PlaydateKitTemplate",
--    products: [.library(name: "PlaydateKitTemplate", targets: ["PlaydateKitTemplate"])],
-+    name: "MyGame",
-+    products: [.library(name: "MyGame", targets: ["MyGame"])],
-     dependencies: [
-         .package(url: "https://github.com/finnvoor/PlaydateKit.git", branch: "main")
-     ],
-     targets: [
-         .target(
--            name: "PlaydateKitTemplate",
-+            name: "MyGame",
-             dependencies: [.product(name: "PlaydateKit", package: "PlaydateKit")],
-             swiftSettings: [
-                 .enableExperimentalFeature("Embedded"),
-```
-
-3. Rename the **Sources > PlaydateKitTemplate** directory to the name chosen above.
-4. *(Optional)* If you will be running your game from Xcode, you will need to modify the default xcschemes.
-    1. Rename the existing xcscheme file located at `.swiftpm/xcode/xcshareddata/xcschemes/PlaydateKitTemplate.xcscheme`
-    2. Open the xcscheme and change all occurences of **PlaydateKitTemplate** to the name of your game. You should end up with a diff that looks like this:
-
-```diff
-diff --git a/.swiftpm/xcode/xcshareddata/xcschemes/PlaydateKitTemplate.xcscheme b/.swiftpm/xcode/xcshareddata/xcschemes/MyGame.xcscheme
-index b18125c..b3c2a4e 100644
---- a/.swiftpm/xcode/xcshareddata/xcschemes/PlaydateKitTemplate.xcscheme
-+++ b/.swiftpm/xcode/xcshareddata/xcschemes/MyGame.xcscheme
-@@ -15,9 +15,9 @@
-             buildForAnalyzing = "YES">
-             <BuildableReference
-                BuildableIdentifier = "primary"
--               BlueprintIdentifier = "PlaydateKitTemplate"
--               BuildableName = "PlaydateKitTemplate"
--               BlueprintName = "PlaydateKitTemplate"
-+               BlueprintIdentifier = "MyGame"
-+               BuildableName = "MyGame"
-+               BlueprintName = "MyGame"
-                ReferencedContainer = "container:">
-             </BuildableReference>
-          </BuildActionEntry>
-@@ -48,9 +48,9 @@
-       <MacroExpansion>
-          <BuildableReference
-             BuildableIdentifier = "primary"
--            BlueprintIdentifier = "PlaydateKitTemplate"
--            BuildableName = "PlaydateKitTemplate"
--            BlueprintName = "PlaydateKitTemplate"
-+            BlueprintIdentifier = "MyGame"
-+            BuildableName = "MyGame"
-+            BlueprintName = "MyGame"
-             ReferencedContainer = "container:">
-          </BuildableReference>
-       </MacroExpansion>
+```console
+swift package rename --allow-writing-to-package-directory --from PlaydateKitTemplate --to <new-name>
 ```
 
 ### Running on the Playdate Simulator
 
 #### Building From the Command Line
 
+Ensure you are using a recent nightly Swift toolchain. You can configure Swiftly to use the latest nightly toolchain by running the following command in your project's root directory:
+
+```console
+swiftly install --use main-snapshot
+```
+
+This will ensure all `swift` commands run in this directory will use a compatible Swift toolchain. If you have manually installed a swift toolchain, you can replace `swift` with `$(xcrun -f swift -toolchain "swift latest")` in the command below.
+
 To build your package into a `pdx` file that can be run on the Playdate simulator, PlaydateKit comes with a `pdc` package plugin. To run this plugin, navigate to the root of your project and run the plugin.
 
 ```console
-$ swift package pdc
+swift package pdc
 ```
 
 Your package should be compiled into a `pdx` file located at `.build/plugins/PDCPlugin/outputs/PlaydateKitTemplate.pdx`, where PlaydateKitTemplate will be the name specified above. You can then open this `pdx` file directly in the Playdate simulator.
@@ -120,3 +68,5 @@ If you followed the xcscheme instructions above, your package should be ready to
 If everything worked, you should now see the default PlaydateKit game running on the Playdate simulator.
 
 ![A screenshot of the PlaydateKitTemplate game running on the Playdate simulator](PlaydateKitTemplate-Simulator)
+
+> Note: While the Xcode-selected Swift toolchain is used for **building** in Xcode, when **running** from Xcode the latest Swift toolchain installed is used (`xcrun -f swift -toolchain "swift latest"`).

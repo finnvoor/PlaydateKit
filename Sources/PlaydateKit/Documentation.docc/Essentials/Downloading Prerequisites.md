@@ -30,20 +30,22 @@ Building games using PlaydateKit requires installing both the Playdate SDK and a
 
 PlaydateKit currently requires a recent nightly version of the Swift toolchain that has support for the Embedded Swift experimental language feature.
 
-1. Navigate to the [Swift.org downloads page](https://www.swift.org/download/#snapshots).
-2. Scroll to the **Trunk Development (main)** subsection, and select the **Xcode "Universal"** link to download the latest version of the Swift nightly toolchain.
-3. Open and install the downloaded **swift-DEVELOPMENT-SNAPSHOT-202X-XX-XX-a-osx.pkg**.
+[Swiftly](https://www.swift.org/swiftly/documentation/swiftlydocs) is the recommended way to install the nightly toolchain.
 
-@TabNavigator {
-   @Tab("Step 1") {
-      ![A screenshot of the Swift toolchain download page](Swift-Toolchain)
-   }
+1. Install Swiftly by running the following commands in your terminal:
 
-   @Tab("Step 2") {
-       ![A screenshot of the Swift toolchain download page](Swift-Toolchain-Download)
-   }
+```console
+curl -O https://download.swift.org/swiftly/darwin/swiftly.pkg
+installer -pkg swiftly.pkg -target CurrentUserHomeDirectory
+~/.swiftly/bin/swiftly init --quiet-shell-followup
+. ~/.swiftly/env.sh
+hash -r
+```
 
-   @Tab("Step 3") {
-       ![A screenshot of the downloaded Swift toolchain](Swift-Toolchain-Finder)
-   }
-}
+2. Install the latest Swift nightly toolchain by running:
+
+```console
+swiftly install main-snapshot
+```
+
+> Note: Swift toolchains can also be downloaded and installed manually from the [Swift Development Snapshots section](https://www.swift.org/install/macos/#development-snapshots) on swift.org, but using Swiftly is recommended as it simplifies the installation and management of toolchains.

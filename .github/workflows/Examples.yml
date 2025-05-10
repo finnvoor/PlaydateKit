@@ -1,0 +1,46 @@
+name: Examples
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  FlappySwift:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - macos-latest
+          - ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 'Install Swift Toolchain'
+        uses: finnvoor/swiftly-action@main
+      - name: 'Install Playdate SDK'
+        uses: finnvoor/playdatesdk-action@main
+      - name: 'Install arm-none-eabi-gcc'
+        if: ${{ runner.os == 'Linux' }}
+        run: sudo apt-get install -y --no-install-recommends gcc-arm-none-eabi libnewlib-arm-none-eabi
+      - name: Build
+        working-directory: Examples/FlappySwift
+        run: swift package pdc
+  Pong:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - macos-latest
+          - ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 'Install Swift Toolchain'
+        uses: finnvoor/swiftly-action@main
+      - name: 'Install Playdate SDK'
+        uses: finnvoor/playdatesdk-action@main
+      - name: 'Install arm-none-eabi-gcc'
+        if: ${{ runner.os == 'Linux' }}
+        run: sudo apt-get install -y --no-install-recommends gcc-arm-none-eabi libnewlib-arm-none-eabi
+      - name: Build
+        working-directory: Examples/Pong
+        run: swift package pdc
