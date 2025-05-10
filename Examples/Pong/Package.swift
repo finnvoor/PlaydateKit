@@ -15,7 +15,7 @@ let playdateSDKPath: String = if let path = Context.environment["PLAYDATE_SDK_PA
 let package = Package(
     name: "Pong",
     platforms: [.macOS(.v14)],
-    products: [.library(name: "Pong", targets: ["Pong"])],
+    products: [.library(name: "Pong", type: .dynamic, targets: ["Pong"])],
     dependencies: [
         .package(path: "../.."),
     ],
