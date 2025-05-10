@@ -1,0 +1,15 @@
+{
+    "schemaVersion": "1.0",
+    "swiftCompiler": {
+        "extraCLIOptions": [
+            "-Xcc", "-DTARGET_SIMULATOR=1"
+        ]
+    },
+    "linker": {
+        "extraCLIOptions": [
+            "-dead_strip",
+            "-allow_dead_duplicates",
+            "-lc", "-lm"
+        ]
+    }
+}
