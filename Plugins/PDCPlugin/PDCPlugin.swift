@@ -315,13 +315,16 @@ struct ModuleBuildRequest {
         // MARK: - CLI
 
         @Sendable func ccURL() throws -> URL {
-            guard let url = [
-                "/usr/local/playdate/gcc-arm-none-eabi-9-2019-q4-major/bin/arm-none-eabi-gcc",
-                try? context.tool(named: "arm-none-eabi-gcc").url.absoluteString
-            ].compactMap(\.self).filter({
-                FileManager.default.fileExists(atPath: $0)
-            }).map({ URL(filePath: $0) }).first else {
-                Diagnostics.warning("arm-none-eabi-gcc not found. Ensure it is installed and in the PATH.")
+            guard
+                let url = [
+                    "/usr/local/playdate/gcc-arm-none-eabi-9-2019-q4-major/bin/arm-none-eabi-gcc",
+                    try? context.tool(named: "arm-none-eabi-gcc").url.absoluteString,
+                ].compactMap(\.self).compactMap({ URL(string: $0)?.path }).filter({
+                    FileManager.default.fileExists(atPath: $0)
+                }).map({ URL(filePath: $0) }).first
+            else {
+                Diagnostics.warning(
+                    "arm-none-eabi-gcc not found. Ensure it is installed and in the PATH.")
                 throw Error.armNoneEabiGCCNotFound
             }
             return url
@@ -333,11 +336,14 @@ struct ModuleBuildRequest {
             #else
             let swiftToolchainPath: [String?] = []
             #endif
-            guard let url = (swiftToolchainPath + [
-                try? context.tool(named: "clang").url.absoluteString
-            ]).compactMap(\.self).filter({
-                FileManager.default.fileExists(atPath: $0)
-            }).map({ URL(filePath: $0) }).first else {
+            guard
+                let url =
+                    (swiftToolchainPath + [
+                        try? context.tool(named: "clang").url.absoluteString
+                    ]).compactMap(\.self).compactMap({ URL(string: $0)?.path }).filter({
+                        FileManager.default.fileExists(atPath: $0)
+                    }).map({ URL(filePath: $0) }).first
+            else {
                 Diagnostics.warning("clang not found. Ensure it is installed and in the PATH.")
                 throw Error.clangNotFound
             }
@@ -345,13 +351,17 @@ struct ModuleBuildRequest {
         }
 
         @Sendable func pdcURL() throws -> URL {
-            guard let url = try [
-                "\(getPlaydateSDK())/bin/pdc",
-                try? context.tool(named: "pdc").url.absoluteString
-            ].compactMap(\.self).filter({
-                FileManager.default.fileExists(atPath: $0)
-            }).map({ URL(filePath: $0) }).first else {
-                Diagnostics.warning("pdc not found. Ensure the Playdate SDK is installed and the pdc tool is available.")
+            guard
+                let url = try [
+                    "\(getPlaydateSDK())/bin/pdc",
+                    try? context.tool(named: "pdc").url.absoluteString,
+                ].compactMap(\.self).compactMap({ URL(string: $0)?.path }).filter({
+                    FileManager.default.fileExists(atPath: $0)
+                }).map({ URL(filePath: $0) }).first
+            else {
+                Diagnostics.warning(
+                    "pdc not found. Ensure the Playdate SDK is installed and the pdc tool is available."
+                )
                 throw Error.pdcNotFound
             }
             return url
@@ -392,7 +402,7 @@ struct ModuleBuildRequest {
                 }
             }
             let process2 = Process()
-            process2.executableURL = URL(filePath: swiftc)
+            process2.executableURL = if let path = URL(string: swiftc)?.path() { URL(filePath: path) } else { URL(filePath: swiftc) }
             process2.arguments = ["-g"] + arguments
             if verbose { process2.print() }
             try process2.run()
