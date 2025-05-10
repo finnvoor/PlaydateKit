@@ -1,4 +1,4 @@
-// swift-tools-version: 5.10
+// swift-tools-version: 6.1
 
 import Foundation
 import PackageDescription
@@ -15,7 +15,7 @@ let playdateSDKPath: String = if let path = Context.environment["PLAYDATE_SDK_PA
 let package = Package(
     name: "Pong",
     platforms: [.macOS(.v14)],
-    products: [.library(name: "Pong", targets: ["Pong"])],
+    products: [.library(name: "Pong", type: .dynamic, targets: ["Pong"])],
     dependencies: [
         .package(path: "../.."),
     ],
@@ -23,9 +23,11 @@ let package = Package(
         .target(
             name: "Pong",
             dependencies: [.product(name: "PlaydateKit", package: "PlaydateKit")],
+            exclude: ["Resources"],
             swiftSettings: [
                 .enableExperimentalFeature("Embedded"),
                 .unsafeFlags([
+                    "-whole-module-optimization",
                     "-Xfrontend", "-disable-objc-interop",
                     "-Xfrontend", "-disable-stack-protector",
                     "-Xfrontend", "-function-sections",
@@ -36,7 +38,7 @@ let package = Package(
                     "-Xcc", "-I", "-Xcc", "\(gccIncludePrefix)/../../../../arm-none-eabi/include",
                     "-I", "\(playdateSDKPath)/C_API"
                 ]),
-            ]
+            ],
         )
     ]
 )

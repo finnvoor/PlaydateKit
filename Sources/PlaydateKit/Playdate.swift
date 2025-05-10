@@ -20,8 +20,8 @@ public enum Playdate {
         return _playdateAPI
     }
 
-    public static func initialize(with pointer: UnsafeMutableRawPointer) {
-        _playdateAPI = pointer.bindMemory(to: PlaydateAPI.self, capacity: 1).pointee
+    public static func initialize(with pointer: UnsafeMutablePointer<PlaydateAPI>) {
+        _playdateAPI = pointer.pointee
         srand(System.millisecondsSinceEpoch)
         System.setUpdateCallback(update: { _ in
             (System.updateCallback?() ?? false) ? 1 : 0
