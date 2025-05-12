@@ -15,7 +15,7 @@ let playdateSDKPath: String = if let path = Context.environment["PLAYDATE_SDK_PA
 let package = Package(
     name: "FlappySwift",
     platforms: [.macOS(.v14)],
-    products: [.library(name: "FlappySwift", targets: ["FlappySwift"])],
+    products: [.library(name: "FlappySwift", type: .dynamic, targets: ["FlappySwift"])],
     dependencies: [
         .package(path: "../.."),
     ],
@@ -23,6 +23,7 @@ let package = Package(
         .target(
             name: "FlappySwift",
             dependencies: [.product(name: "PlaydateKit", package: "PlaydateKit")],
+            exclude: ["Resources"],
             swiftSettings: [
                 .enableExperimentalFeature("Embedded"),
                 .unsafeFlags([

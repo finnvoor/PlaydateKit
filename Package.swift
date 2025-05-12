@@ -1,4 +1,4 @@
-// swift-tools-version: 6.0
+// swift-tools-version: 6.1
 
 import PackageDescription
 
@@ -13,6 +13,7 @@ let package = Package(
         .target(
             name: "PlaydateKit",
             dependencies: ["CPlaydate", "SwiftUnicodeDataTables"],
+            exclude: ["Resources"],
             swiftSettings: [
                 .enableExperimentalFeature("Embedded"),
                 .unsafeFlags([
