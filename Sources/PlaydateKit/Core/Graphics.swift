@@ -748,6 +748,44 @@ public enum Graphics {
         }
     }
 
+    /// Draws a `Rect` with rounded corners with the specified `Color` and line width.
+    public static func drawRoundRect(
+        _ rect: Rect,
+        radius: Int = 0,
+        lineWidth: Int = 1,
+        color: Color = .black
+    ) {
+        color.withLCDColor {
+            graphics.drawRoundRect.unsafelyUnwrapped(
+                CInt(rect.x),
+                CInt(rect.y),
+                CInt(rect.width),
+                CInt(rect.height),
+                CInt(radius),
+                CInt(lineWidth),
+                $0
+            )
+        }
+    }
+    
+    /// Draws a `Rect` with rounded corners filled with the specified `Color`.
+    public static func fillRoundRect(
+        _ rect: Rect,
+        radius: Int = 0,
+        color: Color = .black
+    ) {
+        color.withLCDColor {
+            graphics.fillRoundRect.unsafelyUnwrapped(
+                CInt(rect.x),
+                CInt(rect.y),
+                CInt(rect.width),
+                CInt(rect.height),
+                CInt(radius),
+                $0
+            )
+        }
+    }
+
     /// Draws a filled triangle with points at `p1`, `p2`, and `p3`.
     public static func fillTriangle(
         p1: Point,
