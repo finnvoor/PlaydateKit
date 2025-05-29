@@ -40,7 +40,15 @@ public extension Sound {
         }
 
         public func loadMIDIFile(path: String) -> Bool {
-            sequence.loadMIDIFile.unsafelyUnwrapped(pointer, path) == 1
+            if sequence.loadMIDIFile.unsafelyUnwrapped(pointer, path) == 1 {
+                tracks = (0..<trackCount).map { i in
+                    let trackPointer = sequence.getTrackAtIndex.unsafelyUnwrapped(pointer, UInt32(i)).unsafelyUnwrapped
+                    return Track(pointer: trackPointer, free: false)
+                }
+                return true
+            } else {
+                return false
+            }
         }
 
         public func play(finishCallback: (() -> Void)? = nil) {

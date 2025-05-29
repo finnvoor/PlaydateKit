@@ -767,7 +767,7 @@ public enum Graphics {
             )
         }
     }
-    
+
     /// Draws a `Rect` with rounded corners filled with the specified `Color`.
     public static func fillRoundRect(
         _ rect: Rect,
