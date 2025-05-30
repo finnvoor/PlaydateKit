@@ -25,7 +25,7 @@ For detailed instructions and documentation on how to get started creating a gam
 
 ### Summary
 
-1. Install a recent nightly [Swift](https://www.swift.org/download/#snapshots) toolchain that supports the Embedded experimental feature.
+1. Install a recent nightly Swift toolchain by installing [Swiftly](https://www.swift.org/swiftly/documentation/swiftlydocs) and running `swiftly install main-snapshot`.
 2. Install the [Playdate SDK](https://play.date/dev/).
 3. Create a new repository using the [PlaydateKitTemplate template](https://github.com/finnvoor/PlaydateKitTemplate).
 5. Build and run directly in the simulator using Xcode, or build using the command `swift package pdc`. When built using `swift package pdc`, the built `pdx` game file will be located at `.build/plugins/PDCPlugin/outputs/PlaydateKitTemplate.pdx` and can be opened in the Playdate simulator.
@@ -61,5 +61,4 @@ If you create a game using PlaydateKit and would like it featured here, please o
 
 ## Acknowledgements
 
-PlaydateKit was inspired by and would not be possible without the excellent work done by [@rauhul](https://github.com/rauhul) on [swift-playdate-examples](https://github.com/apple/swift-playdate-examples). Specifically, PlaydateKit was created due to the note in the swift-playdate-examples repo: 
-> It is not intended to be a full-featured Playdate SDK so please do not raise PRs to extend the Playdate Swift overlay to new areas.
+PlaydateKit was inspired by and would not be possible without the excellent work done by [@rauhul](https://github.com/rauhul) on [swift-playdate-examples](https://github.com/apple/swift-playdate-examples) as well as the ongoing work by the rest of the Embedded Swift team.

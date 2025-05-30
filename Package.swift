@@ -1,18 +1,46 @@
-// swift-tools-version: 6.0
+// swift-tools-version: 6.1
 
 import PackageDescription
+
+let armToolchainPath: String = if let path = Context.environment["ARM_NONE_EABI_GCC_PATH"] {
+    path
+} else {
+    #if os(Linux)
+    "/usr/lib/gcc/arm-none-eabi/10.3.1"
+    #else
+    "/usr/local/playdate/gcc-arm-none-eabi-9-2019-q4-major/lib/gcc/arm-none-eabi/9.2.1"
+    #endif
+}
+
+let armSysrootPath: String = if let path = Context.environment["ARM_NONE_EABI_SYSROOT_PATH"] {
+    path
+} else {
+    #if os(Linux)
+    "/usr/lib/arm-none-eabi"
+    #else
+    "/usr/local/playdate/gcc-arm-none-eabi-9-2019-q4-major/arm-none-eabi"
+    #endif
+}
+
+let playdateSDKPath: String = if let path = Context.environment["PLAYDATE_SDK_PATH"] {
+    path
+} else {
+    "\(Context.environment["HOME"]!)/Developer/PlaydateSDK/"
+}
 
 let package = Package(
     name: "PlaydateKit",
     platforms: [.macOS(.v14)],
     products: [
         .library(name: "PlaydateKit", targets: ["PlaydateKit"]),
-        .plugin(name: "PDCPlugin", targets: ["PDCPlugin"])
+        .plugin(name: "PDCPlugin", targets: ["PDCPlugin"]),
+        .plugin(name: "RenamePlugin", targets: ["RenamePlugin"])
     ],
     targets: [
         .target(
             name: "PlaydateKit",
-            dependencies: ["CPlaydate", "SwiftUnicodeDataTables"],
+            dependencies: ["CPlaydate"],
+            exclude: ["Resources"],
             swiftSettings: [
                 .enableExperimentalFeature("Embedded"),
                 .unsafeFlags([
@@ -22,10 +50,10 @@ let package = Package(
                     "-Xfrontend", "-function-sections",
                     "-Xfrontend", "-gline-tables-only",
                     "-Xcc", "-DTARGET_EXTENSION",
-                    "-Xcc", "-I", "-Xcc", "/usr/local/playdate/gcc-arm-none-eabi-9-2019-q4-major/lib/gcc/arm-none-eabi/9.2.1/include",
-                    "-Xcc", "-I", "-Xcc", "/usr/local/playdate/gcc-arm-none-eabi-9-2019-q4-major/lib/gcc/arm-none-eabi/9.2.1/include-fixed",
-                    "-Xcc", "-I", "-Xcc", "/usr/local/playdate/gcc-arm-none-eabi-9-2019-q4-major/lib/gcc/arm-none-eabi/9.2.1/../../../../arm-none-eabi/include",
-                    "-I", "\(Context.environment["PLAYDATE_SDK_PATH"] ?? "\(Context.environment["HOME"]!)/Developer/PlaydateSDK/")/C_API"
+                    "-Xcc", "-I", "-Xcc", "\(armToolchainPath)/include",
+                    "-Xcc", "-I", "-Xcc", "\(armToolchainPath)/include-fixed",
+                    "-Xcc", "-I", "-Xcc", "\(armSysrootPath)/include",
+                    "-I", "\(playdateSDKPath)/C_API"
                 ]),
             ]
         ),
@@ -34,17 +62,11 @@ let package = Package(
             cSettings: [
                 .unsafeFlags([
                     "-DTARGET_EXTENSION",
-                    "-I", "/usr/local/playdate/gcc-arm-none-eabi-9-2019-q4-major/lib/gcc/arm-none-eabi/9.2.1/include",
-                    "-I", "/usr/local/playdate/gcc-arm-none-eabi-9-2019-q4-major/lib/gcc/arm-none-eabi/9.2.1/include-fixed",
-                    "-I", "/usr/local/playdate/gcc-arm-none-eabi-9-2019-q4-major/lib/gcc/arm-none-eabi/9.2.1/../../../../arm-none-eabi/include",
-                    "-I", "\(Context.environment["PLAYDATE_SDK_PATH"] ?? "\(Context.environment["HOME"]!)/Developer/PlaydateSDK/")/C_API"
+                    "-I", "\(armToolchainPath)/include",
+                    "-I", "\(armToolchainPath)/include-fixed",
+                    "-I", "\(armSysrootPath)/include",
+                    "-I", "\(playdateSDKPath)/C_API"
                 ])
-            ]
-        ),
-        .target(
-            name: "SwiftUnicodeDataTables",
-            cxxSettings: [
-                .define("SWIFT_STDLIB_ENABLE_UNICODE_DATA")
             ]
         ),
         .plugin(
@@ -53,6 +75,13 @@ let package = Package(
                 .custom(verb: "pdc", description: "Runs the Playdate compiler")
             )
         ),
+        .plugin(
+            name: "RenamePlugin",
+            capability: .command(
+                intent: .custom(verb: "rename", description: "Rename a PlaydateKit Swift package"),
+                permissions: [.writeToPackageDirectory(reason: "Rename PlaydateKit package")]
+            )
+        )
     ],
     swiftLanguageModes: [.v6]
 )

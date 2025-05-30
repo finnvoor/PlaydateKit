@@ -1,0 +1,16 @@
+{
+    "schemaVersion": "1.0",
+    "cCompiler": {
+        "extraCLIOptions": [
+            "-DTARGET_SIMULATOR=1"
+        ]
+    },
+    "linker": {
+        "extraCLIOptions": [
+            "-dead_strip",
+            "--allow-multiple-definition",
+            "-lc", "-lm",
+            "--export-dynamic-symbol", "_eventHandlerShim"
+        ]
+    }
+}
