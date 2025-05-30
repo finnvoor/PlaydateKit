@@ -9,7 +9,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages"
+  group: 'pages'
   cancel-in-progress: true
 
 jobs:
@@ -20,46 +20,10 @@ jobs:
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
-      - name: Run gtar as root
-        run: sudo chown root /opt/homebrew/bin/gtar && sudo chmod u+s /opt/homebrew/bin/gtar
-      - name: Get latest Swift version
-        id: swift-version
-        run: |
-          DOWNLOAD=$(curl "https://raw.githubusercontent.com/apple/swift-org-website/main/_data/builds/development/xcode.yml" | yq '.[0].download')
-          DIR=$(curl "https://raw.githubusercontent.com/apple/swift-org-website/main/_data/builds/development/xcode.yml" | yq '.[0].dir')
-          echo "name=$DIR" >> $GITHUB_OUTPUT
-          echo "url=https://download.swift.org/development/xcode/$DIR/$DOWNLOAD" >> $GITHUB_OUTPUT
-      - name: Cache Swift
-        id: cache-swift
-        uses: actions/cache@v4
-        with:
-          path: /Library/Developer/Toolchains/${{ steps.swift-version.outputs.name }}.xctoolchain
-          key: ${{ steps.swift-version.outputs.name }}
-      - if: ${{ steps.cache-swift.outputs.cache-hit != 'true' }}
-        name: Install latest Swift version
-        run: |
-          curl -L -sS --show-error --fail ${{ steps.swift-version.outputs.url }} -o swift.pkg
-          sudo installer -pkg swift.pkg -target /
-      - name: Get latest Playdate SDK version
-        id: playdate-version
-        run: |
-          URL=$(curl -Ls -o /dev/null -w %{url_effective} --head "https://download.panic.com/playdate_sdk/PlaydateSDK-latest.zip")
-          echo "name=$(echo $URL | awk -F '/' '{print $(NF)}' | awk -F '.' '{OFS="."; print $1,$2,$3}')" >> $GITHUB_OUTPUT
-          echo "url=$URL" >> $GITHUB_OUTPUT
-      - name: Cache Playdate
-        id: cache-playdate
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/Developer/PlaydateSDK
-            /usr/local/playdate
-          key: ${{ steps.playdate-version.outputs.name }}
-      - if: ${{ steps.cache-playdate.outputs.cache-hit != 'true' }}
-        name: Install Playdate SDK
-        run: |
-          curl -L -sS --show-error --fail ${{ steps.playdate-version.outputs.url }} -o PlaydateSDK-latest.zip
-          unzip PlaydateSDK-latest.zip
-          sudo installer -pkg "PlaydateSDK.pkg" -target /
+      - name: 'Install Swift Toolchain'
+        uses: finnvoor/swiftly-action@main
+      - name: 'Install Playdate SDK'
+        uses: finnvoor/playdatesdk-action@main
       - name: Select Xcode
         run: |
           sudo xcode-select -s '/Applications/Xcode_16.2.app'

@@ -16,12 +16,10 @@ public extension Sound {
 
         // MARK: Public
 
-        public func decompress() -> Bool {
-            return sample.decompress.unsafelyUnwrapped(pointer) == 1
-        }
-
-        // MARK: Internal
-
         public let pointer: OpaquePointer
+
+        public func decompress() -> Bool {
+            sample.decompress.unsafelyUnwrapped(pointer) == 1
+        }
     }
 }
