@@ -34,6 +34,10 @@ public extension Sound {
             synth.setWaveform.unsafelyUnwrapped(pointer, waveform)
         }
 
+        public func setSample(_ sample: Sample, sustainStart: Int = 0, sustainEnd: Int = 0) {
+            synth.setSample.unsafelyUnwrapped(pointer, sample.pointer, UInt32(sustainStart), UInt32(sustainEnd))
+        }
+
         /// Sets the attack time, in seconds.
         public func setAttackTime(_ attackTime: Float) {
             synth.setAttackTime.unsafelyUnwrapped(pointer, attackTime)
