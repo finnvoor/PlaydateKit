@@ -207,9 +207,11 @@ final class Player: Sprite.Sprite {
         // Apply gravity
         velocity.y += gravity
 
-        // Jump when button is pressed
+        // Jump when button is pressed or crank is ticked
+        let buttonPressed = !System.buttonState.pushed.intersection([.a, .b, .up, .left, .right, .down]).isEmpty
+        let crankTicked = System.getCrankTicks(6) != 0
         if (game.scene as? GameScene)?.state == .playing,
-           !System.buttonState.pushed.intersection([.a, .b, .up, .left, .right, .down]).isEmpty {
+           (buttonPressed || crankTicked) {
             velocity.y = jumpVelocity
             flapSynth.playNote(frequency: 1200, volume: 0.5, length: 0.03)
         }
