@@ -434,6 +434,26 @@ public enum Graphics {
             ))
         }
 
+        /// Returns the height of text in the given font, when wrapped to `maxWidth` using the wrapping mode `wrap`.
+        public func getTextHeightForMaxWidth(
+            for text: String,
+            maxWidth: Int,
+            wrap: TextWrap,
+            tracking: Int,
+            extraLeading: Int,
+        ) -> Int {
+            Int(graphics.getTextHeightForMaxWidth.unsafelyUnwrapped(
+                pointer,
+                text,
+                text.utf8.count,
+                CInt(maxWidth),
+                .kUTF8Encoding,
+                wrap,
+                CInt(tracking),
+                CInt(extraLeading)
+            ))
+        }
+
         /// Returns a `Font.Page` object for the given character code. Each font page contains information
         /// for 256 characters; specifically, if `(c1 & ~0xff) == (c2 & ~0xff)`, then `c1` and `c2` belong to the
         /// same page and the same font page can be used to fetch the character data for both instead of searching
