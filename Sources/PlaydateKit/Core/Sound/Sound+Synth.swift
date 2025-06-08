@@ -27,6 +27,8 @@ public extension Sound {
 
         public internal(set) var frequencyModulator: Signal? = nil
 
+        public internal(set) var amplitudeModulator: Signal? = nil
+
         public func copy() -> Synth {
             let copyPointer = synth.copy.unsafelyUnwrapped(pointer).unsafelyUnwrapped
             return Synth(pointer: copyPointer)
@@ -79,6 +81,12 @@ public extension Sound {
         public func setFrequencyModulator(_ frequencyModulator: Signal?) {
             self.frequencyModulator = frequencyModulator
             synth.setFrequencyModulator.unsafelyUnwrapped(pointer, frequencyModulator?.pointer)
+        }
+
+        /// Sets a signal to modulate the synth’s output amplitude. Set to `nil` to clear the modulator.
+        public func setAmplitudeModulator(_ amplitudeModulator: Signal?) {
+            self.amplitudeModulator = amplitudeModulator
+            synth.setAmplitudeModulator.unsafelyUnwrapped(pointer, amplitudeModulator?.pointer)
         }
 
         /// Plays a note with the current waveform or sample.
