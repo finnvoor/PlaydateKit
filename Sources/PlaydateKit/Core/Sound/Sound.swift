@@ -54,6 +54,7 @@ public enum Sound {
     static var synth: playdate_sound_synth { sound.synth.pointee }
     static var instrument: playdate_sound_instrument { sound.instrument.pointee }
     static var signal: playdate_sound_signal { sound.signal.pointee }
+    static var lfo: playdate_sound_lfo { sound.lfo.pointee }
     static var envelope: playdate_sound_envelope { sound.envelope.pointee }
     static var sequence: playdate_sound_sequence { sound.sequence.pointee }
     static var track: playdate_sound_track { sound.track.pointee }
