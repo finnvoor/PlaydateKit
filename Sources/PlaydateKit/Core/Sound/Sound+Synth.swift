@@ -62,6 +62,13 @@ public extension Sound {
             synth.clearEnvelope.unsafelyUnwrapped(pointer)
         }
 
+        /// Smoothly changes the envelope’s shape from linear (amount=0) to exponential (amount=1).
+        public func setEnvelopeCurvature(_ amount: Float) {
+            let envelopePointer = synth.getEnvelope.unsafelyUnwrapped(pointer).unsafelyUnwrapped
+
+            envelope.setCurvature.unsafelyUnwrapped(envelopePointer, amount)
+        }
+
         public func setTranspose(_ halfSteps: Float) {
             synth.setTranspose.unsafelyUnwrapped(pointer, halfSteps)
         }
