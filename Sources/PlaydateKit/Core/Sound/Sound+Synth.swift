@@ -25,6 +25,10 @@ public extension Sound {
             Int(synth.getParameterCount.unsafelyUnwrapped(pointer))
         }
 
+        public internal(set) var frequencyModulator: Signal? = nil
+
+        public internal(set) var amplitudeModulator: Signal? = nil
+
         public func copy() -> Synth {
             let copyPointer = synth.copy.unsafelyUnwrapped(pointer).unsafelyUnwrapped
             return Synth(pointer: copyPointer)
@@ -62,8 +66,27 @@ public extension Sound {
             synth.clearEnvelope.unsafelyUnwrapped(pointer)
         }
 
+        /// Smoothly changes the envelope’s shape from linear (amount=0) to exponential (amount=1).
+        public func setEnvelopeCurvature(_ amount: Float) {
+            let envelopePointer = synth.getEnvelope.unsafelyUnwrapped(pointer).unsafelyUnwrapped
+
+            envelope.setCurvature.unsafelyUnwrapped(envelopePointer, amount)
+        }
+
         public func setTranspose(_ halfSteps: Float) {
             synth.setTranspose.unsafelyUnwrapped(pointer, halfSteps)
+        }
+
+        /// Sets a signal to modulate the synth’s frequency. The signal is scaled so that a value of 1 doubles the synth pitch (i.e. an octave up) and -1 halves it (an octave down). Set to `nil` to clear the modulator.
+        public func setFrequencyModulator(_ frequencyModulator: Signal?) {
+            self.frequencyModulator = frequencyModulator
+            synth.setFrequencyModulator.unsafelyUnwrapped(pointer, frequencyModulator?.pointer)
+        }
+
+        /// Sets a signal to modulate the synth’s output amplitude. Set to `nil` to clear the modulator.
+        public func setAmplitudeModulator(_ amplitudeModulator: Signal?) {
+            self.amplitudeModulator = amplitudeModulator
+            synth.setAmplitudeModulator.unsafelyUnwrapped(pointer, amplitudeModulator?.pointer)
         }
 
         /// Plays a note with the current waveform or sample.
