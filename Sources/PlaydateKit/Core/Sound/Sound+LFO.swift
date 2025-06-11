@@ -18,7 +18,7 @@ public extension Sound {
         // MARK: Public
 
         /// Return the current output value of the LFO.
-        public override var value: Float {
+        override public var value: Float {
             lfo.getValue.unsafelyUnwrapped(pointer)
         }
 

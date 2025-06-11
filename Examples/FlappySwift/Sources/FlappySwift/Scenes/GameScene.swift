@@ -211,7 +211,7 @@ final class Player: Sprite.Sprite {
         let buttonPressed = !System.buttonState.pushed.intersection([.a, .b, .up, .left, .right, .down]).isEmpty
         let crankTicked = System.getCrankTicks(6) != 0
         if (game.scene as? GameScene)?.state == .playing,
-           (buttonPressed || crankTicked) {
+           buttonPressed || crankTicked {
             velocity.y = jumpVelocity
             flapSynth.playNote(frequency: 1200, volume: 0.5, length: 0.03)
         }

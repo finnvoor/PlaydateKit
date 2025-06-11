@@ -9,6 +9,14 @@ public enum Playdate {
 
     /// An error thrown from the Playdate C API.
     public struct Error: Swift.Error, CustomStringConvertible, @unchecked Sendable {
+        // MARK: Lifecycle
+
+        package init(description: String) {
+            self.description = description
+        }
+
+        // MARK: Public
+
         public let description: String
     }
 
