@@ -21,13 +21,13 @@ public extension Sound {
 
         // MARK: Public
 
-        public var parameterCount: Int {
-            Int(synth.getParameterCount.unsafelyUnwrapped(pointer))
-        }
-
         public internal(set) var frequencyModulator: Signal? = nil
 
         public internal(set) var amplitudeModulator: Signal? = nil
+
+        public var parameterCount: Int {
+            Int(synth.getParameterCount.unsafelyUnwrapped(pointer))
+        }
 
         public func copy() -> Synth {
             let copyPointer = synth.copy.unsafelyUnwrapped(pointer).unsafelyUnwrapped

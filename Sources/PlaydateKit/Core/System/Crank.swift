@@ -1,9 +1,9 @@
 public extension System {
-    private static nonisolated(unsafe) var tick_lastCrankReading: Float = Float.infinity
+    private nonisolated(unsafe) static var tick_lastCrankReading: Float = .infinity
 
     /// Returns the number of "ticks" — whose size is defined by the value of _ticksPerRevolution_ passed in to the function  — the crank has turned through since the last time this function was called. Ticks can be positive or negative, depending upon the direction of rotation. If the crank turns through more than one tick in-between update cycles, a value of 2 or more could be returned.
     /// An example: say you have a movie player, and you want your movie to advance 6 frames for every one revolution of the crank. Calling `playdate.getCrankTicks(6)` during each update will cause you to get a return value of 1 as the crank turns past each 60 degree increment (since we passed in a 6, each tick represents 360 / 6 = 60 degrees.) So `getCrankTicks(6)` will return a 1 as the crank turns past the 0 degree absolute position, the 60 degree absolute position, and so on for 120, 180, 240, and 300 degree positions. Otherwise, 0 will be returned.
-    public static func getCrankTicks(_ ticksPerRotation: Int) -> Int {
+    static func getCrankTicks(_ ticksPerRotation: Int) -> Int {
         let totalSegments = ticksPerRotation
         let degreesPerSegment = Float(360 / ticksPerRotation)
 

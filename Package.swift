@@ -33,6 +33,7 @@ let package = Package(
     platforms: [.macOS(.v14)],
     products: [
         .library(name: "PlaydateKit", targets: ["PlaydateKit"]),
+        .library(name: "CrankIndicator", targets: ["CrankIndicator"]),
         .plugin(name: "PDCPlugin", targets: ["PDCPlugin"]),
         .plugin(name: "RenamePlugin", targets: ["RenamePlugin"])
     ],
@@ -40,6 +41,25 @@ let package = Package(
         .target(
             name: "PlaydateKit",
             dependencies: ["CPlaydate"],
+            swiftSettings: [
+                .enableExperimentalFeature("Embedded"),
+                .unsafeFlags([
+                    "-whole-module-optimization",
+                    "-Xfrontend", "-disable-objc-interop",
+                    "-Xfrontend", "-disable-stack-protector",
+                    "-Xfrontend", "-function-sections",
+                    "-Xfrontend", "-gline-tables-only",
+                    "-Xcc", "-DTARGET_EXTENSION",
+                    "-Xcc", "-I", "-Xcc", "\(armToolchainPath)/include",
+                    "-Xcc", "-I", "-Xcc", "\(armToolchainPath)/include-fixed",
+                    "-Xcc", "-I", "-Xcc", "\(armSysrootPath)/include",
+                    "-I", "\(playdateSDKPath)/C_API"
+                ]),
+            ]
+        ),
+        .target(
+            name: "CrankIndicator",
+            dependencies: ["PlaydateKit"],
             exclude: ["Resources"],
             swiftSettings: [
                 .enableExperimentalFeature("Embedded"),

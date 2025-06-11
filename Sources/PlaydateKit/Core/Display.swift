@@ -69,9 +69,7 @@ public enum Display {
         }
     }
 
-    public static var fps: Float {
-        get { display.getFPS.unsafelyUnwrapped() }
-    }
+    public static var fps: Float { display.getFPS.unsafelyUnwrapped() }
 
     /// Sets the display scale factor. Valid values for scale are 1, 2, 4, and 8.
     ///
