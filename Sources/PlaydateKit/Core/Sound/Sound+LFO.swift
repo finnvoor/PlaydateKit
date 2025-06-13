@@ -8,7 +8,7 @@ public extension Sound {
 
         /// Returns a new LFO object, which can be used to modulate sounds. See ``Sound/LFO/setType(_:)`` for type values.
         public init(type: LFOType) {
-            super.init(pointer: lfo.newLFO.unsafelyUnwrapped(type).unsafelyUnwrapped)
+            super.init(pointer: lfo.newLFO.unsafelyUnwrapped(type).unsafelyUnwrapped, free: false)
         }
 
         deinit {
