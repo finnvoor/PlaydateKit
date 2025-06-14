@@ -4,12 +4,15 @@ public extension Sound {
     class Signal {
         // MARK: Lifecycle
 
-        init(pointer: OpaquePointer) {
+        init(pointer: OpaquePointer, free: Bool = true) {
             self.pointer = pointer
+            self.free = free
         }
 
         deinit {
-            signal.freeSignal.unsafelyUnwrapped(pointer)
+            if free {
+                signal.freeSignal.unsafelyUnwrapped(pointer)
+            }
         }
 
         // MARK: Public
@@ -31,5 +34,9 @@ public extension Sound {
         // MARK: Internal
 
         let pointer: OpaquePointer
+
+        // MARK: Private
+
+        private let free: Bool
     }
 }
