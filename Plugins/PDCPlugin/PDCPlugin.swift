@@ -47,6 +47,7 @@ import PackagePlugin
             OPTIONS:
             -p, --product <product>         Build the specified product
                 --device-only               Build a device-only executable suitable for distribution
+                --simulator-only            Build a simulator-only executable for quick testing
             -v, --verbose                   Increase verbosity to include informational output
             """)
             return
@@ -57,6 +58,7 @@ import PackagePlugin
         let verbose = arguments.hasFlag(named: "verbose")
         let productName = arguments.value(for: "product")
         let deviceOnly = arguments.hasFlag(named: "device-only", allowShort: false)
+        let simulatorOnly = arguments.hasFlag(named: "simulator-only", allowShort: false)
 
         let product: PackagePlugin.Product? = if let productName {
             context.package.products.first {
@@ -79,13 +81,15 @@ import PackagePlugin
         }
         try FileManager.default.createDirectory(at: pdcBuildDirectory, withIntermediateDirectories: true)
 
-        print("Building for device...")
-        try buildDevice(
-            context: context,
-            target: target,
-            configuration: .release,
-            verbose: verbose
-        )
+        if !simulatorOnly {
+            print("Building for device...")
+            try buildDevice(
+                context: context,
+                target: target,
+                configuration: .release,
+                verbose: verbose
+            )
+        }
 
         if !deviceOnly {
             print("Building for simulator...")
