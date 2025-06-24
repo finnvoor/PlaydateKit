@@ -60,7 +60,7 @@ class Comic {
 
     var imgUrl: String = "" // `img` in JSON
 
-    var img: Graphics.Bitmap?
+    var sprite: Sprite.Sprite?
 
     var imgWidth: Int = 0
 
@@ -257,7 +257,13 @@ class Comic {
 
         Graphics.popContext()
 
-        img = bitmap
+        let sprite = Sprite.Sprite()
+        sprite.image = bitmap
+        sprite.addToDisplayList()
+        sprite.center = Point.zero
+        sprite.moveTo(Point.zero)
+        sprite.addToDisplayList()
+        self.sprite = sprite
 
         state = .loaded
     }

@@ -9,11 +9,14 @@ class ComicsBrowser {
 
     // MARK: Internal
 
-    var latestNum = 1
-
-    var hasMenuItems = false
-
     func update() {
+        Sprite.updateAndDrawDisplayListSprites()
+
+        if gotoActive {
+            updateGoto()
+            return
+        }
+
         switch comic.state {
         case .loaded:
             break
@@ -24,7 +27,6 @@ class ComicsBrowser {
                 } else {
                     Graphics.drawText("Loading latest", at: Point.zero)
                 }
-
             } else {
                 Graphics.drawText("Loading comic #\(comic.num)", at: Point.zero)
             }
@@ -60,11 +62,11 @@ class ComicsBrowser {
             }
 
             updateInput()
-
-            if let img = comic.img {
-                Graphics.drawBitmap(img, at: Point.zero)
-            }
         case .error(let message):
+            if !hasMenuItems {
+                setUpMenuItems()
+            }
+            
             updateInput()
             Graphics.drawText(message, at: y2)
         }
@@ -81,6 +83,14 @@ class ComicsBrowser {
     private var drawOffX = ComicsBrowser.margin
 
     private var drawOffY = ComicsBrowser.margin
+
+    private var latestNum = 1
+
+    private var hasMenuItems = false
+
+    private let goto = Goto()
+
+    private var gotoActive = false
 
     private func resetDrawOffset() {
         drawOffX = ComicsBrowser.margin
@@ -153,9 +163,9 @@ class ComicsBrowser {
     }
 
     private func setUpMenuItems() {
-        System.addMenuItem(title: "~First") {
-            self.resetDrawOffset()
-            self.comic = Comic(num: 150)
+        System.addMenuItem(title: "GOTO") {
+            self.goto.addToDisplayList()
+            self.gotoActive = true
         }
 
         System.addMenuItem(title: "Latest") {
@@ -169,5 +179,34 @@ class ComicsBrowser {
         }
 
         hasMenuItems = true
+    }
+
+    private func updateGoto() {
+        let pushed = System.buttonState.pushed
+
+        if pushed.contains(.a) {
+            goto.removeFromDisplayList()
+            gotoActive = false
+
+            comic = Comic(num: self.goto.num)
+            return
+        }
+
+        if pushed.contains(.up) {
+            goto.increment()
+        } else if pushed.contains(.down) {
+            goto.decrement()
+        }
+
+        if pushed.contains(.left) {
+            goto.selectPreviousNum()
+        } else if pushed.contains(.right) {
+            goto.selectNextNum()
+        }
+
+        if pushed.contains(.b) {
+            goto.removeFromDisplayList()
+            gotoActive = false
+        }
     }
 }
