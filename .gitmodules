@@ -1,0 +1,3 @@
+[submodule "Examples/Xkpd/Sources/CLodePNG/lodepng"]
+	path = Examples/Xkpd/Sources/CLodePNG/lodepng
+	url = https://github.com/lvandeve/lodepng.git
