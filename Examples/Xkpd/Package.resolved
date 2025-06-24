@@ -1,0 +1,15 @@
+{
+  "originHash" : "67ff08982bc006ab1782f5504cdbe0d2b466663b9d9b4682bfd7372570c3ea84",
+  "pins" : [
+    {
+      "identity" : "utf8viewextensions",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/strawdynamics/UTF8ViewExtensions.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "babf8b80cff1dba41678ececccd3dc711bb9a975"
+      }
+    }
+  ],
+  "version" : 3
+}
