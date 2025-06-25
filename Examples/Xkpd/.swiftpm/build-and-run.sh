@@ -10,7 +10,7 @@ trap cleanup EXIT
 SWIFT=$(xcrun -f swift -toolchain "swift latest")
 
 cd ..
-"$SWIFT" package pdc --extra-device-o-files-build-dirs CLodePNG.build
+"$SWIFT" package pdc --extra-device-o-files-build-dirs CLodePNG.build,CQRCode.build
 
 # Create a symbolic link to the compiled pdx in the Playdate Simulator Games dir
 # This allows browsing the pdx as a sideloaded game, helpful for checking icons

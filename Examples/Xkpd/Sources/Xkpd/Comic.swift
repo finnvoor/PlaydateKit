@@ -2,6 +2,7 @@ import PlaydateKit
 import UTF8ViewExtensions
 
 import CLodePNG
+import CQRCode
 
 class Comic {
     // MARK: Lifecycle
@@ -65,6 +66,8 @@ class Comic {
     var imgWidth: Int = 0
 
     var imgHeight: Int = 0
+
+    var qrBitmap: Graphics.Bitmap?
 
     // MARK: Private
 
@@ -181,6 +184,35 @@ class Comic {
             state = .error(message: "Unsupported image format \(String(decoding: ext, as: UTF8.self))")
             return
         }
+
+        // https://github.com/ricmoo/QRCode
+
+        var qrCode = QRCode()
+        let bufSize = qrcode_getBufferSize(2)
+        let qrData = UnsafeMutablePointer<UInt8>.allocate(capacity: Int(bufSize))
+        defer { qrData.deallocate() }
+
+        let qrGenerateStart = System.elapsedTime
+
+        qrcode_initText(&qrCode, qrData, 2, UInt8(ECC_QUARTILE), "HTTPS://XKCD.COM/\(num)")
+
+        print("Generated QR in \(Int((System.elapsedTime - qrGenerateStart) * 1000)) ms")
+
+        qrBitmap = Graphics.Bitmap(width: 25, height: 25, bgColor: .black)
+
+        Graphics.pushContext(qrBitmap)
+        for y in 0..<25 {
+            for x in 0..<25 {
+                let module = qrcode_getModule(&qrCode, UInt8(x), UInt8(y))
+
+                if module != 0 {
+                    Graphics.setPixel(at: Point(x: x, y: y), to: .white)
+                }
+            }
+        }
+        Graphics.popContext()
+
+        self.qrBitmap = qrBitmap?.rotated(by: 0, xScale: 3, yScale: 3).bitmap
 
         loadImage()
     }

@@ -33,6 +33,7 @@ let package = Package(
                 .product(name: "PlaydateKit", package: "PlaydateKit"),
                 .product(name: "UTF8ViewExtensions", package: "UTF8ViewExtensions"),
                 "CLodePNG",
+                "CQRCode",
             ],
             exclude: ["Resources"],
             swiftSettings: [
@@ -61,6 +62,18 @@ let package = Package(
                     "-I", "\(armSysrootPath)/include",
                 ])
             ],
+        ),
+        .target(
+            name: "CQRCode",
+            exclude: [
+                "QRCode",
+            ],
+            cSettings: [
+                .unsafeFlags([
+                    "-v",
+                    "-I", "\(armSysrootPath)/include",
+                ])
+            ]
         ),
     ]
 )
