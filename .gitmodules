@@ -1,3 +1,6 @@
 [submodule "Examples/Xkpd/Sources/CLodePNG/lodepng"]
 	path = Examples/Xkpd/Sources/CLodePNG/lodepng
 	url = https://github.com/lvandeve/lodepng.git
+[submodule "Examples/Xkpd/Sources/CQRCode/QRCode"]
+	path = Examples/Xkpd/Sources/CQRCode/QRCode
+	url = https://github.com/ricmoo/QRCode.git
