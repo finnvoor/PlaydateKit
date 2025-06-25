@@ -5,7 +5,7 @@ class Goto: Sprite.Sprite {
     
     override init() {
         super.init()
-        setSize(width: 140, height: 90)
+        setSize(width: 140, height: 100)
         moveTo(Point(
             x: Display.width / 2,
             y: Display.height / 2
@@ -38,54 +38,59 @@ class Goto: Sprite.Sprite {
     // MARK: Internal
 
     override func draw(bounds _: Rect, drawRect _: Rect) {
-        Graphics.fillRect(bounds, color: .black(opacity: 0.75))
+        Graphics.fillRoundRect(bounds, radius: 3, color: .black)
+
+        Graphics.drawRoundRect(
+            bounds.insetBy(dx: Float(Self.padding), dy: Float(Self.padding)),
+            radius: 0,
+            lineWidth: 2,
+            color: .white
+        )
 
         let boundsTl = Point(x: bounds.x, y: bounds.y)
 
         // Numbers
         for (i, num) in nums.enumerated() {
-            drawNum(num, at: boundsTl + Point(x: 10 + (i * 20), y: 20))
+            drawNum(num, at: boundsTl + Point(x: 15 + (i * 30), y: Self.padding * 4))
         }
 
         // Selected number triangles
-        let triXOff = selectedNumIndex * 20
+        let triXOff = 15 + 4 + selectedNumIndex * 30
 
         Graphics.fillTriangle(
-            p1: boundsTl + Point(x: 15 + triXOff, y: 15),
-            p2: boundsTl + Point(x: 25 + triXOff, y: 15),
-            p3: boundsTl + Point(x: 20 + triXOff, y: 10),
+            p1: boundsTl + Point(x: 0 + triXOff, y: 20),
+            p2: boundsTl + Point(x: 10 + triXOff, y: 20),
+            p3: boundsTl + Point(x: 5 + triXOff, y: 15),
             color: .white,
         )
 
         Graphics.fillTriangle(
-            p1: boundsTl + Point(x: 15 + triXOff, y: 50),
-            p2: boundsTl + Point(x: 20 + triXOff, y: 55),
-            p3: boundsTl + Point(x: 25 + triXOff, y: 50),
+            p1: boundsTl + Point(x: 0 + triXOff, y: 52),
+            p2: boundsTl + Point(x: 5 + triXOff, y: 58),
+            p3: boundsTl + Point(x: 10 + triXOff, y: 52),
             color: .white,
         )
 
-        // Bottom bar
-        Graphics.fillRect(Rect(
-            x: bounds.x,
-            y: bounds.maxY - 20,
-            width: bounds.width,
-            height: 20,
-        ), color: .black)
+        // Nav text
+        Graphics.setFont(Font.NicoPups16)
+        Graphics.drawMode = .fillWhite
 
         Graphics.drawText("Ⓑ Cancel", at: Point(
-            x: bounds.x + 5,
-            y: bounds.maxY - 20
+            x: Int(bounds.x) + Self.padding * 2,
+            y: Int(bounds.maxY) - Font.NicoPups16.height - Self.padding - 2
         ))
 
         Graphics.drawTextInRect("Ⓐ Go", in: Rect(
             x: bounds.x,
-            y: bounds.maxY - 20,
-            width: bounds.width - 5,
+            y: bounds.maxY - Float(Font.NicoPups16.height) - Float(Self.padding) - 2,
+            width: bounds.width - Float(Self.padding * 2),
             height: 20,
         ), aligned: .right)
     }
 
     // MARK: Private
+
+    private static let padding = 6
 
     private var nums: [Int] = [
         Int.random(in: 1...2, using: &RNG.instance),
@@ -102,12 +107,13 @@ class Goto: Sprite.Sprite {
             y: at.y,
             width: 18,
             height: 24,
-        ), color: .black)
+        ), color: .white)
 
-        Graphics.drawMode = .fillWhite
+        Graphics.drawMode = .fillBlack
+        Graphics.setFont(Font.NicoClean16)
         Graphics.drawText("\(num)", at: at + Point(
-            x: 6,
-            y: 4,
+            x: 4,
+            y: 6,
         ))
     }
 }

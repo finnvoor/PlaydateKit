@@ -153,6 +153,11 @@ class Comic {
 
         print("Got metadata in \(Int((System.elapsedTime - metadataLoadStart) * 1000)) ms (Status \(connection.responseStatus), \(bytesAvailable) bytes)")
 
+        if connection.responseStatus != 200 {
+            state = .error(message: "Unexpected response \(connection.responseStatus)")
+            return
+        }
+
         let buf = UnsafeMutableRawPointer.allocate(byteCount: bytesAvailable, alignment: 1)
 
         let bytesRead = connection.read(buffer: buf, length: CUnsignedInt(bytesAvailable))
@@ -170,16 +175,20 @@ class Comic {
         decoder.didDecodeTableValue = Self.didDecodeTableValue
 
         var value = JSON.Value()
-        _ = JSON.decodeString(using: &decoder, jsonString: jsonString, value: &value)
+        let jsonSuccess = JSON.decodeString(using: &decoder, jsonString: jsonString, value: &value)
 
         self.connection = nil
+
+        if jsonSuccess != 1 {
+            return
+        }
 
         if !imgUrl.utf8.hasSuffix(".png") {
             let ext: String.UTF8View.SubSequence
             if let lastDotIndex = imgUrl.utf8.lastIndex(of: UInt8(ascii: ".")) {
                 ext = imgUrl.utf8.suffix(from: lastDotIndex)
             } else {
-                ext = "unknown".utf8.suffix(from: imgUrl.utf8.startIndex)
+                ext = "unknown".utf8.suffix(from: "".utf8.startIndex)
             }
             state = .error(message: "Unsupported image format \(String(decoding: ext, as: UTF8.self))")
             return
@@ -291,7 +300,6 @@ class Comic {
 
         let sprite = Sprite.Sprite()
         sprite.image = bitmap
-        sprite.addToDisplayList()
         sprite.center = Point.zero
         sprite.moveTo(Point.zero)
         sprite.addToDisplayList()

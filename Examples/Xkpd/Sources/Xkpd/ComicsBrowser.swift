@@ -23,36 +23,36 @@ class ComicsBrowser {
         default:
             if comic.isLatest {
                 if comic.num > 0 {
-                    Graphics.drawText("Loading latest (#\(comic.num))", at: Point.zero)
+                    statusText.line1 = "Loading latest comic (#\(comic.num))"
                 } else {
-                    Graphics.drawText("Loading latest", at: Point.zero)
+                    statusText.line1 = "Loading latest comic"
                 }
             } else {
-                Graphics.drawText("Loading comic #\(comic.num)", at: Point.zero)
+                statusText.line1 = "Loading comic #\(comic.num)"
             }
         }
 
-
-        let y2 = Point(x: 0, y: 20)
-
         switch comic.state {
         case .loadingMetadataHeaders:
+            statusText.addToDisplayList()
+            statusText.line2 = "Downloading metadata headers"
+
             if hasMenuItems {
                 System.removeAllMenuItems()
                 hasMenuItems = false
             }
-            Graphics.drawText("Loading metadata", at: y2)
         case .loadingMetadata:
             if let progress = comic.connection?.progress {
-                Graphics.drawText("Loading metadata \(comic.connection!.bytesAvailable) / \(progress.1)", at: y2)
+                statusText.line2 = "Downloading metadata \(comic.connection!.bytesAvailable) / \(progress.1) bytes"
             }
         case .loadingImageHeaders:
-            Graphics.drawText("Loading image", at: y2)
+            statusText.line2 = "Downloading image headers"
         case .loadingImage:
             if let progress = comic.connection?.progress {
-                Graphics.drawText("Loading image \(comic.connection!.bytesAvailable) / \(progress.1)", at: y2)
+                statusText.line2 = "Downloading image \(comic.connection!.bytesAvailable) / \(progress.1) bytes"
             }
         case .loaded:
+            statusText.removeFromDisplayList()
             if !hasMenuItems {
                 setUpMenuItems()
             }
@@ -66,10 +66,59 @@ class ComicsBrowser {
             if !hasMenuItems {
                 setUpMenuItems()
             }
-            
+
             updateInput()
-            Graphics.drawText(message, at: y2)
+            statusText.line2 = message
         }
+    }
+
+    func onWillPause() {
+        let frame = Graphics.getDisplayBufferBitmap()!
+        let menuBmp = frame.copy()
+
+        Graphics.pushContext(menuBmp)
+        Graphics.fillRect(Rect(
+            x: 0,
+            y: 0,
+            width: Display.width,
+            height: Display.height
+        ), color: .black(opacity: 0.5))
+
+        if let qrBmp = comic.qrBitmap {
+            Graphics.fillRoundRect(Rect(
+                x: 46,
+                y: 15,
+                width: 109,
+                height: 109 + 22,
+            ), radius: 3, color: .black)
+
+            Graphics.drawRoundRect(Rect(
+                x: 52,
+                y: 21,
+                width: 97,
+                height: 97 + 22,
+            ), radius: 0, lineWidth: 2, color: .white)
+
+            Graphics.drawMode = .copy
+            Graphics.drawBitmap(qrBmp, at: Point(
+                x: 63,
+                y: 32,
+            ))
+
+            Graphics.setFont(Font.NicoBold16)
+            Graphics.drawMode = .fillWhite
+            Graphics.drawTextInRect("#\(comic.num)", in: Rect(
+                x: 63,
+                y: 115,
+                width: 75,
+                height: Font.NicoBold16.height
+            ), aligned: .center)
+
+        }
+
+        Graphics.popContext()
+
+        System.setMenuImage(menuBmp)
     }
 
     // MARK: Private
@@ -78,7 +127,17 @@ class ComicsBrowser {
 
     private static let margin = 4
 
-    private var comic: Comic
+    private let statusText = BrowserStatusText()
+
+    private var comic: Comic {
+        didSet {
+            resetDrawOffset()
+            hideInfoBox()
+
+            self.gotoActive = false
+            self.goto.removeFromDisplayList()
+        }
+    }
 
     private var drawOffX = ComicsBrowser.margin
 
@@ -92,6 +151,8 @@ class ComicsBrowser {
 
     private var gotoActive = false
 
+    private var infoBox: InfoBox? = nil
+
     private func resetDrawOffset() {
         drawOffX = ComicsBrowser.margin
         drawOffY = ComicsBrowser.margin
@@ -99,31 +160,31 @@ class ComicsBrowser {
     }
 
     private func prev() {
-        comic = Comic(num: comic.num - 1)
+        if infoBox != nil {
+            return
+        }
 
-        resetDrawOffset()
+        comic = Comic(num: comic.num - 1)
     }
 
     private func next() {
+        if infoBox != nil {
+            return
+        }
+
         if comic.isLatest || comic.num >= latestNum {
             comic = Comic()
         } else {
             comic = Comic(num: comic.num + 1)
         }
-
-        resetDrawOffset()
     }
 
     private func updateInput() {
         let pushed = System.buttonState.pushed
         let current = System.buttonState.current
 
-        if pushed.contains(.b) && comic.num > 1 {
-            prev()
-            return
-        } else if pushed.contains(.a) {
-            next()
-            return
+        if pushed.contains(.b) {
+            toggleInfoBox()
         }
 
         let m = Self.margin
@@ -169,12 +230,10 @@ class ComicsBrowser {
         }
 
         System.addMenuItem(title: "Latest") {
-            self.resetDrawOffset()
             self.comic = Comic()
         }
 
         System.addMenuItem(title: "Random") {
-            self.resetDrawOffset()
             self.comic = Comic(num: Int.random(in: 1...self.latestNum, using: &RNG.instance))
         }
 
@@ -208,5 +267,36 @@ class ComicsBrowser {
             goto.removeFromDisplayList()
             gotoActive = false
         }
+    }
+
+    private func toggleInfoBox() {
+        if infoBox != nil {
+            hideInfoBox()
+        } else {
+            showInfoBox()
+        }
+    }
+
+    private func showInfoBox() {
+        if comic.num == 0 {
+            return
+        }
+
+        infoBox = InfoBox(
+            num: comic.num,
+            title: comic.title,
+            dateString: "\(comic.year)/\(comic.month)/\(comic.day)",
+            alt: comic.alt,
+        )
+        infoBox?.addToDisplayList()
+    }
+
+    private func hideInfoBox() {
+        guard let infoBox else {
+            return
+        }
+
+        infoBox.removeFromDisplayList()
+        self.infoBox = nil
     }
 }

@@ -25,13 +25,13 @@ final class Game: PlaydateGame {
         Graphics.clear(color: .white)
         switch state {
         case .initializingNetwork:
-            Graphics.drawText("Initializing network…", at: Point.zero)
+            drawStatus("Initializing network…")
         case .initializingNetworkFailed(let err):
-            Graphics.drawText("Initializing network failed: \(err.rawValue)", at: Point.zero)
+            drawStatus("Initializing network failed: \(err.rawValue)")
         case .waitingForNetworkAccess:
-            Graphics.drawText("Waiting for network access…", at: Point.zero)
+            drawStatus("Waiting for network access…")
         case .networkAccessDenied:
-            Graphics.drawText("Network access denied", at: Point.zero)
+            drawStatus("Network access denied")
         case .networkReady:
             if browser == nil {
                 self.browser = ComicsBrowser()
@@ -43,6 +43,14 @@ final class Game: PlaydateGame {
         return true
     }
 
+    func gameWillPause() {
+        guard let browser else {
+            return
+        }
+
+        browser.onWillPause()
+    }
+
     // MARK: Private
 
     private var netErr: Network.NetErr? = nil
@@ -50,6 +58,17 @@ final class Game: PlaydateGame {
     private var state: State = .initializingNetwork
 
     private var browser: ComicsBrowser? = nil
+
+    private func drawStatus(_ text: String) {
+        Graphics.drawMode = .fillBlack
+        Graphics.setFont(Font.NicoBold16)
+        Graphics.drawTextInRect(text, in: Rect(
+            x: 0,
+            y: 110,
+            width: Display.width,
+            height: 20,
+        ), aligned: .center)
+    }
 
     private func onNetEnabled(_ err: Network.NetErr) {
         switch err {
