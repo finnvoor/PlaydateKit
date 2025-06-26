@@ -153,6 +153,10 @@ class ComicsBrowser {
 
     private var infoBox: InfoBox? = nil
 
+    private var hasBumpedX = false
+
+    private var hasBumpedY = false
+
     private func resetDrawOffset() {
         drawOffX = ComicsBrowser.margin
         drawOffY = ComicsBrowser.margin
@@ -165,6 +169,8 @@ class ComicsBrowser {
         }
 
         comic = Comic(num: comic.num - 1)
+
+        SFX.instance.play(.prevComic)
     }
 
     private func next() {
@@ -177,11 +183,14 @@ class ComicsBrowser {
         } else {
             comic = Comic(num: comic.num + 1)
         }
+
+        SFX.instance.play(.nextComic)
     }
 
     private func updateInput() {
         let pushed = System.buttonState.pushed
         let current = System.buttonState.current
+        let released = System.buttonState.released
 
         if pushed.contains(.b) {
             toggleInfoBox()
@@ -214,13 +223,47 @@ class ComicsBrowser {
 
         scrollDir = scrollDir.normalized() * Self.scrollSpeed
 
+        // Set up bumps
+        let wantsScrollX = scrollDir.x != 0
+        let wantsScrollY = scrollDir.y != 0
+        let lastDrawOffX = drawOffX
+        let lastDrawOffY = drawOffY
+
+        // Scroll
         drawOffX += Int(scrollDir.x)
         drawOffY += Int(scrollDir.y)
 
         drawOffX = min(max(minOffX, drawOffX), m)
         drawOffY = min(max(minOffY, drawOffY), m)
 
+        // Play bumps
+        if wantsScrollX && lastDrawOffX == drawOffX && !hasBumpedX {
+            hasBumpedX = true
+            SFX.instance.play(.scrollEdge)
+        }
+
+        if wantsScrollY && lastDrawOffY == drawOffY && !hasBumpedY {
+            hasBumpedY = true
+            SFX.instance.play(.scrollEdge)
+        }
+
+        // Play scrolling
+        if (wantsScrollX && !hasBumpedX) || (wantsScrollY && !hasBumpedY) {
+            SFX.instance.start(.scrolling)
+        } else if (!wantsScrollX || !wantsScrollY) {
+            SFX.instance.stop(.scrolling)
+        }
+
         Graphics.setDrawOffset(dx: drawOffX, dy: drawOffY)
+
+        // Reset bumps
+        if released.contains(.left) || released.contains(.right) {
+            hasBumpedX = false
+        }
+
+        if released.contains(.up) || released.contains(.down) {
+            hasBumpedY = false
+        }
     }
 
     private func setUpMenuItems() {
@@ -247,6 +290,8 @@ class ComicsBrowser {
             goto.removeFromDisplayList()
             gotoActive = false
 
+            SFX.instance.play(.goto)
+
             comic = Comic(num: self.goto.num)
             return
         }
@@ -266,12 +311,14 @@ class ComicsBrowser {
         if pushed.contains(.b) {
             goto.removeFromDisplayList()
             gotoActive = false
+            SFX.instance.play(.dismissWindow)
         }
     }
 
     private func toggleInfoBox() {
         if infoBox != nil {
             hideInfoBox()
+            SFX.instance.play(.dismissWindow)
         } else {
             showInfoBox()
         }
@@ -289,6 +336,8 @@ class ComicsBrowser {
             alt: comic.alt,
         )
         infoBox?.addToDisplayList()
+
+        SFX.instance.play(.showInfo)
     }
 
     private func hideInfoBox() {

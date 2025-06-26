@@ -35,7 +35,18 @@ class Comic {
         case error(message: String)
     }
 
-    var state = State.loadingMetadataHeaders
+    var state = State.loadingMetadataHeaders {
+        didSet {
+            switch state {
+            case .loaded:
+                SFX.instance.play(.comicLoaded)
+            case .error:
+                SFX.instance.play(.error)
+            default:
+                break
+            }
+        }
+    }
 
     var connection: Network.HTTPConnection?
 
