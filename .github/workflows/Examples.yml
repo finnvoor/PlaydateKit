@@ -44,3 +44,38 @@ jobs:
       - name: Build
         working-directory: Examples/Pong
         run: swift package pdc
+  Xkpd:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - macos-15
+          - ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: 'Install Swift Toolchain'
+        uses: finnvoor/swiftly-action@main
+      - name: 'Install Playdate SDK'
+        uses: finnvoor/playdatesdk-action@main
+      - name: 'Install arm-none-eabi-gcc'
+        if: ${{ runner.os == 'Linux' }}
+        run: sudo apt-get install -y --no-install-recommends gcc-arm-none-eabi libnewlib-arm-none-eabi
+      - name: Build
+        working-directory: Examples/Xkpd
+        run: swift package pdc --extra-device-o-files-build-dirs CLodePNG.build,CQRCode.build
+      - name: Set pdxinfo buildNumber
+        if: ${{ runner.os == 'macOS' }}
+        working-directory: Examples/Xkpd/Sources/Xkpd/Resources
+        run: echo "buildNumber=$(date +'%Y%m%d%H%M')" >> pdxinfo
+      - name: Build for distribution
+        if: ${{ runner.os == 'macOS' }}
+        working-directory: Examples/Xkpd
+        run: swift package pdc --extra-device-o-files-build-dirs CLodePNG.build,CQRCode.build --device-only
+      - name: Upload build
+        if: ${{ runner.os == 'macOS' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: Xkpd
+          path: Examples/Xkpd/.build/plugins/PDCPlugin/outputs/Xkpd.pdx
