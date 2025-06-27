@@ -1,0 +1,5 @@
+name=xkpd
+author=PlaydateKit contributors
+description=xkcd reader
+bundleID=com.playdatekit.xkpd
+imagePath=meta

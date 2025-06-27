@@ -44,6 +44,10 @@ Tags:
   EnumExtensibility: open
 - Name: PDTextAlignment
   EnumExtensibility: open
+- Name: PDNetErr
+  EnumExtensibility: open
+- Name: accessReply
+  EnumExtensibility: open
 Enumerators:
 - Name: kButtonLeft
   SwiftName: left
@@ -253,3 +257,47 @@ Enumerators:
   SwiftName: center
 - Name: kAlignTextRight
   SwiftName: right
+- Name: NET_OK
+  SwiftName: ok
+- Name: NET_NO_DEVICE
+  SwiftName: noDevice
+- Name: NET_BUSY
+  SwiftName: busy
+- Name: NET_WRITE_ERROR
+  SwiftName: writeError
+- Name: NET_WRITE_BUSY
+  SwiftName: writeBusy
+- Name: NET_WRITE_TIMEOUT
+  SwiftName: writeTimeout
+- Name: NET_READ_ERROR
+  SwiftName: readError
+- Name: NET_READ_BUSY
+  SwiftName: readBusy
+- Name: NET_READ_TIMEOUT
+  SwiftName: readTimeout
+- Name: NET_READ_OVERFLOW
+  SwiftName: readOverflow
+- Name: NET_FRAME_ERROR
+  SwiftName: frameError
+- Name: NET_BAD_RESPONSE
+  SwiftName: badResponse
+- Name: NET_ERROR_RESPONSE
+  SwiftName: errorResponse
+- Name: NET_RESET_TIMEOUT
+  SwiftName: resetTimeout
+- Name: NET_BUFFER_TOO_SMALL
+  SwiftName: bufferTooSmall
+- Name: NET_UNEXPECTED_RESPONSE
+  SwiftName: unexpectedResponse
+- Name: NET_NOT_CONNECTED_TO_AP
+  SwiftName: notConnectedToAP
+- Name: NET_NOT_IMPLEMENTED
+  SwiftName: notImplemented
+- Name: NET_CONNECTION_CLOSED
+  SwiftName: connectionClosed
+- Name: kAccessAsk
+  SwiftName: ask
+- Name: kAccessDeny
+  SwiftName: deny
+- Name: kAccessAllow
+  SwiftName: allow

@@ -45,9 +45,11 @@ import PackagePlugin
             USAGE: swift package pdc [options]
 
             OPTIONS:
-            -p, --product <product>         Build the specified product
-                --device-only               Build a device-only executable suitable for distribution
-            -v, --verbose                   Increase verbosity to include informational output
+            -p, --product <product>                       Build the specified product
+                --device-only                             Build a device-only executable suitable for distribution
+                --simulator-only                          Build a simulator-only executable for quick testing
+                --extra-device-o-files-build-dirs <dirs>  Add more built directories to device `.o` files search (comma-separated)
+            -v, --verbose                                 Increase verbosity to include informational output
             """)
             return
         }
@@ -57,6 +59,8 @@ import PackagePlugin
         let verbose = arguments.hasFlag(named: "verbose")
         let productName = arguments.value(for: "product")
         let deviceOnly = arguments.hasFlag(named: "device-only", allowShort: false)
+        let simulatorOnly = arguments.hasFlag(named: "simulator-only", allowShort: false)
+        let extraDeviceOFilesBuildDirs = arguments.value(for: "extra-device-o-files-build-dirs", allowShort: false)
 
         let product: PackagePlugin.Product? = if let productName {
             context.package.products.first {
@@ -79,13 +83,16 @@ import PackagePlugin
         }
         try FileManager.default.createDirectory(at: pdcBuildDirectory, withIntermediateDirectories: true)
 
-        print("Building for device...")
-        try buildDevice(
-            context: context,
-            target: target,
-            configuration: .release,
-            verbose: verbose
-        )
+        if !simulatorOnly {
+            print("Building for device...")
+            try buildDevice(
+                context: context,
+                target: target,
+                configuration: .release,
+                verbose: verbose,
+                extraDeviceOFilesBuildDirs: extraDeviceOFilesBuildDirs?.split(separator: ",").map(String.init) ?? []
+            )
+        }
 
         if !deviceOnly {
             print("Building for simulator...")
@@ -126,7 +133,8 @@ import PackagePlugin
         context: PluginContext,
         target: PackagePlugin.Target,
         configuration: PackageManager.BuildConfiguration,
-        verbose: Bool
+        verbose: Bool,
+        extraDeviceOFilesBuildDirs: [String]
     ) throws {
         let deviceParameters = try PackageManager.BuildParameters(
             configuration: configuration,
@@ -154,6 +162,19 @@ import PackagePlugin
         ) where url.pathExtension == "o" {
             oFiles.append(url.path(percentEncoded: false))
         }
+
+        for extraDir in extraDeviceOFilesBuildDirs {
+            for url in try FileManager.default.contentsOfDirectory(
+                at: context.pluginWorkDirectoryURL
+                    .appending(component: "../../..")
+                    .appending(component: configuration.rawValue)
+                    .appending(component: extraDir),
+                includingPropertiesForKeys: nil
+            ) where url.pathExtension == "o" {
+                oFiles.append(url.path(percentEncoded: false))
+            }
+        }
+
         for url in try FileManager.default.contentsOfDirectory(
             at: context.pluginWorkDirectoryURL
                 .appending(component: "../../..")

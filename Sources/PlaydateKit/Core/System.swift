@@ -9,6 +9,7 @@ public enum System {
     public typealias DateTime = PDDateTime
     public typealias Peripherals = PDPeripherals
     public typealias Buttons = PDButtons
+    public typealias AccessReply = accessReply
 
     // MARK: - Interacting with the System Menu
 
