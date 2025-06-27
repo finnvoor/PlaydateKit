@@ -93,10 +93,10 @@ class Goto: Sprite.Sprite {
     private static let padding = 6
 
     private var nums: [Int] = [
-        Int.random(in: 1...2, using: &RNG.instance),
-        Int.random(in: 1...9, using: &RNG.instance),
-        Int.random(in: 1...9, using: &RNG.instance),
-        Int.random(in: 1...9, using: &RNG.instance),
+        Int.random(in: 1...2),
+        Int.random(in: 1...9),
+        Int.random(in: 1...9),
+        Int.random(in: 1...9),
     ]
 
     private var selectedNumIndex: Int = 0

@@ -277,7 +277,7 @@ class ComicsBrowser {
         }
 
         System.addMenuItem(title: "Random") {
-            self.comic = Comic(num: Int.random(in: 1...self.latestNum, using: &RNG.instance))
+            self.comic = Comic(num: Int.random(in: 1...self.latestNum))
         }
 
         hasMenuItems = true
