@@ -281,14 +281,14 @@ import PackagePlugin
                 .appending(component: "bin")
                 .appending(component: "pdc"),
             arguments: [
+                "-sdkpath",
+                playdateSDKPath,
                 context.pluginWorkDirectoryURL
                     .appending(component: "Source")
                     .path(percentEncoded: false),
                 context.pluginWorkDirectoryURL
                     .appending(component: product.name)
-                    .path(percentEncoded: false),
-                "-sdkpath",
-                playdateSDKPath,
+                    .path(percentEncoded: false)
             ],
             verbose: verbose
         )
