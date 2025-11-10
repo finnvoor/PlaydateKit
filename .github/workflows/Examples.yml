@@ -7,23 +7,27 @@ on:
 
 jobs:
   FlappySwift:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os:
-          - macos-15
-          - ubuntu-latest
+    runs-on: ubuntu-latest
+    container: swiftlang/swift:nightly-6.2-fedora
     steps:
       - uses: actions/checkout@v4
-      - name: 'Install Swift Toolchain'
-        uses: finnvoor/swiftly-action@main
       - name: 'Install Playdate SDK'
         uses: finnvoor/playdatesdk-action@main
-      - name: 'Install arm-none-eabi-gcc'
-        if: ${{ runner.os == 'Linux' }}
-        run: sudo apt-get install -y --no-install-recommends gcc-arm-none-eabi libnewlib-arm-none-eabi
+      - name: Install Fedora deps
+        run: |
+          dnf -y update
+          # Host toolchain + headers so clang can find <stdlib.h>
+          dnf -y install gcc gcc-c++ glibc-devel glibc-headers kernel-headers \
+                         clang lld git unzip tar ca-certificates
+          # ARM cross toolchain for Playdate device builds
+          dnf -y install arm-none-eabi-gcc-cs arm-none-eabi-gcc-cs-c++ arm-none-eabi-newlib
+          # libpng for pdc tool
+          dnf -y install libpng
       - name: Build
         working-directory: Examples/FlappySwift
+        env:
+          ARM_NONE_EABI_GCC_PATH: /usr/lib/gcc/arm-none-eabi/14.1.0
+          ARM_NONE_EABI_SYSROOT_PATH: /usr/arm-none-eabi
         run: swift package pdc
   Pong:
     runs-on: ${{ matrix.os }}
