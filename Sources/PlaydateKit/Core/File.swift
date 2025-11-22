@@ -54,7 +54,7 @@ public enum File {
         /// Returns the current read/write offset in the given file handle
         public func currentSeekPosition() throws(Playdate.Error) -> Int {
             let offset = file.tell.unsafelyUnwrapped(pointer)
-            guard offset != 0 else { throw lastError }
+            guard offset >= 0 else { throw lastError }
             return Int(offset)
         }
 
