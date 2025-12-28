@@ -2,7 +2,7 @@ import SwiftCompilerPlugin
 import SwiftSyntax
 import SwiftSyntaxMacros
 
-struct MyError: Error, CustomStringConvertible {
+struct InvalidDeclaration: Error, CustomStringConvertible {
 	var description: String {
 		"@PlaydateMain should only be used on a struct, class, or enum declaration"
 	}
@@ -22,7 +22,7 @@ struct PlaydateMainMacro: PeerMacro {
 		} else if let enumDecl = declaration.as(EnumDeclSyntax.self) {
 			gameType = enumDecl.name.trimmed
 		} else {
-			throw MyError()
+			throw InvalidDeclaration()
 		}
 		
 		return [
