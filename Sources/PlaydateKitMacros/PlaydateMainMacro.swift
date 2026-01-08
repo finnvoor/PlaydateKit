@@ -26,7 +26,7 @@ struct PlaydateMainMacro: PeerMacro {
 		}
 		
 		return [
-			"nonisolated(unsafe) fileprivate var game: \(gameType)!",
+			"nonisolated(unsafe) var game: \(gameType)!",
 			"""
 			@_cdecl("eventHandler")
 			func eventHandler(
