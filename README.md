@@ -36,7 +36,7 @@ Your `PlaydateGame` object manages the game lifecycle, receiving events such as 
 import PlaydateKit
 
 @PlaydateMain
-struct Game: PlaydateGame {
+final class Game: PlaydateGame {
     init() {
         System.addCheckmarkMenuItem(title: "check me") { isChecked in
             print(isChecked ? "checked!" : "not checked")
