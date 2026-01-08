@@ -1,6 +1,7 @@
 // swift-tools-version: 6.1
 
 import PackageDescription
+import CompilerPluginSupport
 
 let armToolchainPath: String = if let path = Context.environment["ARM_NONE_EABI_GCC_PATH"] {
     path
@@ -37,10 +38,20 @@ let package = Package(
         .plugin(name: "PDCPlugin", targets: ["PDCPlugin"]),
         .plugin(name: "RenamePlugin", targets: ["RenamePlugin"])
     ],
+    dependencies: [
+        .package(url: "https://github.com/swiftlang/swift-syntax.git", from: "601.0.1"),
+    ],
     targets: [
+        .macro(
+            name: "PlaydateKitMacros",
+            dependencies: [
+                .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
+                .product(name: "SwiftCompilerPlugin", package: "swift-syntax")
+            ]
+        ),
         .target(
             name: "PlaydateKit",
-            dependencies: ["CPlaydate"],
+            dependencies: ["CPlaydate", "PlaydateKitMacros"],
             swiftSettings: [
                 .enableExperimentalFeature("Embedded"),
                 .unsafeFlags([

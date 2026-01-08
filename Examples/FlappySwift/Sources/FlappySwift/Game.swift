@@ -6,6 +6,7 @@ final class TestScene: Scene {}
 
 // MARK: - Game
 
+@PlaydateMain
 final class Game: PlaydateGame {
     var highScore = 0
 
