@@ -3,7 +3,8 @@
 	"swiftCompiler": {
 		"extraCLIOptions": [
 			"-target", "armv7em-none-none-eabi",
-			"-Xfrontend", "-experimental-platform-c-calling-convention=arm_aapcs_vfp"
+			"-Xfrontend", "-experimental-platform-c-calling-convention=arm_aapcs_vfp",
+			"-Xfrontend", "-gline-tables-only"
 		]
 	},
 	"cCompiler": {

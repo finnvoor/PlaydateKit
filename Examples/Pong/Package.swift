@@ -27,7 +27,6 @@ let package = Package(
                     "-Xfrontend", "-disable-objc-interop",
                     "-Xfrontend", "-disable-stack-protector",
                     "-Xfrontend", "-function-sections",
-                    "-Xfrontend", "-gline-tables-only",
                     "-Xcc", "-DTARGET_EXTENSION"
                 ]),
             ],
