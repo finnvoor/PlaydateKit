@@ -1,7 +1,15 @@
 {
     "schemaVersion": "1.0",
+    "swiftCompiler": {
+        "extraCLIOptions": [
+            "-target", "arm64-apple-macos14",
+            "-Xfrontend", "-disable-implicit-concurrency-module-import",
+            "-Xfrontend", "-disable-implicit-string-processing-module-import"
+        ]
+    },
     "cCompiler": {
         "extraCLIOptions": [
+            "-target", "arm64-apple-macos14",
             "-DTARGET_SIMULATOR=1"
         ]
     },
