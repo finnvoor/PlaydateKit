@@ -1,6 +1,9 @@
 #pragma once
 #include "pd_api.h"
 
+int pd_rand(void);
+void pd_srand(unsigned int seed);
+
 int formatStringFloat(PlaydateAPI p, char **outstring, float number) {
     return p.system->formatString(outstring, "%f", number);
 }

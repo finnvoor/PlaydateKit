@@ -15,6 +15,7 @@
 			"-mfloat-abi=hard",
 			"-mfpu=fpv5-sp-d16",
 			"-D__FPU_USED=1",
+			"-DTARGET_PLAYDATE=1",
 
 			"-falign-functions=16",
 			"-fshort-enums"

@@ -12,6 +12,7 @@ jobs:
       matrix:
         os:
           - macos-15
+          - macos-26
           - ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -31,6 +32,7 @@ jobs:
       matrix:
         os:
           - macos-15
+          - macos-26
           - ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -50,6 +52,7 @@ jobs:
       matrix:
         os:
           - macos-15
+          - macos-26
           - ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -77,5 +80,5 @@ jobs:
         if: ${{ runner.os == 'macOS' }}
         uses: actions/upload-artifact@v4
         with:
-          name: Xkpd
+          name: Xkpd-${{ matrix.os }}
           path: Examples/Xkpd/.build/plugins/PDCPlugin/outputs/Xkpd.pdx

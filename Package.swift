@@ -2,26 +2,6 @@
 
 import PackageDescription
 
-let armToolchainPath: String = if let path = Context.environment["ARM_NONE_EABI_GCC_PATH"] {
-    path
-} else {
-    #if os(Linux)
-    "/usr/lib/gcc/arm-none-eabi/10.3.1"
-    #else
-    "/usr/local/playdate/gcc-arm-none-eabi-9-2019-q4-major/lib/gcc/arm-none-eabi/9.2.1"
-    #endif
-}
-
-let armSysrootPath: String = if let path = Context.environment["ARM_NONE_EABI_SYSROOT_PATH"] {
-    path
-} else {
-    #if os(Linux)
-    "/usr/lib/arm-none-eabi"
-    #else
-    "/usr/local/playdate/gcc-arm-none-eabi-9-2019-q4-major/arm-none-eabi"
-    #endif
-}
-
 let playdateSDKPath: String = if let path = Context.environment["PLAYDATE_SDK_PATH"] {
     path
 } else {
@@ -50,9 +30,6 @@ let package = Package(
                     "-Xfrontend", "-function-sections",
                     "-Xfrontend", "-gline-tables-only",
                     "-Xcc", "-DTARGET_EXTENSION",
-                    "-Xcc", "-I", "-Xcc", "\(armToolchainPath)/include",
-                    "-Xcc", "-I", "-Xcc", "\(armToolchainPath)/include-fixed",
-                    "-Xcc", "-I", "-Xcc", "\(armSysrootPath)/include",
                     "-I", "\(playdateSDKPath)/C_API"
                 ]),
             ]
@@ -70,9 +47,6 @@ let package = Package(
                     "-Xfrontend", "-function-sections",
                     "-Xfrontend", "-gline-tables-only",
                     "-Xcc", "-DTARGET_EXTENSION",
-                    "-Xcc", "-I", "-Xcc", "\(armToolchainPath)/include",
-                    "-Xcc", "-I", "-Xcc", "\(armToolchainPath)/include-fixed",
-                    "-Xcc", "-I", "-Xcc", "\(armSysrootPath)/include",
                     "-I", "\(playdateSDKPath)/C_API"
                 ]),
             ]
@@ -82,9 +56,6 @@ let package = Package(
             cSettings: [
                 .unsafeFlags([
                     "-DTARGET_EXTENSION",
-                    "-I", "\(armToolchainPath)/include",
-                    "-I", "\(armToolchainPath)/include-fixed",
-                    "-I", "\(armSysrootPath)/include",
                     "-I", "\(playdateSDKPath)/C_API"
                 ])
             ]

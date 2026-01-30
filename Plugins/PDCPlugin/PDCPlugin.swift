@@ -33,6 +33,28 @@ import PackagePlugin
         }
     }
 
+    var armToolchainPath: String {
+        if let path = ProcessInfo.processInfo.environment["ARM_NONE_EABI_GCC_PATH"] {
+            return path
+        }
+        #if os(Linux)
+        return "/usr/lib/gcc/arm-none-eabi/10.3.1"
+        #else
+        return "/usr/local/playdate/gcc-arm-none-eabi-9-2019-q4-major/lib/gcc/arm-none-eabi/9.2.1"
+        #endif
+    }
+
+    var armSysrootPath: String {
+        if let path = ProcessInfo.processInfo.environment["ARM_NONE_EABI_SYSROOT_PATH"] {
+            return path
+        }
+        #if os(Linux)
+        return "/usr/lib/arm-none-eabi"
+        #else
+        return "/usr/local/playdate/gcc-arm-none-eabi-9-2019-q4-major/arm-none-eabi"
+        #endif
+    }
+
     var playdateSDKURL: URL { get throws { try URL(filePath: playdateSDKPath) } }
 
     func performCommand(context: PluginContext, arguments: [String]) async throws {
@@ -136,11 +158,19 @@ import PackagePlugin
         verbose: Bool,
         extraDeviceOFilesBuildDirs: [String]
     ) throws {
-        let deviceParameters = try PackageManager.BuildParameters(
+        var deviceParameters = try PackageManager.BuildParameters(
             configuration: configuration,
             logging: verbose ? .verbose : .concise,
             echoLogs: verbose
         ).loadFlags(from: deviceToolset)
+
+        let armIncludes = [
+            "-I", "\(armToolchainPath)/include",
+            "-I", "\(armToolchainPath)/include-fixed",
+            "-I", "\(armSysrootPath)/include"
+        ]
+        deviceParameters.otherCFlags += armIncludes
+        deviceParameters.otherSwiftcFlags += armIncludes.flatMap { ["-Xcc", $0] }
 
         let result = try packageManager.build(
             .target(target.name),
