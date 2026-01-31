@@ -2,7 +2,6 @@ import PlaydateKit
 
 // MARK: - Game
 
-@PlaydateMain
 final class Game: PlaydateGame {
     // MARK: Lifecycle
 
