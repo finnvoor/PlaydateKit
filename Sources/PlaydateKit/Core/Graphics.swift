@@ -1,5 +1,16 @@
 import CPlaydate
 
+let bayerPattern: [[UInt8]] = [
+    [0, 32, 8, 40, 2, 34, 10, 42],
+    [48, 16, 56, 24, 50, 18, 58, 26],
+    [12, 44, 4, 36, 14, 46, 6, 38],
+    [60, 28, 52, 20, 62, 30, 54, 22],
+    [3, 35, 11, 43, 1, 33, 9, 41],
+    [51, 19, 59, 27, 49, 17, 57, 25],
+    [15, 47, 7, 39, 13, 45, 5, 37],
+    [63, 31, 55, 23, 61, 29, 53, 21]
+]
+
 // MARK: - Graphics
 
 /// Functions related to displaying information on the device screen.
@@ -213,21 +224,11 @@ public enum Graphics {
         public nonisolated(unsafe) static let xor = Color.solid(.xor)
 
         public static func black(opacity: Float) -> Color {
-            let bayer: [[UInt8]] = [
-                [0, 32, 8, 40, 2, 34, 10, 42],
-                [48, 16, 56, 24, 50, 18, 58, 26],
-                [12, 44, 4, 36, 14, 46, 6, 38],
-                [60, 28, 52, 20, 62, 30, 54, 22],
-                [3, 35, 11, 43, 1, 33, 9, 41],
-                [51, 19, 59, 27, 49, 17, 57, 25],
-                [15, 47, 7, 39, 13, 45, 5, 37],
-                [63, 31, 55, 23, 61, 29, 53, 21]
-            ]
-            var pattern = [UInt8](repeating: 0, count: 16)
+            var pattern: [UInt8] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
             let threshold = UInt8((1 - opacity) * 64)
             for row in 0..<8 {
                 for col in 0..<8 {
-                    if bayer[row][col] >= threshold {
+                    if bayerPattern[row][col] >= threshold {
                         pattern[8 + row] |= (1 << col) // set
                     } else {
                         pattern[8 + row] &= ~(1 << col) // clear
