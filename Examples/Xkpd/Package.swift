@@ -1,6 +1,5 @@
 // swift-tools-version: 6.1
 
-import Foundation
 import PackageDescription
 
 /// Hack to force Xcode builds to not produce a dylib, since linking fails
@@ -12,16 +11,6 @@ let playdateSDKPath: String = if let path = Context.environment["PLAYDATE_SDK_PA
     path
 } else {
     "\(Context.environment["HOME"]!)/Developer/PlaydateSDK/"
-}
-
-let armSysrootPath: String = if let path = Context.environment["ARM_NONE_EABI_SYSROOT_PATH"] {
-    path
-} else {
-    #if os(Linux)
-    "/usr/lib/arm-none-eabi"
-    #else
-    "/usr/local/playdate/gcc-arm-none-eabi-9-2019-q4-major/arm-none-eabi"
-    #endif
 }
 
 let package = Package(
@@ -66,7 +55,6 @@ let package = Package(
                     "-DLODEPNG_NO_COMPILE_DISK",
                     "-DLODEPNG_NO_COMPILE_ALLOCATORS",
                     "-DLODEPNG_NO_COMPILE_ANCILLARY_CHUNKS",
-                    "-I", "\(armSysrootPath)/include",
                 ])
             ],
         ),
@@ -78,7 +66,6 @@ let package = Package(
             cSettings: [
                 .unsafeFlags([
                     "-v",
-                    "-I", "\(armSysrootPath)/include",
                 ])
             ]
         ),
