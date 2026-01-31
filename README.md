@@ -35,7 +35,6 @@ Your `PlaydateGame` object manages the game lifecycle, receiving events such as 
 ```swift
 import PlaydateKit
 
-@PlaydateMain
 final class Game: PlaydateGame {
     init() {
         System.addCheckmarkMenuItem(title: "check me") { isChecked in
