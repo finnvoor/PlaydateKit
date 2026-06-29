@@ -13,7 +13,7 @@ public enum Network {
         _ enabled: Bool,
         callback: (@convention(c) (_ err: NetErr) -> Void)? = nil
     ) {
-        network.setEnabled.unsafelyUnwrapped(enabled, callback)
+        network.setEnabled.unsafelyUnwrapped(enabled, callback ?? { _ in })
     }
 
     public static func getStatus() -> WifiStatus {
