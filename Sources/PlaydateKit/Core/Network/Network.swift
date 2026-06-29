@@ -24,4 +24,6 @@ public enum Network {
     static var network: playdate_network { Playdate.playdateAPI.network.pointee }
 
     static var http: playdate_http { network.http.pointee }
+
+    static var tcp: playdate_tcp { network.tcp.pointee }
 }
