@@ -861,8 +861,13 @@ public enum Graphics {
 
     /// Only valid in the Simulator; function returns nil on device. Returns the debug framebuffer as a bitmap.
     /// White pixels drawn in the image are overlaid on the display in 50% transparent red.
+    ///
+    /// The Simulator owns this bitmap and reuses it every frame, so it must never be freed. Prefer
+    /// ``Debug/draw(_:)``, which handles pushing and popping the drawing context for you.
     public static func getDebugBitmap() -> Bitmap? {
-        graphics.getDebugBitmap.unsafelyUnwrapped().map { Bitmap(pointer: $0) }
+        // `free: false` is essential: this is the Simulator's own debug framebuffer, and freeing it
+        // corrupts the Simulator's heap and takes the whole process down a few frames later.
+        graphics.getDebugBitmap.unsafelyUnwrapped().map { Bitmap(pointer: $0, free: false) }
     }
 
     /// Returns the raw bits in the display buffer, the last completed frame.

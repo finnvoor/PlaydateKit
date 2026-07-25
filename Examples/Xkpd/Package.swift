@@ -38,10 +38,18 @@ let package = Package(
                     "-Xfrontend", "-disable-objc-interop",
                     "-Xfrontend", "-disable-stack-protector",
                     "-Xfrontend", "-function-sections",
-                    "-Xfrontend", "-gline-tables-only",
                     "-Xcc", "-DTARGET_EXTENSION",
                     "-Xcc", "-I", "-Xcc", "\(playdateSDKPath)/C_API",
                 ]),
+                // Simulator (debug) builds keep the full DWARF that SwiftPM's `-g` produces so LLDB
+                // can inspect variables. Device (release) builds only need line tables, pinned to
+                // DWARF 4 because the Simulator's "Device - C" Sampler symbolizes through the
+                // Playdate SDK's `arm-none-eabi-addr2line`, which can't parse DWARF 5.
+                .unsafeFlags([
+                    "-Xfrontend", "-gline-tables-only",
+                    "-dwarf-version=4",
+                    "-Xcc", "-gdwarf-4",
+                ], .when(configuration: .release)),
             ],
         ),
         .target(
