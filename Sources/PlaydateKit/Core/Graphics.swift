@@ -338,10 +338,10 @@ public enum Graphics {
         }
 
         /// Returns a `Font` object wrapping the `LCDFontData` `data` comprising the contents (minus 16-byte header)
-        /// of an uncompressed pft file. `wide` corresponds to the flag in the header indicating whether the font contains
-        /// glyphs at codepoints above U+1FFFF.
-        public init?(data: OpaquePointer, wide: Bool) {
-            guard let pointer = graphics.makeFontFromData.unsafelyUnwrapped(data, wide ? 1 : 0) else {
+        /// of an uncompressed pft file. `length` is the size of `data` in bytes. `wide` corresponds to the flag in the
+        /// header indicating whether the font contains glyphs at codepoints above U+1FFFF.
+        public init?(data: OpaquePointer, length: Int, wide: Bool) {
+            guard let pointer = graphics.makeFontFromData.unsafelyUnwrapped(data, wide ? 1 : 0, CInt(length)) else {
                 return nil
             }
             self.pointer = pointer
