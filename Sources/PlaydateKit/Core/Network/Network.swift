@@ -13,7 +13,7 @@ public enum Network {
         _ enabled: Bool,
         callback: (@convention(c) (_ err: NetErr) -> Void)? = nil
     ) {
-        network.setEnabled.unsafelyUnwrapped(enabled, callback)
+        network.setEnabled.unsafelyUnwrapped(enabled, callback ?? { _ in })
     }
 
     public static func getStatus() -> WifiStatus {
@@ -24,4 +24,6 @@ public enum Network {
     static var network: playdate_network { Playdate.playdateAPI.network.pointee }
 
     static var http: playdate_http { network.http.pointee }
+
+    static var tcp: playdate_tcp { network.tcp.pointee }
 }
