@@ -70,7 +70,7 @@ import PackagePlugin
             -p, --product <product>                       Build the specified product
                 --device-only                             Build a device-only executable suitable for distribution
                 --simulator-only                          Build a simulator-only executable for quick testing
-                --extra-device-o-files-build-dirs <dirs>  Add more built directories to device `.o` files search (comma-separated)
+                --extra-device-o-files-build-dirs <dirs>  Link the device objects of more targets, e.g. `CLodePNG.build` (comma-separated)
             -v, --verbose                                 Increase verbosity to include informational output
             """)
             return
@@ -151,6 +151,9 @@ import PackagePlugin
         print(outputPath)
     }
 
+    /// Builds the device objects with a nested `swift build`, since a command plugin can't change the build
+    /// triple. Without the `armv7em-none-none-eabi` triple, the `swiftbuild` build system prelinks every target
+    /// with the host linker, which can't read the device's ELF objects.
     func buildDevice(
         context: PluginContext,
         target: PackagePlugin.Target,
@@ -158,61 +161,62 @@ import PackagePlugin
         verbose: Bool,
         extraDeviceOFilesBuildDirs: [String]
     ) throws {
-        var deviceParameters = try PackageManager.BuildParameters(
-            configuration: configuration,
-            logging: verbose ? .verbose : .concise,
-            echoLogs: verbose
-        ).loadFlags(from: deviceToolset)
+        let fileManager = FileManager.default
+        let scratchDirectory = context.pluginWorkDirectoryURL.appending(component: "../../..").standardized
+        let deviceBuildDirectory = context.pluginWorkDirectoryURL.appending(component: "DeviceBuild")
+        try fileManager.createDirectory(at: deviceBuildDirectory, withIntermediateDirectories: true)
 
-        let armIncludes = [
-            "-I", "\(armToolchainPath)/include",
-            "-I", "\(armToolchainPath)/include-fixed",
-            "-I", "\(armSysrootPath)/include"
-        ]
-        deviceParameters.otherCFlags += armIncludes
-        deviceParameters.otherSwiftcFlags += armIncludes.flatMap { ["-Xcc", $0] }
-
-        let result = try packageManager.build(
-            .target(target.name),
-            parameters: deviceParameters
-        )
-
-        guard result.succeeded else {
-            if !verbose { print(result.logText) }
-            throw Error.buildFailed
-        }
-
-        var oFiles: [String] = []
-        for url in try FileManager.default.contentsOfDirectory(
-            at: context.pluginWorkDirectoryURL
-                .appending(component: "../../..")
-                .appending(component: configuration.rawValue)
-                .appending(component: "CPlaydate.build"),
-            includingPropertiesForKeys: nil
-        ) where url.pathExtension == "o" {
-            oFiles.append(url.path(percentEncoded: false))
-        }
-
-        for extraDir in extraDeviceOFilesBuildDirs {
-            for url in try FileManager.default.contentsOfDirectory(
-                at: context.pluginWorkDirectoryURL
-                    .appending(component: "../../..")
-                    .appending(component: configuration.rawValue)
-                    .appending(component: extraDir),
-                includingPropertiesForKeys: nil
-            ) where url.pathExtension == "o" {
-                oFiles.append(url.path(percentEncoded: false))
+        // Plugins can't access the network, so seed the nested build with the already resolved dependencies.
+        for item in ["workspace-state.json", "checkouts", "repositories", "artifacts"] {
+            let source = scratchDirectory.appending(component: item)
+            let destination = deviceBuildDirectory.appending(component: item)
+            if fileManager.fileExists(atPath: destination.path(percentEncoded: false)) {
+                try fileManager.removeItem(at: destination)
+            }
+            if fileManager.fileExists(atPath: source.path(percentEncoded: false)) {
+                try fileManager.copyItem(at: source, to: destination)
             }
         }
 
-        for url in try FileManager.default.contentsOfDirectory(
-            at: context.pluginWorkDirectoryURL
-                .appending(component: "../../..")
-                .appending(component: configuration.rawValue)
-                .appending(component: "\(target.name).build"),
-            includingPropertiesForKeys: nil
-        ) where url.pathExtension == "o" {
-            oFiles.append(url.path(percentEncoded: false))
+        let toolset = deviceBuildDirectory.appending(component: "toolset.json")
+        try writeDeviceToolset(to: toolset, linker: context.tool(named: "ld.lld").url)
+
+        let buildArguments = [
+            "--package-path", context.package.directoryURL.path(percentEncoded: false),
+            "--scratch-path", deviceBuildDirectory.path(percentEncoded: false),
+            "--configuration", configuration.rawValue,
+            "--triple", "armv7em-none-none-eabi",
+            "--toolset", toolset.path(percentEncoded: false),
+            "--build-system", "swiftbuild",
+            "--disable-automatic-resolution"
+        ]
+        let swift = try context.tool(named: "swift").url
+        let log = deviceBuildDirectory.appending(component: "build.log")
+        do {
+            try execute(
+                tool: swift,
+                arguments: ["build", "--target", target.name] + buildArguments + (verbose ? ["--verbose"] : []),
+                verbose: verbose,
+                output: verbose ? nil : log
+            )
+        } catch {
+            if !verbose { print((try? String(contentsOf: log, encoding: .utf8)) ?? "") }
+            throw Error.buildFailed
+        }
+
+        let binPathFile = deviceBuildDirectory.appending(component: "bin-path.txt")
+        try execute(tool: swift, arguments: ["build", "--show-bin-path"] + buildArguments, output: binPathFile)
+        let binDirectory = try URL(
+            filePath: String(contentsOf: binPathFile, encoding: .utf8).split(separator: "\n").last.map(String.init) ?? "",
+            directoryHint: .isDirectory
+        )
+
+        // Every target is prelinked into a single relocatable object named after the target.
+        let objectTargets = ["CPlaydate", target.name] + extraDeviceOFilesBuildDirs.map {
+            $0.hasSuffix(".build") ? String($0.dropLast(".build".count)) : $0
+        }
+        let oFiles = objectTargets.map {
+            binDirectory.appending(component: "\($0).o").path(percentEncoded: false)
         }
 
         try execute(tool: context.tool(named: "arm-none-eabi-gcc").url, arguments: oFiles + [
@@ -228,6 +232,28 @@ import PackagePlugin
                 .path(percentEncoded: false),
             "-Wl,--gc-sections,--no-warn-mismatch,--emit-relocs"
         ])
+    }
+
+    /// Writes the device toolset extended with the ARM toolchain includes and `ld.lld` as linker, which the
+    /// nested build uses to prelink targets.
+    func writeDeviceToolset(to url: URL, linker: URL) throws {
+        let armIncludes = [
+            "-I", "\(armToolchainPath)/include",
+            "-I", "\(armToolchainPath)/include-fixed",
+            "-I", "\(armSysrootPath)/include"
+        ]
+        guard var toolset = try JSONSerialization.jsonObject(
+            with: Data(contentsOf: deviceToolset)
+        ) as? [String: Any] else { throw Error.invalidToolset }
+        for (name, options) in [("cCompiler", armIncludes), ("swiftCompiler", armIncludes.flatMap { ["-Xcc", $0] })] {
+            var tool = toolset[name] as? [String: Any] ?? [:]
+            tool["extraCLIOptions"] = (tool["extraCLIOptions"] as? [String] ?? []) + options
+            toolset[name] = tool
+        }
+        var linkerTool = toolset["linker"] as? [String: Any] ?? [:]
+        linkerTool["path"] = linker.path(percentEncoded: false)
+        toolset["linker"] = linkerTool
+        try JSONSerialization.data(withJSONObject: toolset, options: [.prettyPrinted, .sortedKeys]).write(to: url)
     }
 
     func buildSimulator(
@@ -324,12 +350,20 @@ import PackagePlugin
         )
     }
 
-    func execute(tool: URL, arguments: [String], verbose: Bool = false) throws {
+    /// Runs `tool`, writing its output to `output` if given, or to the standard output otherwise.
+    func execute(tool: URL, arguments: [String], verbose: Bool = false, output: URL? = nil) throws {
         let task = Process()
         task.executableURL = tool
         task.arguments = arguments
-        task.standardOutput = FileHandle.standardOutput
-        task.standardError = FileHandle.standardError
+        if let output {
+            FileManager.default.createFile(atPath: output.path(percentEncoded: false), contents: nil)
+            let handle = try FileHandle(forWritingTo: output)
+            task.standardOutput = handle
+            task.standardError = handle
+        } else {
+            task.standardOutput = FileHandle.standardOutput
+            task.standardError = FileHandle.standardError
+        }
         if verbose { task.print() }
         try task.run()
         task.waitUntilExit()
@@ -351,5 +385,6 @@ extension PDCPlugin {
         case missingBuildArtifact
         case duplicateResource
         case buildFailed
+        case invalidToolset
     }
 }
