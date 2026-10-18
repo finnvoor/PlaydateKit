@@ -245,7 +245,12 @@ import PackagePlugin
         guard var toolset = try JSONSerialization.jsonObject(
             with: Data(contentsOf: deviceToolset)
         ) as? [String: Any] else { throw Error.invalidToolset }
-        for (name, options) in [("cCompiler", armIncludes), ("swiftCompiler", armIncludes.flatMap { ["-Xcc", $0] })] {
+        // Unlike the native build system, swiftbuild doesn't forward C flags to swiftc. Without
+        // -fPIC, Swift code addresses globals with MOVW/MOVT relocations, which the Playdate
+        // loader doesn't relocate, crashing the game on device.
+        let cFlags = (toolset["cCompiler"] as? [String: Any])?["extraCLIOptions"] as? [String] ?? []
+        let cOptions = ["-fPIC"] + armIncludes
+        for (name, options) in [("cCompiler", cOptions), ("swiftCompiler", (cFlags + cOptions).flatMap { ["-Xcc", $0] })] {
             var tool = toolset[name] as? [String: Any] ?? [:]
             tool["extraCLIOptions"] = (tool["extraCLIOptions"] as? [String] ?? []) + options
             toolset[name] = tool
