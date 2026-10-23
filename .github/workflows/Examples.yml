@@ -16,6 +16,9 @@ jobs:
           - ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: 'Update apt package index'
+        if: ${{ runner.os == 'Linux' }}
+        run: sudo apt-get update
       - name: 'Install Swift Toolchain'
         uses: finnvoor/swiftly-action@main
       - name: 'Install Playdate SDK'
@@ -36,6 +39,9 @@ jobs:
           - ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: 'Update apt package index'
+        if: ${{ runner.os == 'Linux' }}
+        run: sudo apt-get update
       - name: 'Install Swift Toolchain'
         uses: finnvoor/swiftly-action@main
       - name: 'Install Playdate SDK'
@@ -58,6 +64,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: true
+      - name: 'Update apt package index'
+        if: ${{ runner.os == 'Linux' }}
+        run: sudo apt-get update
       - name: 'Install Swift Toolchain'
         uses: finnvoor/swiftly-action@main
       - name: 'Install Playdate SDK'
