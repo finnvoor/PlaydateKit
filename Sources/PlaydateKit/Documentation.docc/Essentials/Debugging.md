@@ -64,9 +64,18 @@ SDK is binutils 2.33 and cannot parse the DWARF 5 that Clang emits by default â€
 outright and every sample resolves to no source location. The pin lives in PlaydateKit's device
 toolset, so it covers your game's own target without any change to its `Package.swift`.
 
-> Note: The Sampler runs `addr2line -f` without `-C`, and reads function names out of DWARF, so Swift
-frames appear as mangled names like `$e4Pong4BallC6updateyyF` alongside the correct file and line.
-Run a name through `swift demangle` to read it.
+The Sampler runs `addr2line` without `-C` or `-i`, so `swift package pdc` also rewrites that `.elf`
+(never the code that runs on device):
+
+- Symbols are renamed to their demangled form, so frames read `Ball.update()` rather than
+  `$e4Pong4BallC6updateyyF`.
+- Swift puts line 0 on much inlined and compiler-generated code, which `addr2line` reports as no
+  location and the Sampler lumps into one `<Choose game ELF for symbol>` entry. Those rows take the
+  line before them instead.
+
+What remains in that entry is mostly the ARM toolchain's own runtime, such as the soft-float helpers
+`__aeabi_l2f` and `__aeabi_dadd`, which ships without debug info. A large share there usually means
+64-bit integer or `Double` arithmetic on a hot path.
 
 ## Inspecting memory with the Malloc Log
 

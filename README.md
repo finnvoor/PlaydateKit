@@ -58,7 +58,7 @@ final class Game: PlaydateGame {
 `swift package pdc` publishes the debug info the Playdate Simulator's built-in tools need:
 
 - Simulator builds keep full debug info and the `dSYM` bundle is copied into the pdx next to `pdex.dylib`, so **LLDB** can attach to the running Simulator, hit breakpoints, and inspect variables.
-- An unstripped `<Product>.elf` is written next to the pdx for the **Sampler**'s `Device - C` mode, and device builds emit DWARF 4 so the SDK's `arm-none-eabi-addr2line` can resolve source lines.
+- An unstripped `<Product>.elf` is written next to the pdx for the **Sampler**'s `Device - C` mode, with demangled names and line information the SDK's `arm-none-eabi-addr2line` can read.
 
 See [Debugging](https://finnvoor.github.io/PlaydateKit/documentation/playdatekit/debugging) for the full rundown of which Simulator tools work with a compiled Swift game.
 
