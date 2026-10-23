@@ -6,6 +6,8 @@ import PackagePlugin
 @main struct PDCPlugin: CommandPlugin {
     let home = FileManager.default.homeDirectoryForCurrentUser.path()
 
+    /// Pins device builds to DWARF 4 for every target, the game's own included: the Sampler's `Device - C`
+    /// mode symbolizes with the SDK's `arm-none-eabi-addr2line` (binutils 2.33), which can't read DWARF 5.
     let deviceToolset = URL(filePath: #filePath)
         .appending(path: "../../../Toolsets/toolset_device.json")
         .standardized
@@ -207,6 +209,7 @@ import PackagePlugin
         )
 
         guard result.succeeded else {
+            // A verbose build already echoed its log while building.
             if !verbose {
                 print(result.logText)
             }
@@ -280,6 +283,7 @@ import PackagePlugin
         )
 
         guard result.succeeded else {
+            // A verbose build already echoed its log while building.
             if !verbose {
                 print(result.logText)
             }
