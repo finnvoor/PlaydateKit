@@ -366,10 +366,11 @@ import PackagePlugin
             do {
                 var elf = try SamplerELF(url: destination)
                 let lines = elf.fillLineZero()
+                let uncovered = elf.addLinesForUncoveredFunctions()
                 let demangled = try elf.demangleSymbols(demangler: context.tool(named: "swift-demangle").url)
                 try elf.write()
                 if verbose {
-                    print("Wrote \(destination.lastPathComponent) for the Sampler: \(demangled) symbols demangled, line 0 filled in \(lines.rewritten)/\(lines.units) line tables")
+                    print("Wrote \(destination.lastPathComponent) for the Sampler: \(demangled) symbols demangled, line 0 filled in \(lines.rewritten)/\(lines.units) line tables, \(uncovered) functions without line info given one")
                 }
             } catch {
                 print("warning: \(destination.lastPathComponent) keeps mangled names and line 0 rows: \(error)")

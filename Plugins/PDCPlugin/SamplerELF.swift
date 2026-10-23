@@ -86,25 +86,79 @@ struct SamplerELF {
     /// take the line before them instead; a sequence that is all line 0 gets line 1. Every unit keeps
     /// its size, so nothing that points into `.debug_line` needs updating.
     mutating func fillLineZero() -> (rewritten: Int, units: Int) {
-        guard let section = sections[".debug_line"].map({ headers[$0] }) else { return (0, 0) }
         var rewritten = 0
         var units = 0
-        var position = section.offset
-        let end = section.offset + section.size
-        while position + 10 <= end {
-            let unitEnd = position + 4 + Int(u32(position))
-            defer { position = unitEnd }
+        var edits: [(range: Range<Int>, bytes: [UInt8])] = []
+        forEachLineUnit { _, unitEnd, unit in
             units += 1
-            guard let unit = LineProgram(bytes: bytes, at: position, end: unitEnd),
-                  let encoded = unit.encodeFillingLineZero(),
-                  encoded.count <= unitEnd - unit.programStart
-            else { continue }
+            guard let encoded = unit.encodeFillingLineZero(), encoded.count <= unitEnd - unit.programStart else { return }
             // DW_LNS_set_basic_block is a one-byte opcode with no effect on the rows addr2line reads.
             let padding = [UInt8](repeating: 0x07, count: unitEnd - unit.programStart - encoded.count)
-            bytes.replaceSubrange(unit.programStart..<unitEnd, with: encoded + padding)
+            edits.append((unit.programStart..<unitEnd, encoded + padding))
             rewritten += 1
         }
+        for edit in edits {
+            bytes.replaceSubrange(edit.range, with: edit.bytes)
+        }
         return (rewritten, units)
+    }
+
+    /// Code with no line rows at all (newlib, libgcc, merged and outlined Swift functions) has no
+    /// location either. One extra compile unit gives each such function a row in a `nodebug` file, on
+    /// a line of its own; addr2line then names it from the symbol table.
+    mutating func addLinesForUncoveredFunctions() -> Int {
+        guard let symtabIndex = sections[".symtab"], let lineIndex = sections[".debug_line"],
+              let infoIndex = sections[".debug_info"], let abbrevIndex = sections[".debug_abbrev"],
+              let rangesIndex = sections[".debug_ranges"]
+        else { return 0 }
+
+        var covered: [Range<Int>] = []
+        forEachLineUnit { _, _, unit in covered += unit.addressRanges }
+        covered.sort { $0.lowerBound < $1.lowerBound }
+        let symtab = headers[symtabIndex]
+        var functions: [Int: Int] = [:]
+        for index in 0..<symtab.size / 16 {
+            let entry = symtab.offset + index * 16
+            let size = Int(u32(entry + 8))
+            // STT_FUNC; the low bit of a Thumb function's value is not part of its address.
+            guard bytes[entry + 12] & 0xF == 2, size > 0 else { continue }
+            functions[Int(u32(entry + 4)) & ~1, default: 0] = max(functions[Int(u32(entry + 4)) & ~1] ?? 0, size)
+        }
+        let uncovered = functions.map { $0.key..<$0.key + $0.value }.sorted { $0.lowerBound < $1.lowerBound }.filter { function in
+            var low = 0, high = covered.count
+            while low < high {
+                let middle = (low + high) / 2
+                if covered[middle].lowerBound < function.upperBound {
+                    low = middle + 1
+                } else {
+                    high = middle
+                }
+            }
+            return low == 0 || covered[low - 1].upperBound <= function.lowerBound
+        }
+        guard !uncovered.isEmpty else { return 0 }
+
+        let file = Array("nodebug".utf8) + [0]
+        // DWARF 2 line header: minimum_instruction_length 1, default_is_stmt 1, line_base -5,
+        // line_range 14, opcode_base 13, no include directories, one file.
+        var lineHeader: [UInt8] = [1, 1, 0xFB, 14, 13, 0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 1, 0]
+        lineHeader += file + [0, 0, 0, 0]
+        var lineProgram: [UInt8] = []
+        var ranges: [UInt8] = []
+        for (index, function) in uncovered.enumerated() {
+            lineProgram += [0, 5, 2] + littleEndian32(function.lowerBound) + [3] + sleb(index) + [1]
+            lineProgram += [2] + uleb(function.count) + [0, 1, 1]
+            ranges += littleEndian32(function.lowerBound) + littleEndian32(function.upperBound)
+        }
+        let lineUnit = [2, 0] + littleEndian32(lineHeader.count) + lineHeader + lineProgram
+        let lineOffset = append(littleEndian32(lineUnit.count) + lineUnit, to: lineIndex)
+        let rangesOffset = append(ranges + [UInt8](repeating: 0, count: 8), to: rangesIndex)
+        // compile_unit, no children: name string, stmt_list sec_offset, low_pc addr, ranges sec_offset.
+        let abbrevOffset = append([1, 0x11, 0, 0x03, 0x08, 0x10, 0x17, 0x11, 0x01, 0x55, 0x17, 0, 0, 0], to: abbrevIndex)
+        let unit = [4, 0] + littleEndian32(abbrevOffset) + [4, 1] + file + littleEndian32(lineOffset)
+            + littleEndian32(0) + littleEndian32(rangesOffset)
+        _ = append(littleEndian32(unit.count) + unit, to: infoIndex)
+        return uncovered.count
     }
 
     func write() throws {
@@ -117,8 +171,8 @@ struct SamplerELF {
         /// File offset of this section's header.
         let header: Int
         let name: Int
-        let offset: Int
-        let size: Int
+        var offset: Int
+        var size: Int
         let link: Int
     }
 
@@ -139,6 +193,32 @@ struct SamplerELF {
         for byte in 0..<4 {
             bytes[offset + byte] = UInt8(truncatingIfNeeded: value >> (byte * 8))
         }
+    }
+
+    private func forEachLineUnit(_ body: (_ start: Int, _ end: Int, LineProgram) -> Void) {
+        guard let section = sections[".debug_line"].map({ headers[$0] }) else { return }
+        var position = section.offset
+        let end = section.offset + section.size
+        while position + 10 <= end {
+            let unitEnd = position + 4 + Int(u32(position))
+            if let unit = LineProgram(bytes: bytes, at: position, end: unitEnd) {
+                body(position, unitEnd, unit)
+            }
+            position = unitEnd
+        }
+    }
+
+    /// Moves a section to the end of the file with `extra` after its contents, and returns where
+    /// `extra` starts within the section. Only for sections not loaded on device.
+    private mutating func append(_ extra: [UInt8], to index: Int) -> Int {
+        let section = headers[index]
+        let contents = Array(bytes[section.offset..<section.offset + section.size]) + extra
+        headers[index].offset = bytes.count
+        headers[index].size = contents.count
+        setU32(section.header + 16, bytes.count)
+        setU32(section.header + 20, contents.count)
+        bytes += contents
+        return section.size
     }
 
     private func cString(at offset: Int) -> [UInt8] {
@@ -239,6 +319,10 @@ private struct LineProgram {
     // MARK: Internal
 
     let programStart: Int
+
+    var addressRanges: [Range<Int>] {
+        sequences.compactMap { sequence in sequence.rows.first.map { $0.address..<sequence.end } }
+    }
 
     func encodeFillingLineZero() -> [UInt8]? {
         var output: [UInt8] = []
@@ -341,36 +425,38 @@ private struct LineProgram {
     private let lineRange: Int
     private let opcodeBase: Int
     private var sequences: [Sequence] = []
+}
 
-    private func littleEndian32(_ value: Int) -> [UInt8] {
-        (0..<4).map { UInt8(truncatingIfNeeded: value >> ($0 * 8)) }
-    }
+// MARK: - Encoding
 
-    private func uleb(_ value: Int) -> [UInt8] {
-        var value = value
-        var output: [UInt8] = []
-        repeat {
-            var byte = UInt8(value & 0x7F)
-            value >>= 7
-            if value != 0 {
-                byte |= 0x80
-            }
-            output.append(byte)
-        } while value != 0
-        return output
-    }
+private func littleEndian32(_ value: Int) -> [UInt8] {
+    (0..<4).map { UInt8(truncatingIfNeeded: value >> ($0 * 8)) }
+}
 
-    private func sleb(_ value: Int) -> [UInt8] {
-        var value = value
-        var output: [UInt8] = []
-        while true {
-            let byte = UInt8(value & 0x7F)
-            value >>= 7
-            if (value == 0 && byte & 0x40 == 0) || (value == -1 && byte & 0x40 != 0) {
-                output.append(byte)
-                return output
-            }
-            output.append(byte | 0x80)
+private func uleb(_ value: Int) -> [UInt8] {
+    var value = value
+    var output: [UInt8] = []
+    repeat {
+        var byte = UInt8(value & 0x7F)
+        value >>= 7
+        if value != 0 {
+            byte |= 0x80
         }
+        output.append(byte)
+    } while value != 0
+    return output
+}
+
+private func sleb(_ value: Int) -> [UInt8] {
+    var value = value
+    var output: [UInt8] = []
+    while true {
+        let byte = UInt8(value & 0x7F)
+        value >>= 7
+        if (value == 0 && byte & 0x40 == 0) || (value == -1 && byte & 0x40 != 0) {
+            output.append(byte)
+            return output
+        }
+        output.append(byte | 0x80)
     }
 }
