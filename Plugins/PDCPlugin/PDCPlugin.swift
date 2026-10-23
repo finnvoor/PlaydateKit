@@ -181,6 +181,7 @@ import PackagePlugin
         let toolset = deviceBuildDirectory.appending(component: "toolset.json")
         try writeDeviceToolset(to: toolset, linker: context.tool(named: "ld.lld").url)
 
+        // The nested build runs inside the plugin's sandbox already, and macOS refuses to nest another one.
         let buildArguments = [
             "--package-path", context.package.directoryURL.path(percentEncoded: false),
             "--scratch-path", deviceBuildDirectory.path(percentEncoded: false),
@@ -188,7 +189,8 @@ import PackagePlugin
             "--triple", "armv7em-none-none-eabi",
             "--toolset", toolset.path(percentEncoded: false),
             "--build-system", "swiftbuild",
-            "--disable-automatic-resolution"
+            "--disable-automatic-resolution",
+            "--disable-sandbox"
         ]
         let swift = try context.tool(named: "swift").url
         let log = deviceBuildDirectory.appending(component: "build.log")
