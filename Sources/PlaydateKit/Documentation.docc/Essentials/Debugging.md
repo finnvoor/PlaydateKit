@@ -11,7 +11,7 @@ This article covers which tools work with a compiled Swift game, which don't, an
 
 ## Setting breakpoints with LLDB
 
-Simulator builds keep the full DWARF that SwiftPM's `-g` produces, and `swift package pdc` copies the
+Simulator builds keep the full DWARF that SwiftPM's `-g` produces, and `swift package pdc` puts a
 `dSYM` bundle into the pdx next to `pdex.dylib` — the one place LLDB looks for it. Attach to the
 running Simulator:
 

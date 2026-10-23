@@ -326,15 +326,27 @@ import PackagePlugin
             .appendingPathExtension(simulatorArtifact?.pathExtension ?? "dylib")
         if copyDSYM, let simulatorArtifact {
             let dSYM = simulatorArtifact.appendingPathExtension("dSYM")
+            let destination = library.appendingPathExtension("dSYM")
+            if fileManager.fileExists(atPath: destination.path(percentEncoded: false)) {
+                try fileManager.removeItem(at: destination)
+            }
             if fileManager.fileExists(atPath: dSYM.path(percentEncoded: false)) {
-                let destination = library.appendingPathExtension("dSYM")
-                if fileManager.fileExists(atPath: destination.path(percentEncoded: false)) {
-                    try fileManager.removeItem(at: destination)
-                }
                 try fileManager.copyItem(at: dSYM, to: destination)
                 if verbose {
                     print("Copied \(dSYM.lastPathComponent) into \(pdx.lastPathComponent)")
                 }
+            } else {
+                #if os(macOS)
+                // The swiftbuild build system leaves the debug info in the object files instead of a dSYM.
+                try execute(
+                    tool: context.tool(named: "dsymutil").url,
+                    arguments: [simulatorArtifact.path(percentEncoded: false), "-o", destination.path(percentEncoded: false)],
+                    verbose: verbose
+                )
+                if verbose {
+                    print("Wrote \(destination.lastPathComponent) into \(pdx.lastPathComponent)")
+                }
+                #endif
             }
         }
 
