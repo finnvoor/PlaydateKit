@@ -71,6 +71,7 @@ import PackagePlugin
                 --device-only                             Build a device-only executable suitable for distribution
                 --simulator-only                          Build a simulator-only executable for quick testing
                 --extra-device-o-files-build-dirs <dirs>  Add more built directories to device `.o` files search (comma-separated)
+                --no-resource-cache                       Copy and compile every resource, even those unchanged since the last build
             -v, --verbose                                 Increase verbosity to include informational output
             """)
             return
@@ -83,6 +84,7 @@ import PackagePlugin
         let deviceOnly = arguments.hasFlag(named: "device-only", allowShort: false)
         let simulatorOnly = arguments.hasFlag(named: "simulator-only", allowShort: false)
         let extraDeviceOFilesBuildDirs = arguments.value(for: "extra-device-o-files-build-dirs", allowShort: false)
+        let useResourceCache = simulatorOnly && !arguments.hasFlag(named: "no-resource-cache", allowShort: false)
 
         let product: PackagePlugin.Product? = if let productName {
             context.package.products.first {
@@ -126,12 +128,21 @@ import PackagePlugin
             )
         }
 
+        let pdx = context.pluginWorkDirectoryURL
+            .appending(component: product.name)
+            .appendingPathExtension("pdx")
+        let cache = useResourceCache ? try resourceCache(context: context, target: target) : nil
+
         print("Copying resources...")
-        try copyResources(
+        let copied = try copyResources(
             context: context,
             target: target,
+            cache: cache,
             verbose: verbose
         )
+        if !copied.reused.isEmpty {
+            print("Reusing compiled resources: \(copied.reused.map(\.name).joined(separator: ", "))")
+        }
 
         print("Compiling into pdx...")
         try pdc(
@@ -139,6 +150,12 @@ import PackagePlugin
             product: product,
             verbose: verbose
         )
+
+        if let cache {
+            for reused in copied.reused { try cache.restore(reused, into: pdx) }
+            for pending in copied.pending { try cache.store(pending, compiledFrom: pdx) }
+            cache.prune(keeping: Set((copied.reused.map(\.name) + copied.pending.map(\.name))))
+        }
 
         let buildDuration = (Date().timeIntervalSince(startTime))
             .formatted(.number.precision(.fractionLength(2)))
@@ -263,11 +280,27 @@ import PackagePlugin
         )
     }
 
+    func resourceCache(context: PluginContext, target: PackagePlugin.Target) throws -> ResourceCache {
+        let directory = context.pluginWorkDirectoryURL.appending(component: "ResourceCache")
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        return try ResourceCache(
+            directory: directory,
+            pdc: playdateSDKURL.appending(component: "bin").appending(component: "pdc"),
+            resourcesIgnore: target.directoryURL.appending(component: "Resources").appending(component: ".pdcignore")
+        )
+    }
+
+    /// With a `cache`, a top-level directory unchanged since it was last compiled is not copied; `pdc` is told
+    /// to ignore it and the caller puts its compiled output back.
     func copyResources(
         context: PluginContext,
         target: PackagePlugin.Target,
+        cache: ResourceCache? = nil,
         verbose: Bool
-    ) throws {
+    ) throws -> (reused: [ResourceCache.Reused], pending: [ResourceCache.Pending]) {
+        var reused: [ResourceCache.Reused] = []
+        var pending: [ResourceCache.Pending] = []
+        let source = context.pluginWorkDirectoryURL.appending(component: "Source")
         let modules = ([target.sourceModule] + target.recursiveTargetDependencies.map(\.sourceModule))
             .compactMap(\.self)
         var resources: Set<String> = []
@@ -290,15 +323,28 @@ import PackagePlugin
                     guard resources.insert(String(relativePath)).inserted else {
                         throw Error.duplicateResource
                     }
-                    try FileManager.default.copyItem(
-                        at: url,
-                        to: context.pluginWorkDirectoryURL
-                            .appending(component: "Source")
-                            .appending(component: relativePath)
-                    )
+                    if let cache, url.hasDirectoryPath {
+                        let name = url.lastPathComponent
+                        let stamp = cache.stamp(of: url)
+                        if let compiled = cache.compiled(name: name, stamp: stamp) {
+                            reused.append(.init(name: name, compiled: compiled))
+                            continue
+                        }
+                        pending.append(.init(name: name, stamp: stamp))
+                    }
+                    try FileManager.default.copyItem(at: url, to: source.appending(component: relativePath))
                 }
             }
         }
+
+        if !reused.isEmpty {
+            let ignoreFile = source.appending(component: ".pdcignore")
+            var ignore = (try? String(contentsOf: ignoreFile, encoding: .utf8)) ?? ""
+            if !ignore.isEmpty, !ignore.hasSuffix("\n") { ignore += "\n" }
+            ignore += reused.map { "\($0.name)\n" }.joined()
+            try ignore.write(to: ignoreFile, atomically: true, encoding: .utf8)
+        }
+        return (reused, pending)
     }
 
     func pdc(
