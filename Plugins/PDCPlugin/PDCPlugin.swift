@@ -84,7 +84,7 @@ import PackagePlugin
         let deviceOnly = arguments.hasFlag(named: "device-only", allowShort: false)
         let simulatorOnly = arguments.hasFlag(named: "simulator-only", allowShort: false)
         let extraDeviceOFilesBuildDirs = arguments.value(for: "extra-device-o-files-build-dirs", allowShort: false)
-        let useResourceCache = simulatorOnly && !arguments.hasFlag(named: "no-resource-cache", allowShort: false)
+        let useResourceCache = !deviceOnly && !arguments.hasFlag(named: "no-resource-cache", allowShort: false)
 
         let product: PackagePlugin.Product? = if let productName {
             context.package.products.first {
