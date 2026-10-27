@@ -146,7 +146,8 @@ struct SamplerELF {
         var lineProgram: [UInt8] = []
         var ranges: [UInt8] = []
         for (index, function) in uncovered.enumerated() {
-            lineProgram += [0, 5, 2] + littleEndian32(function.lowerBound) + [3] + sleb(index) + [1]
+            lineProgram += [0, 5, 2] + littleEndian32(function.lowerBound)
+            lineProgram += [3] + sleb(index) + [1]
             lineProgram += [2] + uleb(function.count) + [0, 1, 1]
             ranges += littleEndian32(function.lowerBound) + littleEndian32(function.upperBound)
         }
@@ -155,8 +156,8 @@ struct SamplerELF {
         let rangesOffset = append(ranges + [UInt8](repeating: 0, count: 8), to: rangesIndex)
         // compile_unit, no children: name string, stmt_list sec_offset, low_pc addr, ranges sec_offset.
         let abbrevOffset = append([1, 0x11, 0, 0x03, 0x08, 0x10, 0x17, 0x11, 0x01, 0x55, 0x17, 0, 0, 0], to: abbrevIndex)
-        let unit = [4, 0] + littleEndian32(abbrevOffset) + [4, 1] + file + littleEndian32(lineOffset)
-            + littleEndian32(0) + littleEndian32(rangesOffset)
+        var unit: [UInt8] = [4, 0] + littleEndian32(abbrevOffset) + [4, 1] + file
+        unit += littleEndian32(lineOffset) + littleEndian32(0) + littleEndian32(rangesOffset)
         _ = append(littleEndian32(unit.count) + unit, to: infoIndex)
         return uncovered.count
     }
