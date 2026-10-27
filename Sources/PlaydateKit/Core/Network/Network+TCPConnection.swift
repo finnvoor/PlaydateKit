@@ -1,7 +1,7 @@
 import CPlaydate
 
-extension Network {
-    public class TCPConnection {
+public extension Network {
+    class TCPConnection {
         // MARK: Lifecycle
 
         /// Returns a TCPConnection object for connecting to the given server, or `nil` if permission has been denied or not yet granted. No connection is attempted until `open()` is called.
@@ -21,7 +21,8 @@ extension Network {
             tcp.setUserdata(pointer, Unmanaged.passUnretained(self).toOpaque())
 
             tcp.setConnectionClosedCallback.unsafelyUnwrapped(
-                pointer, Self.cConnectionClosedCallback)
+                pointer, Self.cConnectionClosedCallback
+            )
         }
 
         deinit {
@@ -31,6 +32,14 @@ extension Network {
 
         // MARK: Public
 
+        /// Sets a closure to be called when the connection is closed.
+        public var connectionClosedCallback: ((_ error: NetErr) -> Void)? = nil
+
+        /// Returns the number of bytes currently available for reading from the connection.
+        public var bytesAvailable: Int {
+            tcp.getBytesAvailable.unsafelyUnwrapped(pointer)
+        }
+
         /// Before connecting to a server, permission must be given by the user. Unlike in Lua, we don't have a way to pause the runtime to present the modal dialog, so this function must be explicitly called before calling `TCPConnection()`. `server` can be a parent domain of the connections opened, or `nil` to request access to any server. Similarly, if `port` is zero, this requests access to all ports on the target server(s). `purpose` is an optional string displayed in the permissions dialog to explain why the program is requesting access. After the user responds to the request, requestCallback is called with the given userdata argument.
         public static func requestAccess(
             server: String?,
@@ -38,22 +47,15 @@ extension Network {
             useSSL: Bool,
             purpose: String?,
             callback:
-                @convention(c) (
-                    _ allowed: Bool,
-                    _ userdata: UnsafeMutableRawPointer?
-                ) -> Void,
+            @convention(c) (
+                _ allowed: Bool,
+                _ userdata: UnsafeMutableRawPointer?
+            ) -> Void,
             userdata: UnsafeMutableRawPointer? = nil
         ) -> System.AccessReply {
-            return tcp.requestAccess.unsafelyUnwrapped(
-                server, port, useSSL, purpose, callback, userdata)
-        }
-
-        /// Sets a closure to be called when the connection is closed.
-        public var connectionClosedCallback: ((_ error: NetErr) -> Void)? = nil
-
-        /// Returns the number of bytes currently available for reading from the connection.
-        public var bytesAvailable: Int {
-            tcp.getBytesAvailable.unsafelyUnwrapped(pointer)
+            tcp.requestAccess.unsafelyUnwrapped(
+                server, port, useSSL, purpose, callback, userdata
+            )
         }
 
         /// Adds 1 to the connection's retain count, so that it won't be freed when it scopes out of another context.
@@ -73,19 +75,19 @@ extension Network {
         /// Attempts to open the connection to the server. Note that an error may be returned immediately, or in the open callback depending on where it occurs.
         public func open(
             callback:
-                @convention(c) (
-                    _ connection: OpaquePointer?,
-                    _ error: NetErr,
-                    _ userdata: UnsafeMutableRawPointer?
-                ) -> Void,
+            @convention(c) (
+                _ connection: OpaquePointer?,
+                _ error: NetErr,
+                _ userdata: UnsafeMutableRawPointer?
+            ) -> Void,
             userdata: UnsafeMutableRawPointer? = nil
         ) -> NetErr {
-            return tcp.open.unsafelyUnwrapped(pointer, callback, userdata)
+            tcp.open.unsafelyUnwrapped(pointer, callback, userdata)
         }
 
         /// Closes the connection. The connection may be used again for another request.
         public func close() -> NetErr {
-            return tcp.close.unsafelyUnwrapped(pointer)
+            tcp.close.unsafelyUnwrapped(pointer)
         }
 
         /// Sets the length of time, in milliseconds, `read()` will wait for incoming data before returning. The default value is 1000, or one second.
@@ -103,7 +105,7 @@ extension Network {
             buffer: UnsafeMutableRawPointer?,
             length: Int
         ) -> Int {
-            return Int(tcp.read.unsafelyUnwrapped(pointer, buffer, length))
+            Int(tcp.read.unsafelyUnwrapped(pointer, buffer, length))
         }
 
         /// Attempts to write up to `length` bytes to the connection. Returns the number of bytes actually written, which may be less than `length`, or a negative `PDNetErr` value on error.
@@ -111,7 +113,7 @@ extension Network {
             buffer: UnsafeRawPointer,
             length: Int
         ) -> Int {
-            return Int(tcp.write.unsafelyUnwrapped(pointer, buffer, length))
+            Int(tcp.write.unsafelyUnwrapped(pointer, buffer, length))
         }
 
         // MARK: Internal
@@ -120,18 +122,18 @@ extension Network {
 
         // MARK: Private
 
-        private var error: NetErr {
-            tcp.getError.unsafelyUnwrapped(pointer)
-        }
-
         private static let cConnectionClosedCallback:
             @convention(c) (OpaquePointer?, PDNetErr) -> Void = { cConn, err in
                 guard
-                    let cConn = cConn,
+                    let cConn,
                     let userdata = tcp.getUserdata(cConn)
                 else { return }
                 let swiftConn = Unmanaged<TCPConnection>.fromOpaque(userdata).takeUnretainedValue()
                 swiftConn.connectionClosedCallback?(err)
             }
+
+        private var error: NetErr {
+            tcp.getError.unsafelyUnwrapped(pointer)
+        }
     }
 }

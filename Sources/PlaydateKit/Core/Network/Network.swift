@@ -17,13 +17,20 @@ public enum Network {
     }
 
     public static func getStatus() -> WifiStatus {
-        return network.getStatus.unsafelyUnwrapped()
+        network.getStatus.unsafelyUnwrapped()
     }
 
     // MARK: Internal
-    static var network: playdate_network { Playdate.playdateAPI.network.pointee }
 
-    static var http: playdate_http { network.http.pointee }
+    static var network: playdate_network {
+        Playdate.playdateAPI.network.pointee
+    }
 
-    static var tcp: playdate_tcp { network.tcp.pointee }
+    static var http: playdate_http {
+        network.http.pointee
+    }
+
+    static var tcp: playdate_tcp {
+        network.tcp.pointee
+    }
 }
