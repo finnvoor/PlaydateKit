@@ -6,6 +6,8 @@ import PackagePlugin
 @main struct PDCPlugin: CommandPlugin {
     let home = FileManager.default.homeDirectoryForCurrentUser.path()
 
+    /// Pins device builds to DWARF 4 for every target, the game's own included: the Sampler's `Device - C`
+    /// mode symbolizes with the SDK's `arm-none-eabi-addr2line` (binutils 2.33), which can't read DWARF 5.
     let deviceToolset = URL(filePath: #filePath)
         .appending(path: "../../../Toolsets/toolset_device.json")
         .standardized
@@ -73,7 +75,19 @@ import PackagePlugin
                 --device-only                             Build a device-only executable suitable for distribution
                 --simulator-only                          Build a simulator-only executable for quick testing
                 --extra-device-o-files-build-dirs <dirs>  Link the device objects of more targets, e.g. `CLodePNG.build` (comma-separated)
+                --no-debug-symbols                        Skip all debug symbol post processing
+                --no-dsym                                 Don't copy the simulator dSYM bundle into the pdx
             -v, --verbose                                 Increase verbosity to include informational output
+
+            DEBUGGING
+
+            By default `pdc` publishes the debug info the Playdate Simulator's tools need:
+
+            * The simulator `dSYM` bundle is copied next to `pdex.dylib` inside the pdx, which is
+              where LLDB looks for it. Without this, breakpoints in a running game don't resolve.
+            * An unstripped `<Product>.elf` is written next to the pdx, ready to be selected in the
+              Sampler's "Choose Game" prompt when sampling `Device - C`. `pdc` itself only keeps the
+              stripped `pdex.bin`.
             """)
             return
         }
@@ -85,6 +99,8 @@ import PackagePlugin
         let deviceOnly = arguments.hasFlag(named: "device-only", allowShort: false)
         let simulatorOnly = arguments.hasFlag(named: "simulator-only", allowShort: false)
         let extraDeviceOFilesBuildDirs = arguments.value(for: "extra-device-o-files-build-dirs", allowShort: false)
+        let debugSymbols = !arguments.hasFlag(named: "no-debug-symbols", allowShort: false)
+        let copyDSYM = debugSymbols && !arguments.hasFlag(named: "no-dsym", allowShort: false)
 
         let product: PackagePlugin.Product? = if let productName {
             context.package.products.first {
@@ -118,9 +134,10 @@ import PackagePlugin
             )
         }
 
+        var simulatorArtifact: URL?
         if !deviceOnly {
             print("Building for simulator...")
-            try buildSimulator(
+            simulatorArtifact = try buildSimulator(
                 context: context,
                 product: product,
                 configuration: .debug,
@@ -141,6 +158,18 @@ import PackagePlugin
             product: product,
             verbose: verbose
         )
+
+        if debugSymbols {
+            print("Post processing debug symbols...")
+            try postProcessDebugSymbols(
+                context: context,
+                product: product,
+                simulatorArtifact: simulatorArtifact,
+                copyDSYM: copyDSYM,
+                includesDevice: !simulatorOnly,
+                verbose: verbose
+            )
+        }
 
         let buildDuration = (Date().timeIntervalSince(startTime))
             .formatted(.number.precision(.fractionLength(2)))
@@ -267,12 +296,13 @@ import PackagePlugin
         try JSONSerialization.data(withJSONObject: toolset, options: [.prettyPrinted, .sortedKeys]).write(to: url)
     }
 
-    func buildSimulator(
+    /// - Returns: The URL of the built dylib in the SwiftPM build directory.
+    @discardableResult func buildSimulator(
         context: PluginContext,
         product: PackagePlugin.Product,
         configuration: PackageManager.BuildConfiguration,
         verbose: Bool
-    ) throws {
+    ) throws -> URL {
         let simulatorParameters = try PackageManager.BuildParameters(
             configuration: configuration,
             logging: verbose ? .verbose : .concise,
@@ -285,6 +315,7 @@ import PackagePlugin
         )
 
         guard result.succeeded else {
+            // A verbose build already echoed its log while building.
             if !verbose {
                 print(result.logText)
             }
@@ -300,6 +331,83 @@ import PackagePlugin
                 .appending(component: "pdex")
                 .appendingPathExtension(artifact.url.pathExtension)
         )
+
+        return artifact.url
+    }
+
+    /// Makes the built artifacts usable by the Playdate Simulator's Sampler, Malloc Log and by LLDB.
+    ///
+    /// This runs after `pdc` so that `pdc` always sees pristine input: the pdx contents are patched
+    /// in place instead.
+    func postProcessDebugSymbols(
+        context: PluginContext,
+        product: PackagePlugin.Product,
+        simulatorArtifact: URL?,
+        copyDSYM: Bool,
+        includesDevice: Bool,
+        verbose: Bool
+    ) throws {
+        let fileManager = FileManager.default
+        let pdx = context.pluginWorkDirectoryURL
+            .appending(component: product.name)
+            .appendingPathExtension("pdx")
+
+        // LLDB finds a dSYM that sits next to the binary it belongs to. `pdex.dylib` on macOS,
+        // `pdex.so` on Linux.
+        let library = pdx.appending(component: "pdex")
+            .appendingPathExtension(simulatorArtifact?.pathExtension ?? "dylib")
+        if copyDSYM, let simulatorArtifact {
+            let dSYM = simulatorArtifact.appendingPathExtension("dSYM")
+            let destination = library.appendingPathExtension("dSYM")
+            if fileManager.fileExists(atPath: destination.path(percentEncoded: false)) {
+                try fileManager.removeItem(at: destination)
+            }
+            if fileManager.fileExists(atPath: dSYM.path(percentEncoded: false)) {
+                try fileManager.copyItem(at: dSYM, to: destination)
+                if verbose {
+                    print("Copied \(dSYM.lastPathComponent) into \(pdx.lastPathComponent)")
+                }
+            } else {
+                #if os(macOS)
+                // The swiftbuild build system leaves the debug info in the object files instead of a dSYM.
+                try execute(
+                    tool: context.tool(named: "dsymutil").url,
+                    arguments: [simulatorArtifact.path(percentEncoded: false), "-o", destination.path(percentEncoded: false)],
+                    verbose: verbose
+                )
+                if verbose {
+                    print("Wrote \(destination.lastPathComponent) into \(pdx.lastPathComponent)")
+                }
+                #endif
+            }
+        }
+
+        // The Sampler asks for a `.elf` when sampling device performance in C code. `pdc` only keeps
+        // the stripped `pdex.bin`, so publish a copy of the unstripped ELF next to the pdx.
+        let builtELF = context.pluginWorkDirectoryURL
+            .appending(component: "Source")
+            .appending(component: "pdex.elf")
+        if includesDevice, fileManager.fileExists(atPath: builtELF.path(percentEncoded: false)) {
+            let destination = context.pluginWorkDirectoryURL
+                .appending(component: product.name)
+                .appendingPathExtension("elf")
+            if fileManager.fileExists(atPath: destination.path(percentEncoded: false)) {
+                try fileManager.removeItem(at: destination)
+            }
+            try fileManager.copyItem(at: builtELF, to: destination)
+            do {
+                var elf = try SamplerELF(url: destination)
+                let lines = elf.fillLineZero()
+                let uncovered = elf.addLinesForUncoveredFunctions()
+                let demangled = try elf.demangleSymbols(demangler: context.tool(named: "swift-demangle").url)
+                try elf.write()
+                if verbose {
+                    print("Wrote \(destination.lastPathComponent) for the Sampler: \(demangled) symbols demangled, line 0 filled in \(lines.rewritten)/\(lines.units) line tables, \(uncovered) functions without line info given one")
+                }
+            } catch {
+                print("warning: \(destination.lastPathComponent) keeps mangled names and line 0 rows: \(error)")
+            }
+        }
     }
 
     func copyResources(

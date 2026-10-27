@@ -14,6 +14,10 @@ Create games for Playdate using Swift.
 - <doc:Building-the-Template>
 - ``PlaydateGame``
 
+### Debugging
+
+- <doc:Debugging>
+
 ### Essentials
 
 - ``Display``
