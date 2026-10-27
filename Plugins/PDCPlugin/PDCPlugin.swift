@@ -6,6 +6,8 @@ import PackagePlugin
 @main struct PDCPlugin: CommandPlugin {
     let home = FileManager.default.homeDirectoryForCurrentUser.path()
 
+    /// Pins device builds to DWARF 4 for every target, the game's own included: the Sampler's `Device - C`
+    /// mode symbolizes with the SDK's `arm-none-eabi-addr2line` (binutils 2.33), which can't read DWARF 5.
     let deviceToolset = URL(filePath: #filePath)
         .appending(path: "../../../Toolsets/toolset_device.json")
         .standardized
@@ -207,6 +209,7 @@ import PackagePlugin
         )
 
         guard result.succeeded else {
+            // A verbose build already echoed its log while building.
             if !verbose {
                 print(result.logText)
             }
@@ -280,6 +283,7 @@ import PackagePlugin
         )
 
         guard result.succeeded else {
+            // A verbose build already echoed its log while building.
             if !verbose {
                 print(result.logText)
             }
@@ -322,15 +326,27 @@ import PackagePlugin
             .appendingPathExtension(simulatorArtifact?.pathExtension ?? "dylib")
         if copyDSYM, let simulatorArtifact {
             let dSYM = simulatorArtifact.appendingPathExtension("dSYM")
+            let destination = library.appendingPathExtension("dSYM")
+            if fileManager.fileExists(atPath: destination.path(percentEncoded: false)) {
+                try fileManager.removeItem(at: destination)
+            }
             if fileManager.fileExists(atPath: dSYM.path(percentEncoded: false)) {
-                let destination = library.appendingPathExtension("dSYM")
-                if fileManager.fileExists(atPath: destination.path(percentEncoded: false)) {
-                    try fileManager.removeItem(at: destination)
-                }
                 try fileManager.copyItem(at: dSYM, to: destination)
                 if verbose {
                     print("Copied \(dSYM.lastPathComponent) into \(pdx.lastPathComponent)")
                 }
+            } else {
+                #if os(macOS)
+                // The swiftbuild build system leaves the debug info in the object files instead of a dSYM.
+                try execute(
+                    tool: context.tool(named: "dsymutil").url,
+                    arguments: [simulatorArtifact.path(percentEncoded: false), "-o", destination.path(percentEncoded: false)],
+                    verbose: verbose
+                )
+                if verbose {
+                    print("Wrote \(destination.lastPathComponent) into \(pdx.lastPathComponent)")
+                }
+                #endif
             }
         }
 
@@ -347,8 +363,17 @@ import PackagePlugin
                 try fileManager.removeItem(at: destination)
             }
             try fileManager.copyItem(at: builtELF, to: destination)
-            if verbose {
-                print("Wrote \(destination.lastPathComponent) for the Sampler")
+            do {
+                var elf = try SamplerELF(url: destination)
+                let lines = elf.fillLineZero()
+                let uncovered = elf.addLinesForUncoveredFunctions()
+                let demangled = try elf.demangleSymbols(demangler: context.tool(named: "swift-demangle").url)
+                try elf.write()
+                if verbose {
+                    print("Wrote \(destination.lastPathComponent) for the Sampler: \(demangled) symbols demangled, line 0 filled in \(lines.rewritten)/\(lines.units) line tables, \(uncovered) functions without line info given one")
+                }
+            } catch {
+                print("warning: \(destination.lastPathComponent) keeps mangled names and line 0 rows: \(error)")
             }
         }
     }

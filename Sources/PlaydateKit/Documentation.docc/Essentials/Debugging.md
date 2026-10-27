@@ -11,7 +11,7 @@ This article covers which tools work with a compiled Swift game, which don't, an
 
 ## Setting breakpoints with LLDB
 
-Simulator builds keep the full DWARF that SwiftPM's `-g` produces, and `swift package pdc` copies the
+Simulator builds keep the full DWARF that SwiftPM's `-g` produces, and `swift package pdc` puts a
 `dSYM` bundle into the pdx next to `pdex.dylib` — the one place LLDB looks for it. Attach to the
 running Simulator:
 
@@ -44,8 +44,8 @@ Pass `--no-dsym` to keep the bundle out of the pdx.
 
 ## Profiling with the Sampler
 
-The Sampler can sample `Simulator - Lua`, `Device - Lua` and `Device - C`. A PlaydateKit game is C,
-so **`Device - C`**, with the game running on hardware, is the mode to use.
+The Sampler can sample `Simulator - Lua`, `Device - Lua` and `Device - C`. A PlaydateKit game is native
+code that uses the Playdate C API, so **`Device - C`**, with the game running on hardware, is the mode to use.
 
 > Important: There is no `Simulator - C` option. Native code cannot be sampled in the Simulator at
 all — this is a Simulator limitation, not something a game can opt into.
@@ -60,12 +60,22 @@ inside the pdx, so `swift package pdc` writes an unstripped copy next to it:
 ```
 
 Device builds are also pinned to DWARF 4. The `arm-none-eabi-addr2line` that ships with the Playdate
-SDK is binutils 2.32 and cannot parse the DWARF 5 that Clang emits by default — with DWARF 5 it fails
-outright and every sample resolves to no source location.
+SDK is binutils 2.33 and cannot parse the DWARF 5 that Clang emits by default — with DWARF 5 it fails
+outright and every sample resolves to no source location. The pin lives in PlaydateKit's device
+toolset, so it covers your game's own target without any change to its `Package.swift`.
 
-> Note: The Sampler runs `addr2line -f` without `-C`, and reads function names out of DWARF, so Swift
-frames appear as mangled names like `$e4Pong4BallC6updateyyF` alongside the correct file and line.
-Run a name through `swift demangle` to read it.
+The Sampler runs `addr2line` without `-C` or `-i`, so `swift package pdc` also rewrites that `.elf`
+(never the code that runs on device):
+
+- Symbols are renamed to their demangled form, so frames read `Ball.update()` rather than
+  `$e4Pong4BallC6updateyyF`.
+- Swift puts line 0 on much inlined and compiler-generated code, which `addr2line` reports as no
+  location and the Sampler lumps into one `<Choose game ELF for symbol>` entry. Those rows take the
+  line before them instead.
+
+What remains in that entry is mostly the ARM toolchain's own runtime, such as the soft-float helpers
+`__aeabi_l2f` and `__aeabi_dadd`, which ships without debug info. A large share there usually means
+64-bit integer or `Double` arithmetic on a hot path.
 
 ## Inspecting memory with the Malloc Log
 
@@ -76,8 +86,8 @@ Embedded Swift runtime's allocations through the Playdate allocator, every Swift
 2. Choose **View ▸ Show Malloc Log**.
 
 The window reports total heap used, active bytes and a live item count, and lists every allocation by
-address and size. The `Source` column is not populated in SDK 3.1.1, for Lua or C, so allocations
-can't be attributed back to the code that made them.
+address and size. As of SDK 3.1.2 the Simulator leaves the `Source` column empty for Lua and C games
+alike, so allocations can't be attributed back to the code that made them.
 
 > Warning: While Malloc Pool is enabled the Simulator retains every allocation in order to show
 history, so its own memory use grows without bound. Only turn it on while investigating.
