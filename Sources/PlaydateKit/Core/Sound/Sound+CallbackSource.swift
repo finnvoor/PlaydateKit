@@ -1,7 +1,7 @@
 import CPlaydate
 
-extension Sound {
-    public final class CallbackSource: Source {
+public extension Sound {
+    final class CallbackSource: Source {
         // MARK: Lifecycle
 
         /// Registers a new callback-driven source at the default output.
@@ -47,8 +47,15 @@ extension Sound {
         // MARK: Private
 
         private final class Box {
+            // MARK: Lifecycle
+
+            init(_ callback: @escaping AudioSourceFunction) {
+                self.callback = callback
+            }
+
+            // MARK: Internal
+
             let callback: AudioSourceFunction
-            init(_ callback: @escaping AudioSourceFunction) { self.callback = callback }
         }
 
         private let box: Unmanaged<Box>
