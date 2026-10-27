@@ -40,8 +40,7 @@ public enum JSON {
             _ userdata: UnsafeMutableRawPointer?,
             _ string: UnsafePointer<CChar>?,
             _ length: CInt
-        ) -> Void
-        )?,
+        ) -> Void)?,
         userdata: UnsafeMutableRawPointer?,
         pretty: Bool
     ) {
@@ -50,5 +49,7 @@ public enum JSON {
 
     // MARK: Private
 
-    private static var json: playdate_json { Playdate.playdateAPI.json.pointee }
+    private static var json: playdate_json {
+        Playdate.playdateAPI.json.pointee
+    }
 }

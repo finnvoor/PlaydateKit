@@ -11,8 +11,6 @@ final class Game: PlaydateGame {
 
     // MARK: Internal
 
-    static nonisolated(unsafe) let instance = Game()
-
     enum State {
         case initializingNetwork
         case initializingNetworkFailed(Network.NetErr)
@@ -21,12 +19,14 @@ final class Game: PlaydateGame {
         case networkReady
     }
 
+    nonisolated(unsafe) static let instance = Game()
+
     func update() -> Bool {
         Graphics.clear(color: .white)
         switch state {
         case .initializingNetwork:
             drawStatus("Initializing network…")
-        case .initializingNetworkFailed(let err):
+        case let .initializingNetworkFailed(err):
             drawStatus("Initializing network failed: \(err.rawValue)")
         case .waitingForNetworkAccess:
             drawStatus("Waiting for network access…")
@@ -34,7 +34,7 @@ final class Game: PlaydateGame {
             drawStatus("Network access denied")
         case .networkReady:
             if browser == nil {
-                self.browser = ComicsBrowser()
+                browser = ComicsBrowser()
             }
 
             browser.unsafelyUnwrapped.update()
@@ -52,6 +52,14 @@ final class Game: PlaydateGame {
     }
 
     // MARK: Private
+
+    private nonisolated(unsafe) static let onNetEnabled: @convention(c) (_ err: Network.NetErr) -> Void = { err in
+        instance.onNetEnabled(err)
+    }
+
+    private nonisolated static let onAccessResponse: @convention(c) (_ allowed: Bool, _ userdata: UnsafeMutableRawPointer?) -> Void = { allowed, _ in
+        instance.onAccessResponse(allowed)
+    }
 
     private var netErr: Network.NetErr? = nil
 
@@ -98,13 +106,5 @@ final class Game: PlaydateGame {
 
     private func onAccessResponse(_ allowed: Bool) {
         state = allowed ? .networkReady : .networkAccessDenied
-    }
-
-    private static nonisolated(unsafe) let onNetEnabled: @convention(c) (_ err: Network.NetErr) -> Void = { err in
-        instance.onNetEnabled(err)
-    }
-
-    private static nonisolated let onAccessResponse: @convention(c) (_ allowed: Bool, _ userdata: UnsafeMutableRawPointer?) -> Void = { allowed, userdata in
-        instance.onAccessResponse(allowed)
     }
 }

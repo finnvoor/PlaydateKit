@@ -17,7 +17,9 @@ public struct Point: Equatable {
     // MARK: Public
 
     /// The point with location (0,0).
-    public static var zero: Point { Point(x: 0, y: 0) }
+    public static var zero: Point {
+        Point(x: 0, y: 0)
+    }
 
     public var x, y: Float
 }

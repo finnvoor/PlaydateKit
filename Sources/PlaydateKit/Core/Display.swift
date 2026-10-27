@@ -69,7 +69,9 @@ public enum Display {
         }
     }
 
-    public static var fps: Float { display.getFPS.unsafelyUnwrapped() }
+    public static var fps: Float {
+        display.getFPS.unsafelyUnwrapped()
+    }
 
     /// Sets the display scale factor. Valid values for scale are 1, 2, 4, and 8.
     ///
@@ -111,5 +113,7 @@ public enum Display {
 
     private nonisolated(unsafe) static var _inverted = false
 
-    private static var display: playdate_display { Playdate.playdateAPI.display.pointee }
+    private static var display: playdate_display {
+        Playdate.playdateAPI.display.pointee
+    }
 }

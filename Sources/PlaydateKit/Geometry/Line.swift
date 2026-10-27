@@ -12,7 +12,9 @@ public struct Line: Equatable {
     // MARK: Public
 
     /// The line whose start and end are both located at (0, 0).
-    public static var zero: Line { Line(start: .zero, end: .zero) }
+    public static var zero: Line {
+        Line(start: .zero, end: .zero)
+    }
 
     public var start, end: Point
 }

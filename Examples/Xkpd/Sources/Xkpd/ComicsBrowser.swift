@@ -4,7 +4,7 @@ class ComicsBrowser {
     // MARK: Lifecycle
 
     init() {
-        self.comic = Comic()
+        comic = Comic()
     }
 
     // MARK: Internal
@@ -57,12 +57,12 @@ class ComicsBrowser {
                 setUpMenuItems()
             }
 
-            if comic.isLatest && latestNum != comic.num {
+            if comic.isLatest, latestNum != comic.num {
                 latestNum = comic.num
             }
 
             updateInput()
-        case .error(let message):
+        case let .error(message):
             if !hasMenuItems {
                 setUpMenuItems()
             }
@@ -113,7 +113,6 @@ class ComicsBrowser {
                 width: 75,
                 height: Font.NicoBold16.height
             ), aligned: .center)
-
         }
 
         Graphics.popContext()
@@ -128,16 +127,6 @@ class ComicsBrowser {
     private static let margin = 4
 
     private let statusText = BrowserStatusText()
-
-    private var comic: Comic {
-        didSet {
-            resetDrawOffset()
-            hideInfoBox()
-
-            self.gotoActive = false
-            self.goto.removeFromDisplayList()
-        }
-    }
 
     private var drawOffX = ComicsBrowser.margin
 
@@ -156,6 +145,16 @@ class ComicsBrowser {
     private var hasBumpedX = false
 
     private var hasBumpedY = false
+
+    private var comic: Comic {
+        didSet {
+            resetDrawOffset()
+            hideInfoBox()
+
+            gotoActive = false
+            goto.removeFromDisplayList()
+        }
+    }
 
     private func resetDrawOffset() {
         drawOffX = ComicsBrowser.margin
@@ -250,7 +249,7 @@ class ComicsBrowser {
         // Play scrolling
         if (wantsScrollX && !hasBumpedX) || (wantsScrollY && !hasBumpedY) {
             SFX.instance.start(.scrolling)
-        } else if (!wantsScrollX || !wantsScrollY) {
+        } else if !wantsScrollX || !wantsScrollY {
             SFX.instance.stop(.scrolling)
         }
 
@@ -292,7 +291,7 @@ class ComicsBrowser {
 
             SFX.instance.play(.goto)
 
-            comic = Comic(num: self.goto.num)
+            comic = Comic(num: goto.num)
             return
         }
 

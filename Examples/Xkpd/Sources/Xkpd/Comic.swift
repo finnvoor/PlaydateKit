@@ -1,8 +1,7 @@
-import PlaydateKit
-import UTF8ViewExtensions
-
 import CLodePNG
 import CQRCode
+import PlaydateKit
+import UTF8ViewExtensions
 
 class Comic {
     // MARK: Lifecycle
@@ -35,18 +34,50 @@ class Comic {
         case error(message: String)
     }
 
-    var state = State.loadingMetadataHeaders {
-        didSet {
-            switch state {
-            case .loaded:
-                SFX.instance.play(.comicLoaded)
-            case .error:
-                SFX.instance.play(.error)
+    nonisolated(unsafe) static var didDecodeTableValue: @convention(c)
+        (UnsafeMutablePointer<json_decoder>?, UnsafePointer<CChar>?, json_value) -> Void
+        = { ptr, keyC, val in
+            guard
+                let ptr,
+                let keyC,
+                let ctxPtr = ptr.pointee.userdata
+            else { return }
+
+            let key = String(cString: keyC).utf8
+
+            let comic = Unmanaged<Comic>
+                .fromOpaque(ctxPtr)
+                .takeUnretainedValue()
+
+            let type = json_value_type(rawValue: numericCast(val.type))
+
+            switch key {
+            case "num":
+                comic.num = Int(val.data.intval)
+            case "link":
+                comic.link = String(cString: val.data.stringval)
+            case "year":
+                comic.year = String(cString: val.data.stringval)
+            case "month":
+                comic.month = String(cString: val.data.stringval)
+            case "day":
+                comic.day = String(cString: val.data.stringval)
+            case "title":
+                comic.title = String(cString: val.data.stringval)
+            case "safe_title":
+                comic.safeTitle = String(cString: val.data.stringval)
+            case "alt":
+                comic.alt = String(cString: val.data.stringval)
+            case "transcript":
+                comic.transcript = String(cString: val.data.stringval)
+            case "news":
+                comic.news = String(cString: val.data.stringval)
+            case "img":
+                comic.imgUrl = String(cString: val.data.stringval)
             default:
-                break
+                print("Skipping unknown key \(key)")
             }
         }
-    }
 
     var connection: Network.HTTPConnection?
 
@@ -55,7 +86,7 @@ class Comic {
     let isLatest: Bool
 
     var num: Int = 0
-    // Always empty string?
+    /// Always empty string?
     var link: String = ""
 
     var year: String = ""
@@ -80,7 +111,37 @@ class Comic {
 
     var qrBitmap: Graphics.Bitmap?
 
+    var state = State.loadingMetadataHeaders {
+        didSet {
+            switch state {
+            case .loaded:
+                SFX.instance.play(.comicLoaded)
+            case .error:
+                SFX.instance.play(.error)
+            default:
+                break
+            }
+        }
+    }
+
     // MARK: Private
+
+    private nonisolated(unsafe) static var decodeError: @convention(c)
+        (UnsafeMutablePointer<json_decoder>?, UnsafePointer<CChar>?, Int32) -> Void
+        = { ptr, err, line in
+            guard
+                let ptr,
+                let ctxPtr = ptr.pointee.userdata
+            else { return }
+
+            let comic = Unmanaged<Comic>
+                .fromOpaque(ctxPtr)
+                .takeUnretainedValue()
+
+            if let e = err.map({ String(cString: $0) }) {
+                comic.state = .error(message: "JSON error at \(line): \(e)")
+            }
+        }
 
     private var metadataLoadStart = System.elapsedTime
 
@@ -95,7 +156,7 @@ class Comic {
             return
         }
 
-        conn.requestCompleteCallback = self.handleGetMetadataComplete
+        conn.requestCompleteCallback = handleGetMetadataComplete
         let err = conn.get(path: metadataUrl)
 
         if err != .ok {
@@ -116,7 +177,7 @@ class Comic {
         }
 
         conn.setReadBufferSize(bytes: 2_000_000)
-        conn.requestCompleteCallback = self.handleGetImageComplete
+        conn.requestCompleteCallback = handleGetImageComplete
         let err = conn.get(path: imgUrl)
 
         if err != .ok {
@@ -133,14 +194,14 @@ class Comic {
             return nil
         }
 
-        conn.headerReceivedCallback = self.handleHeaderReceived
-        conn.headersReadCallback = self.handleHeadersRead
-        conn.connectionClosedCallback = self.handleConnectionClosed
+        conn.headerReceivedCallback = handleHeaderReceived
+        conn.headersReadCallback = handleHeadersRead
+        conn.connectionClosedCallback = handleConnectionClosed
 
         return conn
     }
 
-    private func handleHeaderReceived(key: String, value: String) {
+    private func handleHeaderReceived(key _: String, value _: String) {
 //        print("Got header \(key): \(value)")
     }
 
@@ -156,7 +217,7 @@ class Comic {
     }
 
     private func handleGetMetadataComplete() {
-        guard let connection = connection else {
+        guard let connection else {
             return
         }
 
@@ -195,11 +256,10 @@ class Comic {
         }
 
         if !imgUrl.utf8.hasSuffix(".png") {
-            let ext: String.UTF8View.SubSequence
-            if let lastDotIndex = imgUrl.utf8.lastIndex(of: UInt8(ascii: ".")) {
-                ext = imgUrl.utf8.suffix(from: lastDotIndex)
+            let ext: String.UTF8View.SubSequence = if let lastDotIndex = imgUrl.utf8.lastIndex(of: UInt8(ascii: ".")) {
+                imgUrl.utf8.suffix(from: lastDotIndex)
             } else {
-                ext = "unknown".utf8.suffix(from: "".utf8.startIndex)
+                "unknown".utf8.suffix(from: "".utf8.startIndex)
             }
             state = .error(message: "Unsupported image format \(String(decoding: ext, as: UTF8.self))")
             return
@@ -232,13 +292,13 @@ class Comic {
         }
         Graphics.popContext()
 
-        self.qrBitmap = qrBitmap?.rotated(by: 0, xScale: 3, yScale: 3).bitmap
+        qrBitmap = qrBitmap?.rotated(by: 0, xScale: 3, yScale: 3).bitmap
 
         loadImage()
     }
 
     private func handleGetImageComplete() {
-        guard let connection = connection else {
+        guard let connection else {
             return
         }
 
@@ -321,68 +381,5 @@ class Comic {
 
     private func handleConnectionClosed() {
         print("Connection closed")
-    }
-
-    private static nonisolated(unsafe) var decodeError: @convention(c)
-    (UnsafeMutablePointer<json_decoder>?, UnsafePointer<CChar>?, Int32) -> Void
-    = { ptr, err, line in
-        guard
-            let ptr = ptr,
-            let ctxPtr = ptr.pointee.userdata
-        else { return }
-
-        let comic = Unmanaged<Comic>
-            .fromOpaque(ctxPtr)
-            .takeUnretainedValue()
-
-        if let e = err.map({ String(cString: $0) }) {
-            comic.state = .error(message: "JSON error at \(line): \(e)")
-        }
-    }
-
-    static nonisolated(unsafe) var didDecodeTableValue: @convention(c)
-    (UnsafeMutablePointer<json_decoder>?, UnsafePointer<CChar>?, json_value) -> Void
-    = { ptr, keyC, val in
-        guard
-            let ptr = ptr,
-            let keyC = keyC,
-            let ctxPtr = ptr.pointee.userdata
-        else { return }
-
-        let key = String(cString: keyC).utf8
-
-        let comic = Unmanaged<Comic>
-            .fromOpaque(ctxPtr)
-            .takeUnretainedValue()
-
-        let type = json_value_type(rawValue: numericCast(val.type))
-
-        switch key {
-        case "num":
-            comic.num = Int(val.data.intval)
-        case "link":
-            comic.link = String(cString: val.data.stringval)
-        case "year":
-            comic.year = String(cString: val.data.stringval)
-        case "month":
-            comic.month = String(cString: val.data.stringval)
-        case "day":
-            comic.day = String(cString: val.data.stringval)
-        case "title":
-            comic.title = String(cString: val.data.stringval)
-        case "safe_title":
-            comic.safeTitle = String(cString: val.data.stringval)
-        case "alt":
-            comic.alt = String(cString: val.data.stringval)
-        case "transcript":
-            comic.transcript = String(cString: val.data.stringval)
-        case "news":
-            comic.news = String(cString: val.data.stringval)
-        case "img":
-            comic.imgUrl = String(cString: val.data.stringval)
-        default:
-            print("Skipping unknown key \(key)")
-            break
-        }
     }
 }

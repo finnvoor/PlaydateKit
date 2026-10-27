@@ -33,7 +33,7 @@ class SFX {
         case showInfo
     }
 
-    static nonisolated(unsafe) let instance = SFX()
+    nonisolated(unsafe) static let instance = SFX()
 
     let samplePlayers: [Effect: Sound.SamplePlayer]
 

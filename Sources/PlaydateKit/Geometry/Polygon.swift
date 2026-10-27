@@ -15,7 +15,9 @@ public struct Polygon: Equatable {
     public var vertices: [Point]
 
     /// Returns true if the polygon is closed, false if not.
-    public var isClosed: Bool { (vertices.first == vertices.last) && vertices.first != nil }
+    public var isClosed: Bool {
+        (vertices.first == vertices.last) && vertices.first != nil
+    }
 
     /// Closes the polygon. If the polygon’s first and last point aren’t coincident, a point equal to the first point will be added.
     public mutating func close() {

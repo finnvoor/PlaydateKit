@@ -454,5 +454,7 @@ public enum System {
         _ userdata: UnsafeMutableRawPointer?
     ) -> Bool)?
 
-    private static var system: playdate_sys { Playdate.playdateAPI.system.pointee }
+    private static var system: playdate_sys {
+        Playdate.playdateAPI.system.pointee
+    }
 }

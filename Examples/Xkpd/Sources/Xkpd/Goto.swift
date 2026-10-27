@@ -2,7 +2,7 @@ import PlaydateKit
 
 class Goto: Sprite.Sprite {
     // MARK: Lifecycle
-    
+
     override init() {
         super.init()
         setSize(width: 140, height: 100)
@@ -13,29 +13,11 @@ class Goto: Sprite.Sprite {
         setIgnoresDrawOffset(true)
     }
 
-    // MARK: Public
-
-    public var num: Int {
-        return Int("\(nums[0])\(nums[1])\(nums[2])\(nums[3])")!
-    }
-
-    public func increment() {
-        nums[selectedNumIndex] = (nums[selectedNumIndex] + 1) % 10
-    }
-
-    public func decrement() {
-        nums[selectedNumIndex] = (nums[selectedNumIndex] - 1 + 10) % 10
-    }
-
-    public func selectNextNum() {
-        selectedNumIndex = (selectedNumIndex + 1) % 4
-    }
-
-    public func selectPreviousNum() {
-        selectedNumIndex = (selectedNumIndex - 1 + 4) % 4
-    }
-
     // MARK: Internal
+
+    var num: Int {
+        Int("\(nums[0])\(nums[1])\(nums[2])\(nums[3])")!
+    }
 
     override func draw(bounds _: Rect, drawRect _: Rect) {
         Graphics.fillRoundRect(bounds, radius: 3, color: .black)
@@ -86,6 +68,22 @@ class Goto: Sprite.Sprite {
             width: bounds.width - Float(Self.padding * 2),
             height: 20,
         ), aligned: .right)
+    }
+
+    func increment() {
+        nums[selectedNumIndex] = (nums[selectedNumIndex] + 1) % 10
+    }
+
+    func decrement() {
+        nums[selectedNumIndex] = (nums[selectedNumIndex] - 1 + 10) % 10
+    }
+
+    func selectNextNum() {
+        selectedNumIndex = (selectedNumIndex + 1) % 4
+    }
+
+    func selectPreviousNum() {
+        selectedNumIndex = (selectedNumIndex - 1 + 4) % 4
     }
 
     // MARK: Private

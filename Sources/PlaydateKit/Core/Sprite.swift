@@ -87,7 +87,9 @@ public enum Sprite {
         /// one of the collision response values as quickly as possible. If sprites need to be modified as the result of a
         /// collision, do so elsewhere, such as by inspecting the list of collisions returned by ``moveWithCollisions(goal:)``.
         /// The default collision response is freeze.
-        open func collisionResponse(other _: Sprite) -> CollisionResponseType { .freeze }
+        open func collisionResponse(other _: Sprite) -> CollisionResponseType {
+            .freeze
+        }
 
         // MARK: Public
 
@@ -100,7 +102,9 @@ public enum Sprite {
         /// > Note: Setting an image will override a Sprite's custom ``draw(bounds:drawRect:)`` function.
         public var image: Graphics.Bitmap? {
             didSet {
-                if image != nil { setDrawFunction(nil) }
+                if image != nil {
+                    setDrawFunction(nil)
+                }
                 sprite.setImage.unsafelyUnwrapped(pointer, image?.pointer, imageFlip)
                 if image == nil {
                     setDrawFunction { sprite, bounds, drawRect in
@@ -607,5 +611,7 @@ public enum Sprite {
 
     // MARK: Private
 
-    private static var sprite: playdate_sprite { Playdate.playdateAPI.sprite.pointee }
+    private static var sprite: playdate_sprite {
+        Playdate.playdateAPI.sprite.pointee
+    }
 }

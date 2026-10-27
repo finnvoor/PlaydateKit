@@ -33,26 +33,6 @@ public extension Network {
 
         // MARK: Public
 
-        /// Before connecting to a server, permission must be given by the user. Unlike in Lua, we don’t have a way to pause the runtime to present the modal dialog, so this function must be explicitly called before calling `HTTPConnection()`. `server` can be a parent domain of the connections opened, or `nil` to request access to any HTTP server. `purpose` is an optional string displayed in the permissions dialog to explain why the program is requesting access. After the user responds to the request, requestCallback is called with the given userdata argument. The return value is one of the following:
-        public static func requestAccess(
-            server: String?,
-            port: Int32,
-            useSSL: Bool,
-            purpose: String?,
-            callback: @convention(c) (
-                _ allowed: Bool,
-                _ userdata: UnsafeMutableRawPointer?
-            ) -> Void,
-            userdata: UnsafeMutableRawPointer? = nil
-        ) -> System.AccessReply {
-            return http.requestAccess.unsafelyUnwrapped(server, port, useSSL, purpose, callback, userdata);
-        }
-
-        /// Conflicts with headerRecieved and headersRead callbacks.
-        public func enableResponseCallback() {
-            http.setResponseCallback.unsafelyUnwrapped(pointer, Self.cResponseCallback)
-        }
-
         /// Sets a closure to be called when the HTTP parser reads a header line from the connection
         public var headerReceivedCallback: ((_ key: String, _ value: String) -> Void)? = nil
 
@@ -89,6 +69,26 @@ public extension Network {
             http.getBytesAvailable.unsafelyUnwrapped(pointer)
         }
 
+        /// Before connecting to a server, permission must be given by the user. Unlike in Lua, we don’t have a way to pause the runtime to present the modal dialog, so this function must be explicitly called before calling `HTTPConnection()`. `server` can be a parent domain of the connections opened, or `nil` to request access to any HTTP server. `purpose` is an optional string displayed in the permissions dialog to explain why the program is requesting access. After the user responds to the request, requestCallback is called with the given userdata argument. The return value is one of the following:
+        public static func requestAccess(
+            server: String?,
+            port: Int32,
+            useSSL: Bool,
+            purpose: String?,
+            callback: @convention(c) (
+                _ allowed: Bool,
+                _ userdata: UnsafeMutableRawPointer?
+            ) -> Void,
+            userdata: UnsafeMutableRawPointer? = nil
+        ) -> System.AccessReply {
+            http.requestAccess.unsafelyUnwrapped(server, port, useSSL, purpose, callback, userdata)
+        }
+
+        /// Conflicts with headerRecieved and headersRead callbacks.
+        public func enableResponseCallback() {
+            http.setResponseCallback.unsafelyUnwrapped(pointer, Self.cResponseCallback)
+        }
+
         /// Adds 1 to the connection’s retain count, so that it won’t be freed when it scopes out of another context. This is used primarily so we can pass a connection created in Lua into C and not have to worry about the Lua wrapper’s lifespan.
         public func retain() {
             http.retain.unsafelyUnwrapped(pointer)
@@ -115,17 +115,17 @@ public extension Network {
 
         /// Opens the connection to the server if it’s not already open (e.g. from a previous request with keep-alive enabled) and sends a GET request with the given path and additional headers if specified.
         public func get(path: String, headersString: String = "") -> NetErr {
-            return http.get.unsafelyUnwrapped(pointer, path, headersString, headersString.utf8.count)
+            http.get.unsafelyUnwrapped(pointer, path, headersString, headersString.utf8.count)
         }
 
         /// Opens the connection to the server if it’s not already open (e.g. from a previous request with keep-alive enabled) and sends a request with the given method and path, additional headers if specified, and the provided data.
         public func query(method: String, path: String, headersString: String, body: String) -> NetErr {
-            return http.query.unsafelyUnwrapped(pointer, method, path, headersString, headersString.utf8.count, body, body.utf8.count)
+            http.query.unsafelyUnwrapped(pointer, method, path, headersString, headersString.utf8.count, body, body.utf8.count)
         }
 
         /// Equivalent to calling `query` with `method` equal to POST.
         public func post(path: String, headersString: String, body: String) -> NetErr {
-            return http.post.unsafelyUnwrapped(pointer, path, headersString, headersString.utf8.count, body, body.utf8.count)
+            http.post.unsafelyUnwrapped(pointer, path, headersString, headersString.utf8.count, body, body.utf8.count)
         }
 
         /// Sets the length of time, in milliseconds, the `read()` function will wait for incoming data before returning. The default value is 1000, or one second.
@@ -142,7 +142,7 @@ public extension Network {
             buffer: UnsafeMutableRawPointer,
             length: CUnsignedInt
         ) -> Int {
-            return Int(http.read.unsafelyUnwrapped(pointer, buffer, length))
+            Int(http.read.unsafelyUnwrapped(pointer, buffer, length))
         }
 
         /// Closes the HTTP connection. The connection may be used again for another request.
@@ -156,18 +156,13 @@ public extension Network {
 
         // MARK: Private
 
-        /// Returns the last error on the connection, or `.ok` if none occurred.
-        private var error: NetErr {
-            http.getError.unsafelyUnwrapped(pointer)
-        }
-
         private static let headerReceived: @convention(c) (
             OpaquePointer?,
             UnsafePointer<CChar>?,
             UnsafePointer<CChar>?
         ) -> Void = { cConn, cKey, cValue in
             guard
-                let cConn = cConn,
+                let cConn,
                 let userdata = http.getUserdata(cConn)
             else { return }
             let swiftConn = Unmanaged<HTTPConnection>.fromOpaque(userdata).takeUnretainedValue()
@@ -178,7 +173,7 @@ public extension Network {
 
         private static let cHeadersReadCallback: @convention(c) (OpaquePointer?) -> Void = { cConn in
             guard
-                let cConn = cConn,
+                let cConn,
                 let userdata = http.getUserdata(cConn)
             else { return }
             let swiftConn = Unmanaged<HTTPConnection>.fromOpaque(userdata).takeUnretainedValue()
@@ -187,7 +182,7 @@ public extension Network {
 
         private static let cResponseCallback: @convention(c) (OpaquePointer?) -> Void = { cConn in
             guard
-                let cConn = cConn,
+                let cConn,
                 let userdata = http.getUserdata(cConn)
             else { return }
             let swiftConn = Unmanaged<HTTPConnection>.fromOpaque(userdata).takeUnretainedValue()
@@ -196,7 +191,7 @@ public extension Network {
 
         private static let cRequestCompleteCallback: @convention(c) (OpaquePointer?) -> Void = { cConn in
             guard
-                let cConn = cConn,
+                let cConn,
                 let userdata = http.getUserdata(cConn)
             else { return }
             let swiftConn = Unmanaged<HTTPConnection>.fromOpaque(userdata).takeUnretainedValue()
@@ -205,11 +200,16 @@ public extension Network {
 
         private static let cConnectionClosedCallback: @convention(c) (OpaquePointer?) -> Void = { cConn in
             guard
-                let cConn = cConn,
+                let cConn,
                 let userdata = http.getUserdata(cConn)
             else { return }
             let swiftConn = Unmanaged<HTTPConnection>.fromOpaque(userdata).takeUnretainedValue()
             swiftConn.connectionClosedCallback?()
+        }
+
+        /// Returns the last error on the connection, or `.ok` if none occurred.
+        private var error: NetErr {
+            http.getError.unsafelyUnwrapped(pointer)
         }
     }
 }

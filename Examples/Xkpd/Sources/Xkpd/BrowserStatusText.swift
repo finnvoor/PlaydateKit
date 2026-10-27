@@ -14,13 +14,11 @@ class BrowserStatusText: Sprite.Sprite {
         setIgnoresDrawOffset(true)
     }
 
-    // MARK: Public
-
-    public var line1: String = ""
-
-    public var line2: String = ""
-
     // MARK: Internal
+
+    var line1: String = ""
+
+    var line2: String = ""
 
     override func draw(bounds _: Rect, drawRect _: Rect) {
         Graphics.drawMode = .fillBlack

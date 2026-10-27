@@ -82,7 +82,9 @@ final class GameScene: Scene {
         default: break
         }
         frame += 1
-        if state == .gameOver { gameOverTimer -= 1 }
+        if state == .gameOver {
+            gameOverTimer -= 1
+        }
 
         if gameOverTimer == 0 {
             game.scene = GameOverScene(score: score.score)
@@ -275,7 +277,9 @@ final class Pipe {
 
     // MARK: Internal
 
-    var maxX: Float { top.bounds.x + top.bounds.width }
+    var maxX: Float {
+        top.bounds.x + top.bounds.width
+    }
 
     func addToDisplayList() {
         top.addToDisplayList()

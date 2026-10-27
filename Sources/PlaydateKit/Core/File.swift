@@ -147,5 +147,7 @@ public enum File {
         )
     }
 
-    private static var file: playdate_file { Playdate.playdateAPI.file.pointee }
+    private static var file: playdate_file {
+        Playdate.playdateAPI.file.pointee
+    }
 }

@@ -77,5 +77,7 @@ public enum Scoreboards {
 
     // MARK: Private
 
-    private static var scoreboards: playdate_scoreboards { Playdate.playdateAPI.scoreboards.pointee }
+    private static var scoreboards: playdate_scoreboards {
+        Playdate.playdateAPI.scoreboards.pointee
+    }
 }

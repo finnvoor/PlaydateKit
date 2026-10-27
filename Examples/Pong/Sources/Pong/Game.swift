@@ -39,7 +39,9 @@ final class Game: PlaydateGame {
     let leftWall = Wall(bounds: Rect(x: -1, y: 0, width: 1, height: Display.height))
     let rightWall = Wall(bounds: Rect(x: Display.width, y: 0, width: 1, height: Display.height))
 
-    var hasWinner: Bool { score.player >= winningScore || score.computer >= winningScore }
+    var hasWinner: Bool {
+        score.player >= winningScore || score.computer >= winningScore
+    }
 
     func update() -> Bool {
         switch state {
@@ -114,11 +116,15 @@ class Ball: Sprite.Sprite {
             if collision.other == game.leftWall {
                 game.score.computer += 1
                 game.ball.reset()
-                if game.hasWinner { game.state = .gameOver }
+                if game.hasWinner {
+                    game.state = .gameOver
+                }
             } else if collision.other == game.rightWall {
                 game.score.player += 1
                 game.ball.reset()
-                if game.hasWinner { game.state = .gameOver }
+                if game.hasWinner {
+                    game.state = .gameOver
+                }
             } else {
                 synth.playNote(frequency: 220.0, volume: 0.7, length: 0.1)
                 if collision.normal.x != 0 {

@@ -29,7 +29,9 @@ public protocol PlaydateGame {
 }
 
 public extension PlaydateGame {
-    func update() -> Bool { false }
+    func update() -> Bool {
+        false
+    }
 
     func gameWillTerminate() {}
     func deviceWillSleep() {}

@@ -28,7 +28,9 @@ public struct Rect: Equatable {
     // MARK: Public
 
     /// The point with location (0,0).
-    public static var zero: Rect { Rect(x: 0, y: 0, width: 0, height: 0) }
+    public static var zero: Rect {
+        Rect(x: 0, y: 0, width: 0, height: 0)
+    }
 
     public var x, y, width, height: Float
 

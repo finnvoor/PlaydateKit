@@ -1,7 +1,7 @@
 // TODO: - Temporary workaround until FloatingPoint print support is added to Embedded Swift
 import CPlaydate
 
-// MARK: - Float + CustomStringConvertible
+// MARK: - Float + @retroactive CustomStringConvertible
 
 extension Float: @retroactive CustomStringConvertible {
     public var description: String {
@@ -12,7 +12,7 @@ extension Float: @retroactive CustomStringConvertible {
     }
 }
 
-// MARK: - Double + CustomStringConvertible
+// MARK: - Double + @retroactive CustomStringConvertible
 
 extension Double: @retroactive CustomStringConvertible {
     public var description: String {
