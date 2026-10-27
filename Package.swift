@@ -8,6 +8,20 @@ let playdateSDKPath: String = if let path = Context.environment["PLAYDATE_SDK_PA
     "\(Context.environment["HOME"]!)/Developer/PlaydateSDK/"
 }
 
+/// Without `-gline-tables-only`, so the Simulator build keeps the full DWARF LLDB needs to inspect
+/// variables. The device toolset adds it back, see `PDCPlugin.deviceToolset`.
+let embeddedSwiftSettings: [SwiftSetting] = [
+    .enableExperimentalFeature("Embedded"),
+    .unsafeFlags([
+        "-whole-module-optimization",
+        "-Xfrontend", "-disable-objc-interop",
+        "-Xfrontend", "-disable-stack-protector",
+        "-Xfrontend", "-function-sections",
+        "-Xcc", "-DTARGET_EXTENSION",
+        "-I", "\(playdateSDKPath)/C_API"
+    ]),
+]
+
 let package = Package(
     name: "PlaydateKit",
     platforms: [.macOS(.v14)],
@@ -21,35 +35,13 @@ let package = Package(
         .target(
             name: "PlaydateKit",
             dependencies: ["CPlaydate"],
-            swiftSettings: [
-                .enableExperimentalFeature("Embedded"),
-                .unsafeFlags([
-                    "-whole-module-optimization",
-                    "-Xfrontend", "-disable-objc-interop",
-                    "-Xfrontend", "-disable-stack-protector",
-                    "-Xfrontend", "-function-sections",
-                    "-Xfrontend", "-gline-tables-only",
-                    "-Xcc", "-DTARGET_EXTENSION",
-                    "-I", "\(playdateSDKPath)/C_API"
-                ]),
-            ]
+            swiftSettings: embeddedSwiftSettings
         ),
         .target(
             name: "CrankIndicator",
             dependencies: ["PlaydateKit"],
             exclude: ["Resources"],
-            swiftSettings: [
-                .enableExperimentalFeature("Embedded"),
-                .unsafeFlags([
-                    "-whole-module-optimization",
-                    "-Xfrontend", "-disable-objc-interop",
-                    "-Xfrontend", "-disable-stack-protector",
-                    "-Xfrontend", "-function-sections",
-                    "-Xfrontend", "-gline-tables-only",
-                    "-Xcc", "-DTARGET_EXTENSION",
-                    "-I", "\(playdateSDKPath)/C_API"
-                ]),
-            ]
+            swiftSettings: embeddedSwiftSettings
         ),
         .target(
             name: "CPlaydate",
@@ -63,8 +55,7 @@ let package = Package(
         .plugin(
             name: "PDCPlugin",
             capability: .command(intent:
-                .custom(verb: "pdc", description: "Runs the Playdate compiler")
-            )
+                .custom(verb: "pdc", description: "Runs the Playdate compiler"))
         ),
         .plugin(
             name: "RenamePlugin",

@@ -6,6 +6,8 @@ import PackagePlugin
 @main struct PDCPlugin: CommandPlugin {
     let home = FileManager.default.homeDirectoryForCurrentUser.path()
 
+    /// Pins device builds to DWARF 4 for every target, the game's own included: the Sampler's `Device - C`
+    /// mode symbolizes with the SDK's `arm-none-eabi-addr2line` (binutils 2.33), which can't read DWARF 5.
     let deviceToolset = URL(filePath: #filePath)
         .appending(path: "../../../Toolsets/toolset_device.json")
         .standardized
@@ -55,7 +57,9 @@ import PackagePlugin
         #endif
     }
 
-    var playdateSDKURL: URL { get throws { try URL(filePath: playdateSDKPath) } }
+    var playdateSDKURL: URL {
+        get throws { try URL(filePath: playdateSDKPath) }
+    }
 
     func performCommand(context: PluginContext, arguments: [String]) async throws {
         let arguments = Arguments(arguments)
@@ -70,9 +74,21 @@ import PackagePlugin
             -p, --product <product>                       Build the specified product
                 --device-only                             Build a device-only executable suitable for distribution
                 --simulator-only                          Build a simulator-only executable for quick testing
-                --extra-device-o-files-build-dirs <dirs>  Add more built directories to device `.o` files search (comma-separated)
+                --extra-device-o-files-build-dirs <dirs>  Link the device objects of more targets, e.g. `CLodePNG.build` (comma-separated)
+                --no-debug-symbols                        Skip all debug symbol post processing
+                --no-dsym                                 Don't copy the simulator dSYM bundle into the pdx
                 --no-resource-cache                       Copy and compile every resource, even those unchanged since the last build
             -v, --verbose                                 Increase verbosity to include informational output
+
+            DEBUGGING
+
+            By default `pdc` publishes the debug info the Playdate Simulator's tools need:
+
+            * The simulator `dSYM` bundle is copied next to `pdex.dylib` inside the pdx, which is
+              where LLDB looks for it. Without this, breakpoints in a running game don't resolve.
+            * An unstripped `<Product>.elf` is written next to the pdx, ready to be selected in the
+              Sampler's "Choose Game" prompt when sampling `Device - C`. `pdc` itself only keeps the
+              stripped `pdex.bin`.
             """)
             return
         }
@@ -84,6 +100,8 @@ import PackagePlugin
         let deviceOnly = arguments.hasFlag(named: "device-only", allowShort: false)
         let simulatorOnly = arguments.hasFlag(named: "simulator-only", allowShort: false)
         let extraDeviceOFilesBuildDirs = arguments.value(for: "extra-device-o-files-build-dirs", allowShort: false)
+        let debugSymbols = !arguments.hasFlag(named: "no-debug-symbols", allowShort: false)
+        let copyDSYM = debugSymbols && !arguments.hasFlag(named: "no-dsym", allowShort: false)
         let useResourceCache = !deviceOnly && !arguments.hasFlag(named: "no-resource-cache", allowShort: false)
 
         let product: PackagePlugin.Product? = if let productName {
@@ -118,9 +136,10 @@ import PackagePlugin
             )
         }
 
+        var simulatorArtifact: URL?
         if !deviceOnly {
             print("Building for simulator...")
-            try buildSimulator(
+            simulatorArtifact = try buildSimulator(
                 context: context,
                 product: product,
                 configuration: .debug,
@@ -152,9 +171,25 @@ import PackagePlugin
         )
 
         if let cache {
-            for reused in copied.reused { try cache.restore(reused, into: pdx) }
-            for pending in copied.pending { try cache.store(pending, compiledFrom: pdx) }
-            cache.prune(keeping: Set((copied.reused.map(\.name) + copied.pending.map(\.name))))
+            for reused in copied.reused {
+                try cache.restore(reused, into: pdx)
+            }
+            for pending in copied.pending {
+                try cache.store(pending, compiledFrom: pdx)
+            }
+            cache.prune(keeping: Set(copied.reused.map(\.name) + copied.pending.map(\.name)))
+        }
+
+        if debugSymbols {
+            print("Post processing debug symbols...")
+            try postProcessDebugSymbols(
+                context: context,
+                product: product,
+                simulatorArtifact: simulatorArtifact,
+                copyDSYM: copyDSYM,
+                includesDevice: !simulatorOnly,
+                verbose: verbose
+            )
         }
 
         let buildDuration = (Date().timeIntervalSince(startTime))
@@ -168,6 +203,9 @@ import PackagePlugin
         print(outputPath)
     }
 
+    /// Builds the device objects with a nested `swift build`, since a command plugin can't change the build
+    /// triple. Without the `armv7em-none-none-eabi` triple, the `swiftbuild` build system prelinks every target
+    /// with the host linker, which can't read the device's ELF objects.
     func buildDevice(
         context: PluginContext,
         target: PackagePlugin.Target,
@@ -175,61 +213,66 @@ import PackagePlugin
         verbose: Bool,
         extraDeviceOFilesBuildDirs: [String]
     ) throws {
-        var deviceParameters = try PackageManager.BuildParameters(
-            configuration: configuration,
-            logging: verbose ? .verbose : .concise,
-            echoLogs: verbose
-        ).loadFlags(from: deviceToolset)
+        let fileManager = FileManager.default
+        let scratchDirectory = context.pluginWorkDirectoryURL.appending(component: "../../..").standardized
+        let deviceBuildDirectory = context.pluginWorkDirectoryURL.appending(component: "DeviceBuild")
+        try fileManager.createDirectory(at: deviceBuildDirectory, withIntermediateDirectories: true)
 
-        let armIncludes = [
-            "-I", "\(armToolchainPath)/include",
-            "-I", "\(armToolchainPath)/include-fixed",
-            "-I", "\(armSysrootPath)/include"
-        ]
-        deviceParameters.otherCFlags += armIncludes
-        deviceParameters.otherSwiftcFlags += armIncludes.flatMap { ["-Xcc", $0] }
-
-        let result = try packageManager.build(
-            .target(target.name),
-            parameters: deviceParameters
-        )
-
-        guard result.succeeded else {
-            if !verbose { print(result.logText) }
-            throw Error.buildFailed
-        }
-
-        var oFiles: [String] = []
-        for url in try FileManager.default.contentsOfDirectory(
-            at: context.pluginWorkDirectoryURL
-                .appending(component: "../../..")
-                .appending(component: configuration.rawValue)
-                .appending(component: "CPlaydate.build"),
-            includingPropertiesForKeys: nil
-        ) where url.pathExtension == "o" {
-            oFiles.append(url.path(percentEncoded: false))
-        }
-
-        for extraDir in extraDeviceOFilesBuildDirs {
-            for url in try FileManager.default.contentsOfDirectory(
-                at: context.pluginWorkDirectoryURL
-                    .appending(component: "../../..")
-                    .appending(component: configuration.rawValue)
-                    .appending(component: extraDir),
-                includingPropertiesForKeys: nil
-            ) where url.pathExtension == "o" {
-                oFiles.append(url.path(percentEncoded: false))
+        // Plugins can't access the network, so seed the nested build with the already resolved dependencies.
+        for item in ["workspace-state.json", "checkouts", "repositories", "artifacts"] {
+            let source = scratchDirectory.appending(component: item)
+            let destination = deviceBuildDirectory.appending(component: item)
+            if fileManager.fileExists(atPath: destination.path(percentEncoded: false)) {
+                try fileManager.removeItem(at: destination)
+            }
+            if fileManager.fileExists(atPath: source.path(percentEncoded: false)) {
+                try fileManager.copyItem(at: source, to: destination)
             }
         }
 
-        for url in try FileManager.default.contentsOfDirectory(
-            at: context.pluginWorkDirectoryURL
-                .appending(component: "../../..")
-                .appending(component: configuration.rawValue)
-                .appending(component: "\(target.name).build"),
-            includingPropertiesForKeys: nil
-        ) where url.pathExtension == "o" {
-            oFiles.append(url.path(percentEncoded: false))
+        let toolset = deviceBuildDirectory.appending(component: "toolset.json")
+        try writeDeviceToolset(to: toolset, linker: context.tool(named: "ld.lld").url)
+
+        // The nested build runs inside the plugin's sandbox already, and macOS refuses to nest another one.
+        let buildArguments = [
+            "--package-path", context.package.directoryURL.path(percentEncoded: false),
+            "--scratch-path", deviceBuildDirectory.path(percentEncoded: false),
+            "--configuration", configuration.rawValue,
+            "--triple", "armv7em-none-none-eabi",
+            "--toolset", toolset.path(percentEncoded: false),
+            "--build-system", "swiftbuild",
+            "--disable-automatic-resolution",
+            "--disable-sandbox"
+        ]
+        let swift = try context.tool(named: "swift").url
+        let log = deviceBuildDirectory.appending(component: "build.log")
+        do {
+            try execute(
+                tool: swift,
+                arguments: ["build", "--target", target.name] + buildArguments + (verbose ? ["--verbose"] : []),
+                verbose: verbose,
+                output: verbose ? nil : log
+            )
+        } catch {
+            if !verbose {
+                print((try? String(contentsOf: log, encoding: .utf8)) ?? "")
+            }
+            throw Error.buildFailed
+        }
+
+        let binPathFile = deviceBuildDirectory.appending(component: "bin-path.txt")
+        try execute(tool: swift, arguments: ["build", "--show-bin-path"] + buildArguments, output: binPathFile)
+        let binDirectory = try URL(
+            filePath: String(contentsOf: binPathFile, encoding: .utf8).split(separator: "\n").last.map(String.init) ?? "",
+            directoryHint: .isDirectory
+        )
+
+        // Every target is prelinked into a single relocatable object named after the target.
+        let objectTargets = ["CPlaydate", target.name] + extraDeviceOFilesBuildDirs.map {
+            $0.hasSuffix(".build") ? String($0.dropLast(".build".count)) : $0
+        }
+        let oFiles = objectTargets.map {
+            binDirectory.appending(component: "\($0).o").path(percentEncoded: false)
         }
 
         try execute(tool: context.tool(named: "arm-none-eabi-gcc").url, arguments: oFiles + [
@@ -247,12 +290,40 @@ import PackagePlugin
         ])
     }
 
-    func buildSimulator(
+    /// Writes the device toolset extended with the ARM toolchain includes and `ld.lld` as linker, which the
+    /// nested build uses to prelink targets.
+    func writeDeviceToolset(to url: URL, linker: URL) throws {
+        let armIncludes = [
+            "-I", "\(armToolchainPath)/include",
+            "-I", "\(armToolchainPath)/include-fixed",
+            "-I", "\(armSysrootPath)/include"
+        ]
+        guard var toolset = try JSONSerialization.jsonObject(
+            with: Data(contentsOf: deviceToolset)
+        ) as? [String: Any] else { throw Error.invalidToolset }
+        // Unlike the native build system, swiftbuild doesn't forward C flags to swiftc. Without
+        // -fPIC, Swift code addresses globals with MOVW/MOVT relocations, which the Playdate
+        // loader doesn't relocate, crashing the game on device.
+        let cFlags = (toolset["cCompiler"] as? [String: Any])?["extraCLIOptions"] as? [String] ?? []
+        let cOptions = ["-fPIC"] + armIncludes
+        for (name, options) in [("cCompiler", cOptions), ("swiftCompiler", (cFlags + cOptions).flatMap { ["-Xcc", $0] })] {
+            var tool = toolset[name] as? [String: Any] ?? [:]
+            tool["extraCLIOptions"] = (tool["extraCLIOptions"] as? [String] ?? []) + options
+            toolset[name] = tool
+        }
+        var linkerTool = toolset["linker"] as? [String: Any] ?? [:]
+        linkerTool["path"] = linker.path(percentEncoded: false)
+        toolset["linker"] = linkerTool
+        try JSONSerialization.data(withJSONObject: toolset, options: [.prettyPrinted, .sortedKeys]).write(to: url)
+    }
+
+    /// - Returns: The URL of the built dylib in the SwiftPM build directory.
+    @discardableResult func buildSimulator(
         context: PluginContext,
         product: PackagePlugin.Product,
         configuration: PackageManager.BuildConfiguration,
         verbose: Bool
-    ) throws {
+    ) throws -> URL {
         let simulatorParameters = try PackageManager.BuildParameters(
             configuration: configuration,
             logging: verbose ? .verbose : .concise,
@@ -265,7 +336,10 @@ import PackagePlugin
         )
 
         guard result.succeeded else {
-            if !verbose { print(result.logText) }
+            // A verbose build already echoed its log while building.
+            if !verbose {
+                print(result.logText)
+            }
             throw Error.buildFailed
         }
 
@@ -278,6 +352,83 @@ import PackagePlugin
                 .appending(component: "pdex")
                 .appendingPathExtension(artifact.url.pathExtension)
         )
+
+        return artifact.url
+    }
+
+    /// Makes the built artifacts usable by the Playdate Simulator's Sampler, Malloc Log and by LLDB.
+    ///
+    /// This runs after `pdc` so that `pdc` always sees pristine input: the pdx contents are patched
+    /// in place instead.
+    func postProcessDebugSymbols(
+        context: PluginContext,
+        product: PackagePlugin.Product,
+        simulatorArtifact: URL?,
+        copyDSYM: Bool,
+        includesDevice: Bool,
+        verbose: Bool
+    ) throws {
+        let fileManager = FileManager.default
+        let pdx = context.pluginWorkDirectoryURL
+            .appending(component: product.name)
+            .appendingPathExtension("pdx")
+
+        // LLDB finds a dSYM that sits next to the binary it belongs to. `pdex.dylib` on macOS,
+        // `pdex.so` on Linux.
+        let library = pdx.appending(component: "pdex")
+            .appendingPathExtension(simulatorArtifact?.pathExtension ?? "dylib")
+        if copyDSYM, let simulatorArtifact {
+            let dSYM = simulatorArtifact.appendingPathExtension("dSYM")
+            let destination = library.appendingPathExtension("dSYM")
+            if fileManager.fileExists(atPath: destination.path(percentEncoded: false)) {
+                try fileManager.removeItem(at: destination)
+            }
+            if fileManager.fileExists(atPath: dSYM.path(percentEncoded: false)) {
+                try fileManager.copyItem(at: dSYM, to: destination)
+                if verbose {
+                    print("Copied \(dSYM.lastPathComponent) into \(pdx.lastPathComponent)")
+                }
+            } else {
+                #if os(macOS)
+                // The swiftbuild build system leaves the debug info in the object files instead of a dSYM.
+                try execute(
+                    tool: context.tool(named: "dsymutil").url,
+                    arguments: [simulatorArtifact.path(percentEncoded: false), "-o", destination.path(percentEncoded: false)],
+                    verbose: verbose
+                )
+                if verbose {
+                    print("Wrote \(destination.lastPathComponent) into \(pdx.lastPathComponent)")
+                }
+                #endif
+            }
+        }
+
+        // The Sampler asks for a `.elf` when sampling device performance in C code. `pdc` only keeps
+        // the stripped `pdex.bin`, so publish a copy of the unstripped ELF next to the pdx.
+        let builtELF = context.pluginWorkDirectoryURL
+            .appending(component: "Source")
+            .appending(component: "pdex.elf")
+        if includesDevice, fileManager.fileExists(atPath: builtELF.path(percentEncoded: false)) {
+            let destination = context.pluginWorkDirectoryURL
+                .appending(component: product.name)
+                .appendingPathExtension("elf")
+            if fileManager.fileExists(atPath: destination.path(percentEncoded: false)) {
+                try fileManager.removeItem(at: destination)
+            }
+            try fileManager.copyItem(at: builtELF, to: destination)
+            do {
+                var elf = try SamplerELF(url: destination)
+                let lines = elf.fillLineZero()
+                let uncovered = elf.addLinesForUncoveredFunctions()
+                let demangled = try elf.demangleSymbols(demangler: context.tool(named: "swift-demangle").url)
+                try elf.write()
+                if verbose {
+                    print("Wrote \(destination.lastPathComponent) for the Sampler: \(demangled) symbols demangled, line 0 filled in \(lines.rewritten)/\(lines.units) line tables, \(uncovered) functions without line info given one")
+                }
+            } catch {
+                print("warning: \(destination.lastPathComponent) keeps mangled names and line 0 rows: \(error)")
+            }
+        }
     }
 
     func resourceCache(context: PluginContext, target: PackagePlugin.Target) throws -> ResourceCache {
@@ -340,7 +491,9 @@ import PackagePlugin
         if !reused.isEmpty {
             let ignoreFile = source.appending(component: ".pdcignore")
             var ignore = (try? String(contentsOf: ignoreFile, encoding: .utf8)) ?? ""
-            if !ignore.isEmpty, !ignore.hasSuffix("\n") { ignore += "\n" }
+            if !ignore.isEmpty, !ignore.hasSuffix("\n") {
+                ignore += "\n"
+            }
             ignore += reused.map { "\($0.name)\n" }.joined()
             try ignore.write(to: ignoreFile, atomically: true, encoding: .utf8)
         }
@@ -370,13 +523,23 @@ import PackagePlugin
         )
     }
 
-    func execute(tool: URL, arguments: [String], verbose: Bool = false) throws {
+    /// Runs `tool`, writing its output to `output` if given, or to the standard output otherwise.
+    func execute(tool: URL, arguments: [String], verbose: Bool = false, output: URL? = nil) throws {
         let task = Process()
         task.executableURL = tool
         task.arguments = arguments
-        task.standardOutput = FileHandle.standardOutput
-        task.standardError = FileHandle.standardError
-        if verbose { task.print() }
+        if let output {
+            FileManager.default.createFile(atPath: output.path(percentEncoded: false), contents: nil)
+            let handle = try FileHandle(forWritingTo: output)
+            task.standardOutput = handle
+            task.standardError = handle
+        } else {
+            task.standardOutput = FileHandle.standardOutput
+            task.standardError = FileHandle.standardError
+        }
+        if verbose {
+            task.print()
+        }
         try task.run()
         task.waitUntilExit()
         guard task.terminationReason == .exit, task.terminationStatus == 0 else {
@@ -397,5 +560,6 @@ extension PDCPlugin {
         case missingBuildArtifact
         case duplicateResource
         case buildFailed
+        case invalidToolset
     }
 }
