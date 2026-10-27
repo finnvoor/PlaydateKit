@@ -353,6 +353,8 @@ private struct LineProgram {
                     file = row.file
                 }
                 let addressAdvance = (row.address - address) / minimumInstructionLength
+                // Special opcodes and DW_LNS_advance_pc can't move back in address.
+                guard addressAdvance >= 0 else { return nil }
                 var lineAdvance = row.line - line
                 if !(lineBase..<lineBase + lineRange).contains(lineAdvance) {
                     output += [3] + sleb(lineAdvance)
@@ -368,6 +370,7 @@ private struct LineProgram {
                 address = row.address
                 line = row.line
             }
+            guard sequence.end >= address else { return nil }
             output += [2] + uleb((sequence.end - address) / minimumInstructionLength) + [0, 1, 1]
         }
         return output
