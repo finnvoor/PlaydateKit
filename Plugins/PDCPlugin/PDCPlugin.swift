@@ -55,7 +55,9 @@ import PackagePlugin
         #endif
     }
 
-    var playdateSDKURL: URL { get throws { try URL(filePath: playdateSDKPath) } }
+    var playdateSDKURL: URL {
+        get throws { try URL(filePath: playdateSDKPath) }
+    }
 
     func performCommand(context: PluginContext, arguments: [String]) async throws {
         let arguments = Arguments(arguments)
@@ -202,7 +204,9 @@ import PackagePlugin
                 output: verbose ? nil : log
             )
         } catch {
-            if !verbose { print((try? String(contentsOf: log, encoding: .utf8)) ?? "") }
+            if !verbose {
+                print((try? String(contentsOf: log, encoding: .utf8)) ?? "")
+            }
             throw Error.buildFailed
         }
 
@@ -281,7 +285,9 @@ import PackagePlugin
         )
 
         guard result.succeeded else {
-            if !verbose { print(result.logText) }
+            if !verbose {
+                print(result.logText)
+            }
             throw Error.buildFailed
         }
 
@@ -371,7 +377,9 @@ import PackagePlugin
             task.standardOutput = FileHandle.standardOutput
             task.standardError = FileHandle.standardError
         }
-        if verbose { task.print() }
+        if verbose {
+            task.print()
+        }
         try task.run()
         task.waitUntilExit()
         guard task.terminationReason == .exit, task.terminationStatus == 0 else {
