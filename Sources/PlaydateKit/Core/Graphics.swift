@@ -878,7 +878,7 @@ public enum Graphics {
     public static func getDebugBitmap() -> Bitmap? {
         // `free: false` is essential: this is the Simulator's own debug framebuffer, and freeing it
         // corrupts the Simulator's heap and takes the whole process down a few frames later.
-        graphics.getDebugBitmap.unsafelyUnwrapped().map { Bitmap(pointer: $0, free: false) }
+        graphics.getDebugBitmap?().map { Bitmap(pointer: $0, free: false) }
     }
 
     /// Returns the raw bits in the display buffer, the last completed frame.
