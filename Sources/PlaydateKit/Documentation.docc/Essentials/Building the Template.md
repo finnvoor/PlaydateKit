@@ -61,6 +61,14 @@ Your package should be compiled into a `pdx` file located at `.build/plugins/PDC
 
 To build using Xcode you will need to ensure Xcode is using the nightly Swift toolchain downloaded previously. Navigate to the **Xcode > Toolchains** menu item and select the Development Snapshot toolchain.
 
+> Important: Xcode 27 can't link package manifests using a Swift.org toolchain, since these toolchains don't include `ld`. Xcode fails to load the package with `posix_spawn failed: No such file or directory`, and command line builds fail with `can't exec '.../Developer/usr/bin/ld' (errno=Argument list too long)` while the toolchain is selected in Xcode. To fix this, link Xcode's `ld` into the toolchain:
+>
+> ```console
+> ln -s "$(xcrun -f ld -toolchain com.apple.dt.toolchain.XcodeDefault)" ~/Library/Developer/Toolchains/<toolchain>.xctoolchain/usr/bin/ld
+> ```
+>
+> Repeat this for each new toolchain you install.
+
 If you followed the xcscheme instructions above, your package should be ready to run from Xcode. Select the Run icon in the toolbar or press Cmd+R on your keyboard to start building. This will automatically run the `pdc` package plugin and launch the Playdate simulator with your newly build game.
 
 > Tip: If your game doesn't launch when run from Xcode, try running `swift package pdc` from the command line to debug any build issues.
