@@ -25,12 +25,24 @@ public extension Sound {
             if let samplePointer {
                 sample.freeSample(samplePointer)
             }
+            assignedSample = nil
 
             samplePointer = sample.load(path)
             guard samplePointer != nil else { return false }
 
             sampleplayer.setSample(pointer, samplePointer)
             return true
+        }
+
+        /// Assigns `newSample` to player, which keeps it alive while assigned, so one sample can be shared
+        /// by several players.
+        public func setSample(_ newSample: Sample) {
+            sampleplayer.setSample.unsafelyUnwrapped(pointer, newSample.pointer)
+            if let samplePointer {
+                sample.freeSample(samplePointer)
+                self.samplePointer = nil
+            }
+            assignedSample = newSample
         }
 
         /// Stops playing the sample.
@@ -116,6 +128,9 @@ public extension Sound {
 
         // MARK: Private
 
+        /// Loaded by `setSample(path:)` and owned by the player.
         private var samplePointer: OpaquePointer?
+        /// Released after `deinit` has freed the player, so the player never outlives its sample.
+        private var assignedSample: Sample?
     }
 }
